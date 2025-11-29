@@ -1,0 +1,51 @@
+# Gradle
+.gradle/
+gradle-app.setting
+!gradle-wrapper.jar
+gradle-dist/
+build/
+.gradle-wrapper/
+
+# Compiled Java
+*.class
+*.jar
+*.zip
+*.war
+*.ear
+*.nar
+*.log
+*.jasper
+target/
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.classpath
+.project
+.settings/
+
+# IDE - VSCode
+.vscode/
+*.code-workspace
+
+# IDE - Eclipse
+.metadata/
+.factorypath
+.c9/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.swp
+*.swo
+*~
+
+# Miscellaneous
+.DS_Store
+MANIFEST.MF
+*.orig
+*.rej
