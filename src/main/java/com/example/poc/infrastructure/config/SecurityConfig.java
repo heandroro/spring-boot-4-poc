@@ -1,0 +1,72 @@
+package com.example.poc.infrastructure.config;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+
+@Configuration
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    private final String allowedOrigins;
+    private final String allowedMethods;
+
+    public SecurityConfig(
+        @Value("${app.security.cors.allowed-origins:*}") String allowedOrigins,
+        @Value("${app.security.cors.allowed-methods:GET,POST,PUT,PATCH,DELETE,OPTIONS}") String allowedMethods
+    ) {
+        this.allowedOrigins = allowedOrigins;
+        this.allowedMethods = allowedMethods;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                // TODO: Ajustar para authenticated assim que JWT estiver implementado
+                .anyRequest().permitAll()
+            );
+
+        return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    private CorsConfigurationSource corsConfigurationSource() {
+        return request -> {
+            CorsConfiguration config = new CorsConfiguration();
+            config.setAllowedOrigins(splitByComma(allowedOrigins));
+            config.setAllowedMethods(splitByComma(allowedMethods));
+            config.setAllowedHeaders(List.of("*"));
+            config.setAllowCredentials(false);
+            return config;
+        };
+    }
+
+    private List<String> splitByComma(String value) {
+        return Arrays.stream(value.split(","))
+            .map(String::trim)
+            .filter(s -> !s.isEmpty())
+            .toList();
+    }
+}

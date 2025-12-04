@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: spring-boot-4-poc
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/spring-boot-4-poc}
+      database: ${MONGODB_DATABASE:spring-boot-4-poc}
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me}
+      expiration-hours: ${JWT_EXPIRATION_HOURS:24}
+    cors:
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+      allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+
+logging:
+  level:
+    org.springframework.security: INFO
+    com.example.poc: INFO
