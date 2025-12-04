@@ -16,12 +16,13 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 - **Mockito**: Mocking framework for unit tests
 - **Testcontainers**: Real MongoDB for integration tests
 
-### Why Gradle Kotlin DSL?
-This project uses `build.gradle.kts` (Kotlin DSL) instead of `build.gradle` (Groovy DSL) for:
-- ✅ **Type-safety**: Compile-time error detection in build scripts
-- ✅ **IDE Support**: Full autocompletion, navigation, and refactoring
-- ✅ **Consistency**: Same language paradigm as Java/Kotlin code
-- ✅ **Maintainability**: Easier to catch configuration errors early
+### Why Gradle (vs Maven)?
+This project uses **Gradle** with **Kotlin DSL** (`build.gradle.kts`) for:
+- ✅ **Performance**: 2-10x faster builds with incremental compilation, build cache, and parallel execution
+- ✅ **Type-safety**: Compile-time error detection in build scripts (Kotlin DSL vs XML)
+- ✅ **IDE Support**: Full autocompletion, navigation, and refactoring in build files
+- ✅ **Flexibility**: Programmatic DSL allows custom tasks and conditional logic easily
+- ✅ **Conciseness**: Less verbose than Maven's XML (~30-40% fewer lines)
 
 Build and run
 
