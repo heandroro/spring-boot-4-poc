@@ -32,6 +32,7 @@ Este projeto segue padrões específicos. Use este guia ao gerar ou sugerir cód
 - **Mockito**: `@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`
 - **Testcontainers**: MongoDB real em integração
 - **Gradle local**: Sempre usar o binário local (`gradle test`) em vez do wrapper (`./gradlew`) quando rodar localmente
+- **Antes de commitar**: garantir que o projeto builda (`gradle build`) e, se houver mudanças em testes, que eles passam (`gradle test`)
 
 ## 🔒 Segurança
 - **@PreAuthorize**: Controle de acesso por role
