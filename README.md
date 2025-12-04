@@ -2,12 +2,26 @@
 
 Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 and MongoDB.
 
-Key points:
-- DDD-inspired package layout under `com.example.poc` (domain, application, infrastructure, web)
-- No Lombok — uses Java `record` types for DTOs / value objects
-- MapStruct for mappers
-- Instancio for test data generation
-- JUnit 6 for tests
+## 🎯 Key Points
+
+### Architecture & Structure
+- **DDD-inspired layout**: `domain`, `application`, `infrastructure`, `web` layers
+- **No Lombok**: Uses Java 25 native `record` types for immutability
+- **MapStruct**: Type-safe DTO ↔ Entity mapping
+- **Gradle Kotlin DSL**: Type-safe build configuration with IDE support
+
+### Testing Stack
+- **JUnit 6 (Jupiter)**: Modern testing framework with `@DisplayName`
+- **Instancio**: Automatic test data generation
+- **Mockito**: Mocking framework for unit tests
+- **Testcontainers**: Real MongoDB for integration tests
+
+### Why Gradle Kotlin DSL?
+This project uses `build.gradle.kts` (Kotlin DSL) instead of `build.gradle` (Groovy DSL) for:
+- ✅ **Type-safety**: Compile-time error detection in build scripts
+- ✅ **IDE Support**: Full autocompletion, navigation, and refactoring
+- ✅ **Consistency**: Same language paradigm as Java/Kotlin code
+- ✅ **Maintainability**: Easier to catch configuration errors early
 
 Build and run
 
