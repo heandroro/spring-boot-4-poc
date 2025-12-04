@@ -3,6 +3,7 @@
 gradle-app.setting
 !gradle-wrapper.jar
 gradle-dist/
+.gradle-dist/
 build/
 .gradle-wrapper/
 
