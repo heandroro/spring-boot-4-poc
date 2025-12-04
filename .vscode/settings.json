@@ -1,0 +1,66 @@
+{
+  "java.compile.nullAnalysis.mode": "automatic",
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.saveActions.organizeImports": true,
+  
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  },
+  
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": true,
+    "scminput": false
+  },
+  "github.copilot.editor.enableAutoCompletions": true,
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "Follow DDD architecture: domain/application/infrastructure/web layers"
+    },
+    {
+      "text": "Use Java 25 Records instead of Lombok for immutable DTOs and entities"
+    },
+    {
+      "text": "Always use constructor injection, never @Autowired on fields"
+    },
+    {
+      "text": "Use Spring Boot 4 RestClient instead of RestTemplate"
+    },
+    {
+      "text": "Generate tests using JUnit 6, Mockito, and Instancio for fixtures"
+    },
+    {
+      "text": "Use @DisplayName with descriptive test names"
+    },
+    {
+      "text": "For MongoDB entities use @Document, @Id, @Indexed appropriately"
+    },
+    {
+      "text": "Implement embedding for tight coupling, referencing for independent aggregates"
+    },
+    {
+      "text": "Add Bean Validation annotations to DTOs: @NotBlank, @NotNull, @Email"
+    },
+    {
+      "text": "Use @PreAuthorize for role-based access control on endpoints"
+    },
+    {
+      "text": "Return appropriate HTTP status codes: 201 Created, 204 No Content"
+    },
+    {
+      "text": "Use ProblemDetail for error responses following RFC 7807"
+    }
+  ],
+  
+  "files.exclude": {
+    "**/.gradle": true,
+    "**/build": true,
+    "**/.DS_Store": true
+  },
+  "search.exclude": {
+    "**/build": true,
+    "**/.gradle": true
+  }
+}
