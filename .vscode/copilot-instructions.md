@@ -31,6 +31,7 @@ Este projeto segue padrões específicos. Use este guia ao gerar ou sugerir cód
 - **Instancio**: `Instancio.create(Product.class)` para fixtures
 - **Mockito**: `@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`
 - **Testcontainers**: MongoDB real em integração
+- **Gradle local**: Sempre usar o binário local (`gradle test`) em vez do wrapper (`./gradlew`) quando rodar localmente
 
 ## 🔒 Segurança
 - **@PreAuthorize**: Controle de acesso por role
