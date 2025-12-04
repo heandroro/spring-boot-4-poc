@@ -5,12 +5,19 @@ spring:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/spring-boot-4-poc}
       database: ${MONGODB_DATABASE:spring-boot-4-poc}
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
+      auto-index-creation: true
 
 server:
   port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
 
 app:
   security:
