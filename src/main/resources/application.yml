@@ -22,11 +22,18 @@ management:
 app:
   security:
     jwt:
-      secret: ${JWT_SECRET:change-me}
+      # SECURITY: Must be set via JWT_SECRET environment variable
+      # NEVER use weak defaults in production
+      secret: ${JWT_SECRET}
       expiration-hours: ${JWT_EXPIRATION_HOURS:24}
     cors:
+      # SECURITY: Restrict origins in production (e.g., http://localhost:3000)
+      # Using '*' is acceptable for local development only
       allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
       allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+  rest-client:
+    # REST client read timeout in seconds (configurable per environment)
+    read-timeout-seconds: ${REST_CLIENT_READ_TIMEOUT_SECONDS:10}
 
 logging:
   level:

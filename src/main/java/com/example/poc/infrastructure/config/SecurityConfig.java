@@ -59,6 +59,9 @@ public class SecurityConfig {
             config.setAllowedMethods(splitByComma(allowedMethods));
             config.setAllowedHeaders(List.of("*"));
             config.setAllowCredentials(false);
+            // NOTE: If you need to support credentials (cookies, authorization headers) in the future,
+            // you must specify explicit origins instead of '*'. Browsers reject requests with
+            // credentials if allowed origins is '*'. See CORS specification for details.
             return config;
         };
     }
