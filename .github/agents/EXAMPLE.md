@@ -2,6 +2,11 @@
 
 Este documento demonstra como o agente de review utiliza comentários existentes do PR para contextualizar suas análises.
 
+> **⚠️ Disclaimer**: Os exemplos abaixo são ilustrativos e representam o comportamento desejado/ideal 
+> para um agente de review do GitHub Copilot. Eles descrevem capacidades aspiracionais que podem 
+> ou não estar totalmente disponíveis na versão atual do GitHub Copilot. Esta documentação serve 
+> como especificação de requisitos e guia de comportamento esperado.
+
 ## Cenário 1: Evitando Feedback Duplicado
 
 ### Comentários Existentes no PR

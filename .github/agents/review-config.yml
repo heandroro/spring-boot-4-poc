@@ -1,11 +1,18 @@
 # GitHub Copilot Review Agent Configuration
 # Configuração para habilitar a leitura de comentários do PR durante revisões
+#
+# NOTA: Esta é uma configuração aspiracional que define o comportamento desejado
+# para o agente de review do GitHub Copilot. Nem todas as features podem estar
+# disponíveis na versão atual do GitHub Copilot. Esta configuração serve como
+# documentação de requisitos e pode ser usada quando as features estiverem disponíveis.
 
 name: "Code Review Agent"
 description: "Agente de revisão de código que considera comentários do PR"
 version: "1.0"
 
 # Habilitar leitura de comentários do PR
+# Esta configuração solicita que o agente leia comentários existentes no PR
+# antes de realizar a revisão, para evitar feedback duplicado
 read_pr_comments: true
 
 # Contexto adicional que o agente deve considerar
@@ -102,16 +109,19 @@ filters:
     - "*.properties"
 
 # Integrações
+# NOTA: As permissões do GitHub Copilot são gerenciadas automaticamente pelo GitHub.
+# Esta seção documenta as permissões que o agente necessita para funcionar conforme esperado.
 integrations:
   # GitHub API para ler comentários
   github_api:
     enabled: true
-    permissions:
+    # Permissões necessárias (gerenciadas pelo GitHub automaticamente)
+    required_permissions:
       - read:pull_request
       - read:comments
       - read:reviews
   
-  # Ferramentas de análise
+  # Ferramentas de análise (integração futura)
   analysis_tools:
     - spotbugs              # Análise estática Java
     - sonarqube             # Qualidade de código

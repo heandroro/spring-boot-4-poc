@@ -87,9 +87,13 @@ Este agente está integrado com:
 ## Configuração
 
 Para habilitar a leitura de comentários do PR pelo agente:
-1. O agente tem acesso aos metadados do PR via GitHub API
-2. Comentários são incluídos automaticamente no contexto da revisão
-3. O agente prioriza comentários recentes e não resolvidos
+1. O agente deve ter acesso aos metadados do PR via GitHub API
+2. Comentários devem ser incluídos no contexto da revisão
+3. O agente deve priorizar comentários recentes e não resolvidos
+
+**Nota**: As capacidades descritas neste documento representam o comportamento desejado
+para o agente de review. A implementação real depende das features disponíveis no
+GitHub Copilot. Esta documentação serve como especificação de requisitos.
 
 ---
 

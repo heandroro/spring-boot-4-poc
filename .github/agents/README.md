@@ -2,6 +2,14 @@
 
 Este diretório contém configurações de agentes do GitHub Copilot para automação de tarefas no repositório.
 
+> **📝 Importante**: As configurações neste diretório representam o comportamento desejado e as 
+> capacidades aspiracionais para agentes do GitHub Copilot. Nem todas as features descritas podem 
+> estar disponíveis na versão atual do GitHub Copilot. Esta documentação serve como:
+> - 📋 Especificação de requisitos para o agente de review
+> - 🎯 Guia de comportamento esperado e ideal
+> - 🔮 Preparação para features futuras do GitHub Copilot
+> - 📖 Documentação de padrões de revisão do projeto
+
 ## 📋 Agentes Disponíveis
 
 ### 1. Review Agent (Agente de Revisão)
