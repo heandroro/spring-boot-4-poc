@@ -1,0 +1,159 @@
+# GitHub Copilot Review Agent Configuration
+# Configuração para habilitar a leitura de comentários do PR durante revisões
+
+name: "Code Review Agent"
+description: "Agente de revisão de código que considera comentários do PR"
+version: "1.0"
+
+# Habilitar leitura de comentários do PR
+read_pr_comments: true
+
+# Contexto adicional que o agente deve considerar
+context_sources:
+  - pr_description          # Descrição do Pull Request
+  - pr_comments             # Comentários no PR (gerais)
+  - review_comments         # Comentários inline no código
+  - commit_messages         # Mensagens de commit
+  - file_changes            # Arquivos modificados no PR
+
+# Arquivos de instruções a considerar
+instruction_files:
+  - .github/instructions.md
+  - .github/PULL_REQUEST_TEMPLATE.md
+  - .github/agents/review.md
+  - .vscode/copilot-instructions.md
+  - CONTRIBUTING.md
+
+# Focar revisão em tipos específicos de mudanças
+focus_areas:
+  - architecture            # Violações de arquitetura DDD
+  - security                # Vulnerabilidades de segurança
+  - testing                 # Cobertura e qualidade dos testes
+  - mongodb                 # Best practices do MongoDB
+  - spring_boot             # Uso correto do Spring Boot 4
+  - java_25                 # Features do Java 25
+
+# Prioridades de review
+priority_order:
+  1: security               # Segurança é prioridade máxima
+  2: functionality          # Bugs e lógica incorreta
+  3: architecture           # Conformidade com DDD
+  4: performance            # Queries e índices
+  5: maintainability        # Qualidade e manutenibilidade
+  6: style                  # Estilo de código
+
+# Checklist automático baseado na template do PR
+auto_checklist:
+  enabled: true
+  source: .github/PULL_REQUEST_TEMPLATE.md
+  
+  # Verificações obrigatórias
+  required_checks:
+    - ddd_layers              # Separação de camadas DDD
+    - constructor_injection   # Uso de constructor injection
+    - no_lombok               # Não usar Lombok (usar Records)
+    - mongodb_indexes         # Índices MongoDB configurados
+    - security_annotations    # @PreAuthorize nos endpoints
+    - test_coverage           # Cobertura mínima de testes
+    - bean_validation         # Validação nos DTOs
+
+# Comportamento do agente
+behavior:
+  # Sempre ler comentários antes de revisar
+  read_comments_first: true
+  
+  # Evitar duplicar feedback já fornecido
+  avoid_duplicate_feedback: true
+  
+  # Considerar respostas do autor
+  consider_author_responses: true
+  
+  # Focar apenas no diff do PR
+  review_only_changes: true
+  
+  # Fornecer sugestões de código
+  provide_code_suggestions: true
+  
+  # Nível de detalhe
+  detail_level: detailed     # Options: brief, normal, detailed
+  
+  # Tom do feedback
+  feedback_tone: constructive  # Options: strict, constructive, encouraging
+
+# Filtros de review
+filters:
+  # Ignorar arquivos gerados
+  exclude_patterns:
+    - "*.gradle"
+    - "gradlew*"
+    - ".gradle/**"
+    - "build/**"
+    - "target/**"
+    - "*.class"
+    - "*.jar"
+    - "*.war"
+  
+  # Focar em extensões específicas
+  include_patterns:
+    - "*.java"
+    - "*.md"
+    - "*.yml"
+    - "*.yaml"
+    - "*.properties"
+
+# Integrações
+integrations:
+  # GitHub API para ler comentários
+  github_api:
+    enabled: true
+    permissions:
+      - read:pull_request
+      - read:comments
+      - read:reviews
+  
+  # Ferramentas de análise
+  analysis_tools:
+    - spotbugs              # Análise estática Java
+    - sonarqube             # Qualidade de código
+    - dependency_check      # Vulnerabilidades em dependências
+
+# Formato de output
+output:
+  format: markdown           # Options: markdown, text, json
+  
+  # Estrutura do comentário de review
+  structure:
+    - summary               # Resumo geral
+    - critical_issues       # Issues críticas
+    - suggestions           # Sugestões de melhoria
+    - positive_feedback     # Feedback positivo
+    - checklist_status      # Status do checklist
+  
+  # Emojis para categorização
+  use_emojis: true
+  emoji_mapping:
+    security: "🔒"
+    bug: "🐛"
+    performance: "⚡"
+    architecture: "🏗️"
+    test: "🧪"
+    style: "💅"
+    documentation: "📝"
+    positive: "✅"
+
+# Limites
+limits:
+  max_comments_to_read: 100   # Máximo de comentários a ler
+  max_files_to_review: 50     # Máximo de arquivos a revisar
+  max_suggestions_per_file: 5 # Máximo de sugestões por arquivo
+
+# Aprendizado
+learning:
+  # Aprender com feedback dos desenvolvedores
+  learn_from_feedback: true
+  
+  # Adaptar às preferências da equipe
+  adapt_to_team_style: true
+  
+  # Melhorar com o tempo
+  continuous_improvement: true
