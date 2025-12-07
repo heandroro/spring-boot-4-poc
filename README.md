@@ -10,6 +10,12 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 - **MapStruct**: Type-safe DTO ↔ Entity mapping
 - **Gradle Kotlin DSL**: Type-safe build configuration with IDE support
 
+### GitHub Copilot Review Agent
+- **Smart PR Reviews**: Automated code review agent that reads and considers PR comments
+- **Context-Aware**: Avoids duplicate feedback by analyzing existing discussions
+- **Standards Validation**: Automatically checks DDD, security, testing, and MongoDB best practices
+- See [.github/agents/README.md](.github/agents/README.md) for details
+
 ### Testing Stack
 - **JUnit 6 (Jupiter)**: Modern testing framework with `@DisplayName`
 - **Instancio**: Automatic test data generation
