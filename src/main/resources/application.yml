@@ -23,8 +23,8 @@ app:
   security:
     jwt:
       # SECURITY: Must be set via JWT_SECRET environment variable
-      # NEVER use weak defaults in production
-      secret: ${JWT_SECRET}
+      # Application will fail to start if JWT_SECRET is not set
+      secret: ${JWT_SECRET:?JWT_SECRET environment variable must be set}
       expiration-hours: ${JWT_EXPIRATION_HOURS:24}
     cors:
       # SECURITY: Restrict origins in production (e.g., http://localhost:3000)

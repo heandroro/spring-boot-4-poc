@@ -40,7 +40,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                // TODO: Ajustar para authenticated assim que JWT estiver implementado
+                // TODO: Adjust to authenticated once JWT is implemented
                 .anyRequest().permitAll()
             );
 
