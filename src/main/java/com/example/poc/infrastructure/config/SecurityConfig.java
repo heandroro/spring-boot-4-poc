@@ -52,7 +52,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    private CorsConfigurationSource corsConfigurationSource() {
+    CorsConfigurationSource corsConfigurationSource() {
         return request -> {
             CorsConfiguration config = new CorsConfiguration();
             config.setAllowedOrigins(splitByComma(allowedOrigins));

@@ -28,6 +28,8 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-test")
+    testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
     testImplementation("org.testcontainers:mongodb:1.20.4")
