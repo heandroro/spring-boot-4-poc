@@ -344,7 +344,7 @@ class ProductRepositoryTest {
 
 ## Spring Annotations - @Bean, @Component, UseCase, @Repository
 
-Escolher a anotacao correta melhora legibilidade, testabilidade e clareza de intenção. **UseCase (classe sem anotação) é o padrão preferido para lógica de negócio, mas @Service é aceitável quando apropriado.**
+Escolher a anotacao correta melhora legibilidade, testabilidade e clareza de intenção. **Todo UseCase DEVE usar @Service - é o padrão obrigatório para lógica de negócio.**
 
 ### @Repository - Acesso a Dados
 
@@ -398,15 +398,15 @@ public interface CustomerMapper {
 
 ### UseCase - Logica de Negocio
 
-Use quando a classe representa um **caso de uso específico** com **regras de negócio** e **orquestração**. Duas abordagens válidas: UseCase (sem anotação) ou @Service.
+**🔑 REGRA OBRIGATÓRIA: Todo UseCase DEVE usar @Service**
 
-#### Opção 1: UseCase (Padrão Preferido - Sem Anotação)
+Use `@Service` quando a classe representa um **caso de uso específico** com **regras de negócio** e **orquestração**. Esta é a forma padrão e obrigatória para implementar UseCases em projetos Spring.
 
-Classes simples (Plain Java Objects) que definem claramente o caso de uso. Spring as registra via `@Bean` ou `@ComponentScan`. Ideal para código desacoplado do framework.
+#### ✅ PADRÃO OBRIGATÓRIO: UseCase com @Service
 
-✅ CERTO (Opção 1):
 ```java
 // application/usecase/RegisterCustomerUseCase.java
+@Service
 public class RegisterCustomerUseCase {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
@@ -442,6 +442,7 @@ public class RegisterCustomerUseCase {
 }
 
 // application/usecase/UpdateCustomerProfileUseCase.java
+@Service
 public class UpdateCustomerProfileUseCase {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
@@ -470,89 +471,6 @@ public class UpdateCustomerProfileUseCase {
     }
 }
 ```
-
-#### Opção 2: @Service (Alternativa Válida)
-
-Use `@Service` quando preferir marcação explícita do Spring. Igualmente válido, especialmente em equipes que preferem estereótipos claros e automáticos.
-
-✅ CERTO (Opção 2 - Com @Service):
-```java
-// application/service/RegisterCustomerService.java
-@Service
-public class RegisterCustomerService {
-    private final CustomerRepository repository;
-    private final CustomerMapper mapper;
-    private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
-
-    public RegisterCustomerService(
-        CustomerRepository repository,
-        CustomerMapper mapper,
-        PasswordEncoder passwordEncoder,
-        EmailService emailService
-    ) {
-        this.repository = repository;
-        this.mapper = mapper;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
-    }
-
-    public CustomerResponse execute(RegisterRequest request) {
-        if (repository.findByEmail(request.email()).isPresent()) {
-            throw new DuplicateEmailException(request.email());
-        }
-
-        var customer = mapper.toEntity(request);
-        customer.setPassword(passwordEncoder.encode(request.password()));
-        
-        var saved = repository.save(customer);
-        emailService.sendWelcomeEmail(saved.email());
-        
-        return mapper.toResponse(saved);
-    }
-}
-
-// application/service/UpdateCustomerProfileService.java
-@Service
-public class UpdateCustomerProfileService {
-    private final CustomerRepository repository;
-    private final CustomerMapper mapper;
-    private final AuditService auditService;
-
-    public UpdateCustomerProfileService(
-        CustomerRepository repository,
-        CustomerMapper mapper,
-        AuditService auditService
-    ) {
-        this.repository = repository;
-        this.mapper = mapper;
-        this.auditService = auditService;
-    }
-
-    public CustomerResponse execute(String id, UpdateProfileRequest request) {
-        var customer = repository.findById(id)
-            .orElseThrow(() -> new CustomerNotFoundException(id));
-
-        var updated = customer.updateProfile(request.name(), request.phone());
-        repository.save(updated);
-        auditService.log("profile_updated", id);
-        
-        return mapper.toResponse(updated);
-    }
-}
-```
-
-#### Comparação: UseCase vs @Service
-
-| Aspecto | UseCase (Sem Anotação) | @Service |
-|--------|------------------------|----------|
-| **Clareza DDD** | ✅ Padrão puro | ⚠️ Acoplado ao Spring |
-| **Testabilidade** | ✅ Excelente | ✅ Excelente |
-| **Registro Automático** | ❌ Requer `@Bean` ou `@ComponentScan` | ✅ Automático |
-| **Independência** | ✅ Sem deps do framework | ⚠️ Acoplado ao Spring |
-| **Convencionalismo** | ⚠️ Menos comum | ✅ Padrão Spring |
-
-**Recomendação:** Use qualquer um. UseCase é preferido por desacoplamento, mas @Service é perfeitamente válido e mais convencional em projetos Spring tradicionais.
 
 ❌ ERRADO:
 ```java
@@ -858,20 +776,20 @@ public class RegisterCustomerUseCase {
 }
 ```
 
-#### ❌ Nao Use @Bean para Suas Classes (Use Stereotypes ou UseCase)
+#### ❌ Nao Use @Bean para Suas Classes (UseCase SEMPRE com @Service)
 
 ```java
-// ERRADO: @Bean para classe propria
+// ERRADO: @Bean para classe propria que é UseCase
 @Configuration
 public class AppConfig {
     @Bean
     public RegisterCustomerUseCase registerCustomerUseCase(CustomerRepository repo, CustomerMapper mapper) {
-        // Suas classes devem usar stereotypes (@Service) ou UseCase sem anotacao
+        // UseCase deve SEMPRE ter @Service, nao ser registrado como @Bean
         return new RegisterCustomerUseCase(repo, mapper);
     }
 }
 
-// CERTO: Opção 1 - UseCase sem anotacao (requere @Bean ou @ComponentScan)
+// ERRADO: UseCase sem @Service
 public class RegisterCustomerUseCase {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
@@ -886,13 +804,13 @@ public class RegisterCustomerUseCase {
     }
 }
 
-// CERTO: Opção 2 - @Service (automático e convencional)
+// ✅ CERTO: UseCase com @Service (obrigatório)
 @Service
-public class RegisterCustomerService {
+public class RegisterCustomerUseCase {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
 
-    public RegisterCustomerService(CustomerRepository repository, CustomerMapper mapper) {
+    public RegisterCustomerUseCase(CustomerRepository repository, CustomerMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
     }
