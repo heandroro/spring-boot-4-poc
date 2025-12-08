@@ -50,6 +50,14 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 14.1 [Quando Usar Enums](#quando-usar-enums)
     - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
     - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
+15. [Spring Annotations - @Bean, @Component, @Service, @Repository](#spring-annotations---bean-component-service-repository)
+    - 15.1 [@Repository - Acesso a Dados](#repository---acesso-a-dados)
+    - 15.2 [@Service - Logica de Negocio](#service---logica-de-negocio)
+    - 15.3 [@Component - Utilitarios e Helpers](#component---utilitarios-e-helpers)
+    - 15.4 [@Bean - Configuracao e Terceiros](#bean---configuracao-e-terceiros)
+    - 15.5 [Anti-patterns: Quando NÃO Usar](#anti-patterns-quando-nao-usar)
+    - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
+    - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
 
 ---
 
@@ -1951,3 +1959,431 @@ public enum Transaction {
 | **Serializacao** | ✅ Nativa | ✅ Nativa |
 | **Exemplo** | OrderStatus, UserRole | TIMEOUT_SECONDS, MAX_SIZE |
 ```
+
+## Spring Annotations - @Bean, @Component, @Service, @Repository
+
+Escolher a anotacao correta melhora legibilidade, testabilidade e clareza de intenção.
+
+### @Repository - Acesso a Dados
+
+Use quando a classe é **responsável por persistência** (acesso a banco de dados).
+
+✅ CERTO:
+```java
+// domain/CustomerRepository.java - Interface
+public interface CustomerRepository extends MongoRepository<Customer, String> {
+    Optional<Customer> findByEmail(String email);
+    List<Customer> findByRegion(String region);
+}
+
+// Nao precisa anotacao aqui - Spring Data cuida automaticamente
+
+// infrastructure/persistence/CustomerRepositoryImpl.java - Implementacao customizada (se necessario)
+@Repository
+public class CustomerRepositoryImpl implements CustomerRepository {
+    private final MongoTemplate mongoTemplate;
+
+    public CustomerRepositoryImpl(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
+
+    @Override
+    public List<Customer> findByRegion(String region) {
+        return mongoTemplate.find(
+            query(where("region").is(region)),
+            Customer.class
+        );
+    }
+}
+```
+
+❌ ERRADO:
+```java
+// Nao use @Repository em classes que nao acessam dados
+@Repository
+public class EmailValidator {
+    public boolean isValidEmail(String email) {
+        return email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
+    }
+}
+
+// Nao use em Mappers
+@Repository
+public interface CustomerMapper {
+    Customer toEntity(CustomerDto dto);
+}
+```
+
+### @Service - Logica de Negocio
+
+Use quando a classe contém **regras de negócio** e **orquestração**.
+
+✅ CERTO:
+```java
+// application/CustomerService.java
+@Service
+public class CustomerService {
+    private final CustomerRepository repository;
+    private final CustomerMapper mapper;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
+    public CustomerService(
+        CustomerRepository repository,
+        CustomerMapper mapper,
+        PasswordEncoder passwordEncoder,
+        EmailService emailService
+    ) {
+        this.repository = repository;
+        this.mapper = mapper;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
+    }
+
+    // Regra de negocio: registro com validacoes
+    public CustomerResponse register(RegisterRequest request) {
+        if (repository.findByEmail(request.email()).isPresent()) {
+            throw new DuplicateEmailException(request.email());
+        }
+
+        var customer = mapper.toEntity(request);
+        customer.setPassword(passwordEncoder.encode(request.password()));
+        
+        var saved = repository.save(customer);
+        emailService.sendWelcomeEmail(saved.email());
+        
+        return mapper.toResponse(saved);
+    }
+
+    // Regra de negocio: atualizar com auditoria
+    public CustomerResponse updateProfile(String id, UpdateProfileRequest request) {
+        var customer = repository.findById(id)
+            .orElseThrow(() -> new CustomerNotFoundException(id));
+
+        var updated = customer.updateProfile(request.name(), request.phone());
+        repository.save(updated);
+        
+        return mapper.toResponse(updated);
+    }
+}
+```
+
+❌ ERRADO:
+```java
+// Nao use @Service em helpers puros
+@Service
+public class PasswordValidator {
+    public boolean isStrong(String password) {
+        return password.length() >= 8 && password.matches(".*[0-9].*");
+    }
+}
+
+// Nao use em Converters/Formatters
+@Service
+public class MoneyFormatter {
+    public String format(BigDecimal amount) {
+        return String.format("R$ %.2f", amount);
+    }
+}
+```
+
+### @Component - Utilitarios e Helpers
+
+Use para **utilitários genéricos** que precisam ser injetáveis mas não são services ou repositories.
+
+✅ CERTO:
+```java
+// infrastructure/util/PaginationHelper.java
+@Component
+public class PaginationHelper {
+    private static final int DEFAULT_PAGE_SIZE = 20;
+    private static final int MAX_PAGE_SIZE = 100;
+
+    public Pageable createPageable(int page, int size) {
+        if (page < 0) page = 0;
+        if (size < 1 || size > MAX_PAGE_SIZE) size = DEFAULT_PAGE_SIZE;
+        return PageRequest.of(page, size, Sort.by("createdAt").descending());
+    }
+}
+
+// Uso em controller
+@RestController
+@RequestMapping("/api/customers")
+public class CustomerController {
+    private final CustomerService service;
+    private final PaginationHelper paginationHelper;
+
+    public CustomerController(CustomerService service, PaginationHelper paginationHelper) {
+        this.service = service;
+        this.paginationHelper = paginationHelper;
+    }
+
+    @GetMapping
+    public Page<CustomerResponse> list(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size
+    ) {
+        var pageable = paginationHelper.createPageable(page, size);
+        return service.findAll(pageable).map(this::toResponse);
+    }
+}
+
+// infrastructure/event/OrderEventPublisher.java
+@Component
+public class OrderEventPublisher {
+    private final ApplicationEventPublisher eventPublisher;
+
+    public OrderEventPublisher(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
+
+    public void publishOrderCreated(Order order) {
+        eventPublisher.publishEvent(new OrderCreatedEvent(this, order));
+    }
+}
+```
+
+❌ ERRADO:
+```java
+// Nao use @Component para classe puros (usar static ou sem Bean)
+@Component
+public class DateUtils {
+    public static String formatDate(LocalDate date) {
+        return date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+}
+
+// Melhor: classe sem anotacao
+public final class DateUtils {
+    private DateUtils() {}
+
+    public static String formatDate(LocalDate date) {
+        return date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+}
+```
+
+### @Bean - Configuracao e Terceiros
+
+Use em `@Configuration` para **criar instâncias de classes terceiras** ou **configurações complexas**.
+
+✅ CERTO:
+```java
+// infrastructure/config/SecurityConfig.java
+@Configuration
+public class SecurityConfig {
+    
+    // Bean para terceiro (Spring Security)
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder(12);
+    }
+
+    // Bean para cliente HTTP terceiro
+    @Bean
+    public RestClient stripeClient(StripeProperties props) {
+        return RestClient.builder()
+            .baseUrl("https://api.stripe.com")
+            .defaultHeader("Authorization", "Bearer " + props.apiKey())
+            .build();
+    }
+
+    // Bean para converter complexo
+    @Bean
+    public ObjectMapper objectMapper() {
+        var mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
+    }
+
+    // Bean condicional
+    @Bean
+    @ConditionalOnProperty(name = "app.cache.enabled", havingValue = "true")
+    public CacheManager cacheManager() {
+        return new ConcurrentMapCacheManager("customers", "orders");
+    }
+}
+
+// infrastructure/config/MongoConfig.java
+@Configuration
+public class MongoConfig {
+    
+    @Bean
+    public MongoCustomConversions mongoCustomConversions() {
+        return new MongoCustomConversions(Arrays.asList(
+            new BigDecimalToStringConverter(),
+            new StringToBigDecimalConverter()
+        ));
+    }
+}
+```
+
+❌ ERRADO:
+```java
+// Nao use @Bean para sua logica de negocio
+@Configuration
+public class AppConfig {
+    @Bean
+    public CustomerService customerService(CustomerRepository repo, CustomerMapper mapper) {
+        // Suas classes devem ter @Service, nao @Bean
+        return new CustomerService(repo, mapper);
+    }
+}
+
+// Melhor: use @Service diretamente
+@Service
+public class CustomerService {
+    // ...
+}
+```
+
+### Anti-patterns: Quando NÃO Usar
+
+#### ❌ Não misture Responsabilidades em Uma Classe
+
+```java
+// ERRADO: Repository + Service + Validacao
+@Service
+@Repository
+public class CustomerBadService {
+    @Autowired private MongoTemplate mongoTemplate;
+
+    public void register(CustomerRequest request) {
+        // Validacao
+        if (request.email() == null) throw new Exception("Email required");
+        
+        // Persistencia
+        mongoTemplate.save(new Customer(request.email(), ...));
+        
+        // Negocio
+        emailService.send(...);
+    }
+}
+
+// CERTO: Separacao clara
+@Service
+public class CustomerService {
+    private final CustomerRepository repository;
+    private final EmailService emailService;
+
+    public CustomerResponse register(RegisterRequest request) {
+        // Validacao delegada para Bean Validation ou Validator
+        var customer = mapper.toEntity(request);
+        
+        // Persistencia via repository
+        var saved = repository.save(customer);
+        
+        // Negocio
+        emailService.sendWelcomeEmail(saved.email());
+        
+        return mapper.toResponse(saved);
+    }
+}
+```
+
+#### ❌ Nao Use @Bean para Suas Classes (Use Stereotypes)
+
+```java
+// ERRADO: @Bean para classe propria
+@Configuration
+public class AppConfig {
+    @Bean
+    public CustomerService customerService() {
+        return new CustomerService(...);
+    }
+}
+
+// CERTO: @Service para classe propria
+@Service
+public class CustomerService {
+    // ...
+}
+```
+
+#### ❌ Nao Use Field Injection (@Autowired em Fields)
+
+```java
+// ERRADO: Field Injection
+@Service
+public class OrderService {
+    @Autowired private OrderRepository repository;
+    @Autowired private CustomerRepository customerRepository;
+    @Autowired private PaymentService paymentService;
+    
+    // Dificil de testar, dependencias ocultas
+}
+
+// CERTO: Constructor Injection
+@Service
+public class OrderService {
+    private final OrderRepository repository;
+    private final CustomerRepository customerRepository;
+    private final PaymentService paymentService;
+
+    public OrderService(
+        OrderRepository repository,
+        CustomerRepository customerRepository,
+        PaymentService paymentService
+    ) {
+        this.repository = repository;
+        this.customerRepository = customerRepository;
+        this.paymentService = paymentService;
+    }
+}
+```
+
+#### ❌ Nao Use @Component para Utilitarios Puros
+
+```java
+// ERRADO: @Component para funcoes puras
+@Component
+public class MathHelper {
+    public BigDecimal calculateDiscount(BigDecimal price, int percent) {
+        return price.multiply(new BigDecimal(100 - percent).divide(new BigDecimal(100)));
+    }
+}
+
+// CERTO: Classe estatica ou sem Bean
+public final class MathHelper {
+    private MathHelper() {}
+
+    public static BigDecimal calculateDiscount(BigDecimal price, int percent) {
+        return price.multiply(new BigDecimal(100 - percent).divide(new BigDecimal(100)));
+    }
+}
+```
+
+#### ❌ Nao Use @Service para Mappers
+
+```java
+// ERRADO: @Service para Mapper
+@Service
+public class CustomerMapper {
+    public Customer toEntity(CustomerDto dto) {
+        return new Customer(...);
+    }
+}
+
+// CERTO: @Mapper do MapStruct
+@Mapper(componentModel = "spring")
+public interface CustomerMapper {
+    Customer toEntity(CustomerDto dto);
+    CustomerDto toDto(Customer customer);
+}
+```
+
+## Tabela Decisoria: Qual Anotacao Usar?
+
+| Classe | Anotacao | Razao |
+|--------|----------|-------|
+| **CustomerRepository (Spring Data)** | Nao precisa | Spring Data cria automaticamente |
+| **CustomerService** | `@Service` | Logica de negocio e orquestracao |
+| **PaginationHelper** | `@Component` | Utilitario reutilizavel |
+| **MoneyConverter** | Nao precisa | Classe pura, pode ser static |
+| **PasswordEncoder** | `@Bean` | Classe terceira (Spring Security) |
+| **RestClient** | `@Bean` | Configuracao complexa |
+| **CustomerDto** | Nao precisa | DTO, nao eh componente |
+| **Customer (Entidade)** | Nao precisa | Entidade, nao eh componente |
+| **OrderEventPublisher** | `@Component` | Utilitario que publica eventos |
+| **EmailService** | `@Service` | Servico de email com regras |
