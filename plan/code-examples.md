@@ -22,9 +22,9 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 
 ### PARTE III: Padrões Arquiteturais e Injeção de Dependências
 
-9. [Spring Annotations - @Bean, @Component, UseCase, @Repository](#spring-annotations---bean-component-usecase-repository)
+9. [Spring Annotations - @Bean, @Component, @Service, @Repository](#spring-annotations---bean-component-usecase-repository)
    - 9.1 [@Repository - Acesso a Dados](#repository---acesso-a-dados)
-   - 9.2 [UseCase - Logica de Negocio](#usecase---logica-de-negocio)
+   - 9.2 [@Service - Logica de Negocio](#usecase---logica-de-negocio)
    - 9.3 [@Component - Utilitarios e Helpers](#component---utilitarios-e-helpers)
    - 9.4 [@Bean - Configuracao e Terceiros](#bean---configuracao-e-terceiros)
    - 9.5 [🔑 REGRA OBRIGATÓRIA: @Bean para Interfaces](#-regra-obrigatória-bean-para-interfaces)
@@ -342,7 +342,7 @@ class ProductRepositoryTest {
 
 
 
-## Spring Annotations - @Bean, @Component, UseCase, @Repository
+## Spring Annotations - @Bean, @Component, @Service, @Repository
 
 Escolher a anotacao correta melhora legibilidade, testabilidade e clareza de intenção. **Todo UseCase DEVE usar @Service - é o padrão obrigatório para lógica de negócio.**
 
