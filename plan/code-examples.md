@@ -398,6 +398,422 @@ public List<Product> findByCategory(String category) {
 }
 ```
 
+## Java 25 Features - Explore Melhor
+
+### 1. Pattern Matching em Switch (Record Patterns)
+
+✅ CERTO:
+```java
+public OrderStatus processOrder(Order order) {
+    return switch (order) {
+        case Order(var id, var items, var customer, var total) when items.isEmpty() ->
+            throw new EmptyOrderException();
+        
+        case Order(var id, var items, var customer, var total) when total.compareTo(HIGH_VALUE_THRESHOLD) > 0 ->
+            OrderStatus.PENDING_APPROVAL;
+        
+        case Order(var id, var items, var customer, _) when customer.isPremium() ->
+            OrderStatus.AUTO_CONFIRMED;
+        
+        case Order(_, _, _, _) ->
+            OrderStatus.PENDING_PAYMENT;
+    };
+}
+
+// Pattern matching tambem funciona com instanceof
+if (entity instanceof Product(var id, @Indexed var sku, var name)) {
+    log.info("Product {} with SKU: {}", id, sku);
+}
+```
+
+❌ ERRADO:
+```java
+public OrderStatus processOrder(Order order) {
+    if (order.getItems().isEmpty()) { // IF tradicional
+        throw new EmptyOrderException();
+    }
+    
+    if (order.getTotal().compareTo(HIGH_VALUE_THRESHOLD) > 0) {
+        return OrderStatus.PENDING_APPROVAL;
+    }
+    
+    if (order.getCustomer().isPremium()) {
+        return OrderStatus.AUTO_CONFIRMED;
+    }
+    
+    return OrderStatus.PENDING_PAYMENT;
+}
+```
+
+### 2. Sequenced Collections - getFirst() e getLast()
+
+✅ CERTO:
+```java
+public record Order(
+    String id,
+    List<OrderItem> items,
+    Customer customer,
+    BigDecimal total
+) {
+    public OrderItem getFirstItem() {
+        return items.getFirst(); // Novo em Java 21+
+    }
+
+    public OrderItem getLastItem() {
+        return items.getLast();
+    }
+
+    public boolean hasMultipleItems() {
+        return items.size() > 1;
+    }
+}
+
+// Tambem funciona com outros tipos sequenciados
+var firstProduct = products.getFirst();
+var lastCustomer = customers.getLast();
+var firstEntry = sortedMap.sequencedEntrySet().getFirst();
+```
+
+❌ ERRADO:
+```java
+public OrderItem getFirstItem() {
+    return items.get(0); // Index explícito e perigoso
+}
+
+public OrderItem getLastItem() {
+    return items.get(items.size() - 1); // Off-by-one risk
+}
+```
+
+### 3. Text Blocks para Queries MongoDB e SQL
+
+✅ CERTO:
+```java
+public interface ProductRepository extends MongoRepository<Product, String> {
+    @Query("""
+        {
+            'category': ?0,
+            'stock': { $gt: 0 },
+            'price': { $gte: ?1, $lte: ?2 }
+        }
+        """)
+    List<Product> findAvailableInPriceRange(String category, BigDecimal min, BigDecimal max);
+}
+
+// Text blocks tambem em strings comuns
+String errorTemplate = """
+    Validacao falhou:
+    - Campo: %s
+    - Valor: %s
+    - Mensagem: %s
+    """;
+```
+
+❌ ERRADO:
+```java
+@Query("{ 'category': ?0, 'stock': { $gt: 0 }, 'price': { $gte: ?1, $lte: ?2 } }")
+List<Product> findAvailableInPriceRange(String category, BigDecimal min, BigDecimal max);
+// Difícil de ler em uma linha
+```
+
+### 4. Sealed Classes - Controle de Hierarquia
+
+✅ CERTO:
+```java
+// Apenas Order pode estender OrderState (segurança)
+public sealed interface OrderState permits PendingState, ConfirmedState, ShippedState {}
+
+public final class PendingState implements OrderState {
+    public void confirm() {
+        // Apenas tipos conhecidos podem implementar
+    }
+}
+
+public final class ConfirmedState implements OrderState {
+    public void ship() { }
+}
+
+public final class ShippedState implements OrderState { }
+
+// Combinado com pattern matching:
+String status = switch (orderState) {
+    case PendingState ps -> "Aguardando confirmacao";
+    case ConfirmedState cs -> "Confirmado";
+    case ShippedState ss -> "Enviado";
+};
+```
+
+❌ ERRADO:
+```java
+public interface OrderState { } // Qualquer um pode implementar
+// Risco de implementacoes inesperadas
+
+class UnknownState implements OrderState { } // Surprise!
+```
+
+### 5. Records com Validacao Compacta
+
+✅ CERTO:
+```java
+public record CreateProductRequest(
+    @NotBlank String sku,
+    @NotBlank String name,
+    @NotNull @DecimalMin("0.01") BigDecimal price,
+    @NotNull @Min(0) Integer stock
+) {
+    // Compact constructor - validacoes sem repetir parametros
+    public CreateProductRequest {
+        Objects.requireNonNull(sku, "SKU cannot be null");
+        Objects.requireNonNull(name, "Name cannot be null");
+        
+        if (price != null && price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Price must be greater than zero");
+        }
+        
+        if (stock != null && stock < 0) {
+            throw new IllegalArgumentException("Stock cannot be negative");
+        }
+    }
+}
+```
+
+❌ ERRADO:
+```java
+public class CreateProductRequest {
+    private String sku;
+    private String name;
+    private BigDecimal price;
+    private Integer stock;
+    
+    public CreateProductRequest(String sku, String name, BigDecimal price, Integer stock) {
+        this.sku = sku;
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+        // Sem validacao
+    }
+    // Getters, setters, equals, hashCode, toString manualmente
+}
+```
+
+### 6. Virtual Threads (Preludio)
+
+✅ CERTO:
+```java
+@Configuration
+public class ExecutorConfig {
+    @Bean
+    public Executor taskExecutor() {
+        // Executor baseado em virtual threads (Java 21+)
+        return Executors.newVirtualThreadPerTaskExecutor();
+    }
+}
+
+@Service
+public class OrderService {
+    @Async
+    public CompletableFuture<OrderResponse> processAsync(CreateOrderRequest request) {
+        return CompletableFuture.completedFuture(create(request));
+    }
+}
+```
+
+## Spring Boot 4 Features - Explore Melhor
+
+### 1. RestClient (Substitui RestTemplate)
+
+✅ CERTO:
+```java
+@Configuration
+public class RestClientConfig {
+    @Bean
+    public RestClient restClient() {
+        return RestClient.builder()
+            .baseUrl("https://api.stripe.com")
+            .defaultHeader("Authorization", "Bearer ${STRIPE_KEY}")
+            .requestInterceptor((request, body, execution) -> {
+                log.debug("Outgoing request: {} {}", request.getMethod(), request.getURI());
+                return execution.execute(request, body);
+            })
+            .build();
+    }
+}
+
+@Service
+public class StripeService {
+    private final RestClient restClient;
+
+    public StripeService(RestClient restClient) {
+        this.restClient = restClient;
+    }
+
+    public PaymentResponse charge(BigDecimal amount) {
+        return restClient.post()
+            .uri("/v1/charges")
+            .body(Map.of("amount", amount))
+            .retrieve()
+            .body(PaymentResponse.class);
+    }
+}
+```
+
+❌ ERRADO:
+```java
+@Service
+public class StripeServiceOld {
+    private final RestTemplate restTemplate; // Deprecated
+    
+    public PaymentResponse charge(BigDecimal amount) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "Bearer " + stripeKey);
+        
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(
+            Map.of("amount", amount),
+            headers
+        );
+        
+        return restTemplate.postForObject(
+            "https://api.stripe.com/v1/charges",
+            request,
+            PaymentResponse.class
+        );
+    }
+}
+```
+
+### 2. ProblemDetail (RFC 7807)
+
+✅ CERTO:
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<ProblemDetail> handleNotFound(ProductNotFoundException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Produto nao encontrado");
+        problem.setDetail(ex.getMessage());
+        problem.setProperty("errorCode", "PRODUCT_NOT_FOUND");
+        problem.setProperty("timestamp", LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problem);
+    }
+
+    @ExceptionHandler(ValidationException.class)
+    public ResponseEntity<ProblemDetail> handleValidation(ValidationException ex) {
+        var problem = ProblemDetail.forStatus(HttpStatus.UNPROCESSABLE_ENTITY);
+        problem.setTitle("Falha na validacao");
+        problem.setDetail(ex.getMessage());
+        problem.setProperty("fields", ex.getFieldErrors());
+        return ResponseEntity.unprocessableEntity().body(problem);
+    }
+}
+```
+
+❌ ERRADO:
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandlerOld {
+    @ExceptionHandler(ProductNotFoundException.class)
+    public ResponseEntity<String> handleNotFound(ProductNotFoundException ex) {
+        return ResponseEntity.status(404).body("Product not found: " + ex.getMessage());
+        // Sem estrutura padrao, difícil de processar no cliente
+    }
+}
+```
+
+### 3. Observability com @Observed (Micrometer)
+
+✅ CERTO:
+```java
+@Service
+public class OrderService {
+    private final OrderRepository repository;
+
+    @Observed(name = "order.create", description = "Criar novo pedido")
+    public OrderResponse create(CreateOrderRequest request) {
+        // Metrica automatica: tempo de execucao, sucesso/erro
+        var order = new Order(...);
+        return repository.save(order);
+    }
+
+    @Observed(name = "order.find", description = "Buscar pedido")
+    public Optional<OrderResponse> findById(String id) {
+        return repository.findById(id).map(this::toResponse);
+    }
+}
+
+// Spring automaticamente rastreia:
+// - Tempo de execução
+// - Taxa de erro
+// - Histograma de latência
+```
+
+❌ ERRADO:
+```java
+@Service
+public class OrderServiceOld {
+    public OrderResponse create(CreateOrderRequest request) {
+        long start = System.currentTimeMillis();
+        try {
+            var order = repository.save(new Order(...));
+            return toResponse(order);
+        } finally {
+            long duration = System.currentTimeMillis() - start;
+            // Log manual e inconsistente
+            log.info("Order creation took {} ms", duration);
+        }
+    }
+}
+```
+
+### 4. ConfigurationProperties Typed
+
+✅ CERTO:
+```java
+@ConfigurationProperties(prefix = "app.payment")
+public record PaymentProperties(
+    String stripeKey,
+    String stripeSecret,
+    @DurationUnit(ChronoUnit.SECONDS) Duration timeout,
+    Integer maxRetries,
+    Boolean enableSandbox
+) {}
+
+@Configuration
+@EnableConfigurationProperties(PaymentProperties.class)
+public class AppConfig {
+    @Bean
+    public StripeService stripeService(PaymentProperties props) {
+        return new StripeService(props.stripeKey(), props.stripeSecret());
+    }
+}
+
+// application.yml
+/*
+app:
+  payment:
+    stripe-key: sk_test_...
+    stripe-secret: sk_secret_...
+    timeout: 30s
+    max-retries: 3
+    enable-sandbox: true
+*/
+```
+
+❌ ERRADO:
+```java
+@Component
+public class PaymentConfig {
+    @Value("${app.payment.stripeKey}")
+    private String stripeKey;
+    
+    @Value("${app.payment.stripeSecret}")
+    private String stripeSecret;
+    
+    // Sem type safety, sem validacao
+}
+```
+
 ## Design Patterns para IFs Complexos
 
 ### 1. Strategy Pattern - Multiplos Comportamentos
