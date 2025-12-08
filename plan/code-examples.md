@@ -9,7 +9,7 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 1. [Entidade de Dominio (MongoDB)](#entidade-de-dominio-mongodb)
 2. [DTO com Bean Validation](#dto-com-bean-validation)
 3. [Mapper com MapStruct](#mapper-com-mapstruct)
-4. [Service com Regras e Constructor Injection](#service-com-regras-e-constructor-injection)
+4. [UseCase com Regras e Constructor Injection](#usecase-com-regras-e-constructor-injection)
 5. [Controller REST com @PreAuthorize e Status Corretos](#controller-rest-com-preauthorize-e-status-corretos)
 6. [Tratamento de Erros com ProblemDetail](#tratamento-de-erros-com-problemdetail)
 7. [Teste Unitario com JUnit 6, Mockito e Instancio](#teste-unitario-com-junit-6-mockito-e-instancio)
@@ -50,9 +50,9 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 14.1 [Quando Usar Enums](#quando-usar-enums)
     - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
     - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
-15. [Spring Annotations - @Bean, @Component, @Service, @Repository](#spring-annotations---bean-component-service-repository)
+15. [Spring Annotations - @Bean, @Component, UseCase, @Repository](#spring-annotations---bean-component-usecase-repository)
     - 15.1 [@Repository - Acesso a Dados](#repository---acesso-a-dados)
-    - 15.2 [@Service - Logica de Negocio](#service---logica-de-negocio)
+    - 15.2 [UseCase - Logica de Negocio](#usecase---logica-de-negocio)
     - 15.3 [@Component - Utilitarios e Helpers](#component---utilitarios-e-helpers)
     - 15.4 [@Bean - Configuracao e Terceiros](#bean---configuracao-e-terceiros)
     - 15.5 [Anti-patterns: Quando NÃO Usar](#anti-patterns-quando-nao-usar)
@@ -125,19 +125,18 @@ public class ProductMapperManual {
 }
 ```
 
-## Service com Regras e Constructor Injection
+## UseCase com Regras e Constructor Injection
 ```java
-@Service
-public class ProductService {
+public class CreateProductUseCase {
     private final ProductRepository repository;
     private final ProductMapper mapper;
 
-    public ProductService(ProductRepository repository, ProductMapper mapper) {
+    public CreateProductUseCase(ProductRepository repository, ProductMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
     }
 
-    public ProductResponse create(CreateProductRequest request) {
+    public ProductResponse execute(CreateProductRequest request) {
         if (repository.existsBySku(request.sku())) {
             throw new DuplicateSkuException(request.sku());
         }
@@ -150,8 +149,7 @@ public class ProductService {
 
 Evitar:
 ```java
-@Service
-public class ProductServiceBad {
+public class CreateProductUseCaseBad {
     @Autowired private ProductRepository repository; // field injection
 
     public Product create(CreateProductRequest request) {
@@ -166,16 +164,16 @@ public class ProductServiceBad {
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
-    private final ProductService service;
+    private final CreateProductUseCase createProductUseCase;
 
-    public ProductController(ProductService service) {
-        this.service = service;
+    public ProductController(CreateProductUseCase createProductUseCase) {
+        this.createProductUseCase = createProductUseCase;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ROLE_MANAGER')")
     public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest request) {
-        var response = service.create(request);
+        var response = createProductUseCase.execute(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 }
@@ -221,12 +219,12 @@ public class GlobalExceptionHandlerBad {
 ## Teste Unitario com JUnit 6, Mockito e Instancio
 ```java
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProductService - Criar produto")
-class ProductServiceTest {
+@DisplayName("CreateProductUseCase - Criar produto")
+class CreateProductUseCaseTest {
 
     @Mock private ProductRepository repository;
     @Mock private ProductMapper mapper;
-    @InjectMocks private ProductService service;
+    @InjectMocks private CreateProductUseCase useCase;
 
     @Test
     @DisplayName("Deve criar produto quando SKU eh unico")
@@ -241,7 +239,7 @@ class ProductServiceTest {
         when(repository.save(entity)).thenReturn(saved);
         when(mapper.toResponse(saved)).thenReturn(response);
 
-        var result = service.create(request);
+        var result = useCase.execute(request);
 
         assertThat(result).isEqualTo(response);
         verify(repository).save(entity);
@@ -1960,9 +1958,9 @@ public enum Transaction {
 | **Exemplo** | OrderStatus, UserRole | TIMEOUT_SECONDS, MAX_SIZE |
 ```
 
-## Spring Annotations - @Bean, @Component, @Service, @Repository
+## Spring Annotations - @Bean, @Component, UseCase, @Repository
 
-Escolher a anotacao correta melhora legibilidade, testabilidade e clareza de intenção.
+Escolher a anotacao correta melhora legibilidade, testabilidade e clareza de intenção. **UseCase é o padrão preferido para lógica de negócio.**
 
 ### @Repository - Acesso a Dados
 
@@ -2014,21 +2012,20 @@ public interface CustomerMapper {
 }
 ```
 
-### @Service - Logica de Negocio
+### UseCase - Logica de Negocio
 
-Use quando a classe contém **regras de negócio** e **orquestração**.
+Use quando a classe representa um **caso de uso específico** com **regras de negócio** e **orquestração**. UseCase é o padrão preferido em vez de @Service.
 
 ✅ CERTO:
 ```java
-// application/CustomerService.java
-@Service
-public class CustomerService {
+// application/usecase/RegisterCustomerUseCase.java
+public class RegisterCustomerUseCase {
     private final CustomerRepository repository;
     private final CustomerMapper mapper;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    public CustomerService(
+    public RegisterCustomerUseCase(
         CustomerRepository repository,
         CustomerMapper mapper,
         PasswordEncoder passwordEncoder,
@@ -2040,8 +2037,8 @@ public class CustomerService {
         this.emailService = emailService;
     }
 
-    // Regra de negocio: registro com validacoes
-    public CustomerResponse register(RegisterRequest request) {
+    // UseCase: registro com validacoes e orquestracao
+    public CustomerResponse execute(RegisterRequest request) {
         if (repository.findByEmail(request.email()).isPresent()) {
             throw new DuplicateEmailException(request.email());
         }
@@ -2054,14 +2051,32 @@ public class CustomerService {
         
         return mapper.toResponse(saved);
     }
+}
 
-    // Regra de negocio: atualizar com auditoria
-    public CustomerResponse updateProfile(String id, UpdateProfileRequest request) {
+// application/usecase/UpdateCustomerProfileUseCase.java
+public class UpdateCustomerProfileUseCase {
+    private final CustomerRepository repository;
+    private final CustomerMapper mapper;
+    private final AuditService auditService;
+
+    public UpdateCustomerProfileUseCase(
+        CustomerRepository repository,
+        CustomerMapper mapper,
+        AuditService auditService
+    ) {
+        this.repository = repository;
+        this.mapper = mapper;
+        this.auditService = auditService;
+    }
+
+    // UseCase: atualizar com auditoria
+    public CustomerResponse execute(String id, UpdateProfileRequest request) {
         var customer = repository.findById(id)
             .orElseThrow(() -> new CustomerNotFoundException(id));
 
         var updated = customer.updateProfile(request.name(), request.phone());
         repository.save(updated);
+        auditService.log("profile_updated", id);
         
         return mapper.toResponse(updated);
     }
@@ -2070,8 +2085,7 @@ public class CustomerService {
 
 ❌ ERRADO:
 ```java
-// Nao use @Service em helpers puros
-@Service
+// Nao use UseCase para helpers puros
 public class PasswordValidator {
     public boolean isStrong(String password) {
         return password.length() >= 8 && password.matches(".*[0-9].*");
@@ -2079,7 +2093,6 @@ public class PasswordValidator {
 }
 
 // Nao use em Converters/Formatters
-@Service
 public class MoneyFormatter {
     public String format(BigDecimal amount) {
         return String.format("R$ %.2f", amount);
@@ -2261,13 +2274,23 @@ public class CustomerBadService {
     }
 }
 
-// CERTO: Separacao clara
-@Service
-public class CustomerService {
+// CERTO: Separacao clara com UseCase
+public class RegisterCustomerUseCase {
     private final CustomerRepository repository;
     private final EmailService emailService;
+    private final CustomerMapper mapper;
 
-    public CustomerResponse register(RegisterRequest request) {
+    public RegisterCustomerUseCase(
+        CustomerRepository repository,
+        EmailService emailService,
+        CustomerMapper mapper
+    ) {
+        this.repository = repository;
+        this.emailService = emailService;
+        this.mapper = mapper;
+    }
+
+    public CustomerResponse execute(RegisterRequest request) {
         // Validacao delegada para Bean Validation ou Validator
         var customer = mapper.toEntity(request);
         
@@ -2289,15 +2312,25 @@ public class CustomerService {
 @Configuration
 public class AppConfig {
     @Bean
-    public CustomerService customerService() {
-        return new CustomerService(...);
+    public RegisterCustomerUseCase registerCustomerUseCase(CustomerRepository repo, CustomerMapper mapper) {
+        // UseCase deve ser injetado via constructor, nao @Bean
+        return new RegisterCustomerUseCase(repo, mapper);
     }
 }
 
-// CERTO: @Service para classe propria
-@Service
-public class CustomerService {
-    // ...
+// CERTO: UseCase com constructor injection
+public class RegisterCustomerUseCase {
+    private final CustomerRepository repository;
+    private final CustomerMapper mapper;
+
+    public RegisterCustomerUseCase(CustomerRepository repository, CustomerMapper mapper) {
+        this.repository = repository;
+        this.mapper = mapper;
+    }
+    
+    public CustomerResponse execute(RegisterRequest request) {
+        // UseCase logic
+    }
 }
 ```
 
@@ -2305,30 +2338,28 @@ public class CustomerService {
 
 ```java
 // ERRADO: Field Injection
-@Service
-public class OrderService {
+public class CreateOrderUseCase {
     @Autowired private OrderRepository repository;
     @Autowired private CustomerRepository customerRepository;
-    @Autowired private PaymentService paymentService;
+    @Autowired private ProcessPaymentUseCase processPaymentUseCase;
     
     // Dificil de testar, dependencias ocultas
 }
 
-// CERTO: Constructor Injection
-@Service
-public class OrderService {
+// CERTO: Constructor Injection em UseCase
+public class CreateOrderUseCase {
     private final OrderRepository repository;
     private final CustomerRepository customerRepository;
-    private final PaymentService paymentService;
+    private final ProcessPaymentUseCase processPaymentUseCase;
 
-    public OrderService(
+    public CreateOrderUseCase(
         OrderRepository repository,
         CustomerRepository customerRepository,
-        PaymentService paymentService
+        ProcessPaymentUseCase processPaymentUseCase
     ) {
         this.repository = repository;
         this.customerRepository = customerRepository;
-        this.paymentService = paymentService;
+        this.processPaymentUseCase = processPaymentUseCase;
     }
 }
 ```
@@ -2358,7 +2389,6 @@ public final class MathHelper {
 
 ```java
 // ERRADO: @Service para Mapper
-@Service
 public class CustomerMapper {
     public Customer toEntity(CustomerDto dto) {
         return new Customer(...);
@@ -2378,7 +2408,7 @@ public interface CustomerMapper {
 | Classe | Anotacao | Razao |
 |--------|----------|-------|
 | **CustomerRepository (Spring Data)** | Nao precisa | Spring Data cria automaticamente |
-| **CustomerService** | `@Service` | Logica de negocio e orquestracao |
+| **RegisterCustomerUseCase** | Componente | Logica de negocio (caso de uso) |
 | **PaginationHelper** | `@Component` | Utilitario reutilizavel |
 | **MoneyConverter** | Nao precisa | Classe pura, pode ser static |
 | **PasswordEncoder** | `@Bean` | Classe terceira (Spring Security) |
@@ -2386,4 +2416,4 @@ public interface CustomerMapper {
 | **CustomerDto** | Nao precisa | DTO, nao eh componente |
 | **Customer (Entidade)** | Nao precisa | Entidade, nao eh componente |
 | **OrderEventPublisher** | `@Component` | Utilitario que publica eventos |
-| **EmailService** | `@Service` | Servico de email com regras |
+| **SendEmailUseCase** | Componente | UseCase de envio de email |
