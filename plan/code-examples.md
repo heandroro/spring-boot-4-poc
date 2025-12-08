@@ -80,6 +80,13 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 15.4 [Calculators](#4-calculators---logica-de-calculo-pura)
     - 15.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
 
+17. [Tamanho de Metodos - Linhas, Complexidade e Quebras](#tamanho-de-metodos---linhas-complexidade-e-quebras)
+    - 17.1 [Recomendacoes de Tamanho (Linhas)](#recomendacoes-de-tamanho-linhas)
+    - 17.2 [Quando Quebrar em Metodos Menores](#quando-quebrar-em-metodos-menores)
+    - 17.3 [Quando NÃO Quebrar em Metodos Menores](#quando-não-quebrar-em-metodos-menores)
+    - 17.4 [Exemplo Prático: Refatoração](#exemplo-prático-refatoração)
+    - 15.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
+
 16. [Constantes vs Enums - Boas Praticas](#constantes-vs-enums---boas-praticas)
     - 16.1 [Quando Usar Enums](#quando-usar-enums)
     - 16.2 [Quando Usar Constantes](#quando-usar-constantes)
@@ -1983,6 +1990,493 @@ public enum Transaction {
 | **Serializacao** | ✅ Nativa | ✅ Nativa |
 | **Exemplo** | OrderStatus, UserRole | TIMEOUT_SECONDS, MAX_SIZE |
 ```
+
+## Tamanho de Metodos - Linhas, Complexidade e Quebras
+
+Tamanho de método é crucial para legibilidade, testabilidade e manutenção. Use essas diretrizes:
+
+### Recomendacoes de Tamanho (Linhas)
+
+| Categoria | Linhas Máx | Descrição |
+|-----------|-----------|-----------|
+| **Métodos Triviais** | 5-10 | Getters, setters, delegação simples |
+| **Métodos Simples** | 15-20 | Lógica clara, poucas responsabilidades |
+| **Métodos Normais** | 25-30 | Lógica moderada, pode ter múltiplas operações |
+| **Métodos Complexos** | 40-50 | Último recurso, considere refatorar |
+| **Nunca Exceder** | 100+ | Quebra em múltiplos métodos |
+
+✅ **REGRA DE OURO:**
+- **Métodos menores são melhores.** Se você consegue manter <= 20 linhas, faça isso.
+- **Cada método = uma responsabilidade** (Single Responsibility Principle)
+- **Métodos testáveis** são menores (fácil mockar, fácil afirmar)
+
+### Quando Quebrar em Metodos Menores
+
+**SEMPRE QUEBRE** quando:
+
+#### 1. Múltiplas Responsabilidades
+```java
+// ERRADO: 45 linhas, múltiplas responsabilidades
+public OrderResponse createOrder(CreateOrderRequest request) {
+    // Validacao
+    if (request.customerId() == null) throw new InvalidCustomerException();
+    if (request.items().isEmpty()) throw new EmptyOrderException();
+    if (request.items().stream().anyMatch(i -> i.quantity() <= 0)) throw new InvalidQuantityException();
+    
+    // Buscar customer
+    var customer = customerRepository.findById(request.customerId())
+        .orElseThrow(() -> new CustomerNotFoundException(request.customerId()));
+    
+    // Validar estoque
+    for (OrderItemRequest item : request.items()) {
+        var product = productRepository.findById(item.productId())
+            .orElseThrow(() -> new ProductNotFoundException(item.productId()));
+        if (product.stock() < item.quantity()) {
+            throw new InsufficientStockException(product.id(), item.quantity());
+        }
+    }
+    
+    // Criar order
+    var order = new Order(customer, request.items().stream()
+        .map(itemRequest -> new OrderItem(
+            productRepository.findById(itemRequest.productId()).orElseThrow(),
+            itemRequest.quantity(),
+            itemRequest.price()
+        ))
+        .collect(Collectors.toList()));
+    
+    // Atualizar estoque
+    request.items().forEach(itemRequest -> {
+        var product = productRepository.findById(itemRequest.productId()).orElseThrow();
+        productRepository.save(product.decreaseStock(itemRequest.quantity()));
+    });
+    
+    // Salvar e notificar
+    var saved = orderRepository.save(order);
+    eventPublisher.publishOrderCreated(saved);
+    emailService.notifyCustomer(customer.email(), saved);
+    
+    return orderMapper.toResponse(saved);
+}
+
+// CERTO: Quebrado em métodos pequenos e testáveis
+public class CreateOrderUseCase {
+    private final CustomerRepository customerRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
+    private final ApplicationEventPublisher eventPublisher;
+    private final EmailService emailService;
+
+    public CreateOrderUseCase(
+        CustomerRepository customerRepository,
+        ProductRepository productRepository,
+        OrderRepository orderRepository,
+        OrderMapper orderMapper,
+        ApplicationEventPublisher eventPublisher,
+        EmailService emailService
+    ) {
+        this.customerRepository = customerRepository;
+        this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
+        this.orderMapper = orderMapper;
+        this.eventPublisher = eventPublisher;
+        this.emailService = emailService;
+    }
+
+    public OrderResponse execute(CreateOrderRequest request) {
+        validateRequest(request);
+        var customer = loadCustomer(request.customerId());
+        var items = loadAndValidateItems(request.items());
+        
+        var order = new Order(customer, items);
+        var saved = orderRepository.save(order);
+        
+        notifyAfterOrderCreation(saved, customer.email());
+        
+        return orderMapper.toResponse(saved);
+    }
+
+    private void validateRequest(CreateOrderRequest request) {
+        if (request.customerId() == null) throw new InvalidCustomerException();
+        if (request.items().isEmpty()) throw new EmptyOrderException();
+        if (request.items().stream().anyMatch(i -> i.quantity() <= 0)) {
+            throw new InvalidQuantityException();
+        }
+    }
+
+    private Customer loadCustomer(String customerId) {
+        return customerRepository.findById(customerId)
+            .orElseThrow(() -> new CustomerNotFoundException(customerId));
+    }
+
+    private List<OrderItem> loadAndValidateItems(List<OrderItemRequest> itemRequests) {
+        return itemRequests.stream()
+            .map(this::createOrderItem)
+            .collect(Collectors.toList());
+    }
+
+    private OrderItem createOrderItem(OrderItemRequest request) {
+        var product = productRepository.findById(request.productId())
+            .orElseThrow(() -> new ProductNotFoundException(request.productId()));
+        
+        validateStock(product, request.quantity());
+        decreaseStock(product, request.quantity());
+        
+        return new OrderItem(product, request.quantity(), request.price());
+    }
+
+    private void validateStock(Product product, int requiredQuantity) {
+        if (product.stock() < requiredQuantity) {
+            throw new InsufficientStockException(product.id(), requiredQuantity);
+        }
+    }
+
+    private void decreaseStock(Product product, int quantity) {
+        var updated = product.decreaseStock(quantity);
+        productRepository.save(updated);
+    }
+
+    private void notifyAfterOrderCreation(Order order, String customerEmail) {
+        eventPublisher.publishOrderCreated(order);
+        emailService.notifyCustomer(customerEmail, order);
+    }
+}
+```
+
+**Benefício:** Cada método <= 15 linhas, responsabilidade única, testável individualmente.
+
+#### 2. Lógica Complexa Aninhada
+```java
+// ERRADO: 30 linhas com lógica aninhada profunda
+public List<CustomerResponse> findEligibleForPromotion() {
+    var customers = customerRepository.findAll();
+    var result = new ArrayList<CustomerResponse>();
+    
+    for (Customer customer : customers) {
+        if (customer.isActive()) {
+            var orders = orderRepository.findByCustomerId(customer.id());
+            if (!orders.isEmpty()) {
+                var totalSpent = orders.stream()
+                    .map(Order::total)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+                
+                if (totalSpent.compareTo(new BigDecimal("1000")) > 0) {
+                    var lastOrder = orders.stream()
+                        .max(Comparator.comparing(Order::createdAt));
+                    
+                    if (lastOrder.isPresent()) {
+                        var daysAgo = ChronoUnit.DAYS.between(lastOrder.get().createdAt(), LocalDateTime.now());
+                        if (daysAgo < 90) {
+                            result.add(customerMapper.toResponse(customer));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
+
+// CERTO: Quebrado com métodos auxiliares
+public List<CustomerResponse> findEligibleForPromotion() {
+    return customerRepository.findAll().stream()
+        .filter(this::isEligibleForPromotion)
+        .map(customerMapper::toResponse)
+        .collect(Collectors.toList());
+}
+
+private boolean isEligibleForPromotion(Customer customer) {
+    return customer.isActive() && 
+           hasRecentOrders(customer.id()) &&
+           hasHighTotalSpent(customer.id());
+}
+
+private boolean hasRecentOrders(String customerId) {
+    return orderRepository.findByCustomerId(customerId).stream()
+        .map(Order::createdAt)
+        .anyMatch(this::isWithin90Days);
+}
+
+private boolean hasHighTotalSpent(String customerId) {
+    var totalSpent = orderRepository.findByCustomerId(customerId).stream()
+        .map(Order::total)
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+    return totalSpent.compareTo(new BigDecimal("1000")) > 0;
+}
+
+private boolean isWithin90Days(LocalDateTime date) {
+    var daysAgo = ChronoUnit.DAYS.between(date, LocalDateTime.now());
+    return daysAgo < 90;
+}
+```
+
+#### 3. Múltiplos Níveis de Abstração
+```java
+// ERRADO: Mistura low-level e high-level
+public void processPayments() {
+    var orders = orderRepository.findUnpaidOrders();
+    
+    for (Order order : orders) {
+        try {
+            var payment = new Payment(order.id(), order.total());
+            var response = stripeClient.post("/charges", payment);
+            
+            if (response.getStatusCode() == 200) {
+                var result = objectMapper.readValue(response.getBody(), ChargeResponse.class);
+                
+                var orderPayment = new OrderPayment(
+                    order.id(),
+                    result.getId(),
+                    result.getAmount(),
+                    LocalDateTime.now()
+                );
+                orderPaymentRepository.save(orderPayment);
+                
+                order.markAsPaid();
+                orderRepository.save(order);
+            }
+        } catch (Exception e) {
+            log.error("Failed to process payment for order {}", order.id(), e);
+        }
+    }
+}
+
+// CERTO: Separar abstrações
+public void processPayments() {
+    var unpaidOrders = orderRepository.findUnpaidOrders();
+    unpaidOrders.forEach(this::processPayment);
+}
+
+private void processPayment(Order order) {
+    try {
+        var chargeResponse = chargeCustomer(order);
+        recordPayment(order, chargeResponse);
+        markOrderAsPaid(order);
+    } catch (PaymentException e) {
+        logPaymentFailure(order, e);
+    }
+}
+
+private ChargeResponse chargeCustomer(Order order) {
+    var payment = new Payment(order.id(), order.total());
+    return paymentGateway.charge(payment);
+}
+
+private void recordPayment(Order order, ChargeResponse response) {
+    var orderPayment = new OrderPayment(
+        order.id(),
+        response.getId(),
+        response.getAmount(),
+        LocalDateTime.now()
+    );
+    orderPaymentRepository.save(orderPayment);
+}
+
+private void markOrderAsPaid(Order order) {
+    order.markAsPaid();
+    orderRepository.save(order);
+}
+
+private void logPaymentFailure(Order order, PaymentException e) {
+    log.error("Failed to process payment for order {}", order.id(), e);
+}
+```
+
+### Quando NÃO Quebrar em Metodos Menores
+
+**NÃO QUEBRE** quando:
+
+#### 1. Métodos Triviais (Getters, Delegação)
+```java
+// OK: Deixe assim, quebrar seria excessivo
+public String getEmail() {
+    return email;
+}
+
+public boolean isActive() {
+    return active;
+}
+
+public void updatePassword(String newPassword) {
+    this.password = passwordEncoder.encode(newPassword);
+}
+
+// OK: Simples delegação
+public OrderResponse execute(CreateOrderRequest request) {
+    return orderService.execute(request);  // Se é só delegação, pode ficar aqui
+}
+```
+
+#### 2. Construtor de Objeto (Initialization)
+```java
+// OK: Construção de objeto pode ser longa se necessário
+public class User {
+    private final String id;
+    private final String email;
+    private final String name;
+    private final LocalDateTime createdAt;
+    private final List<Role> roles;
+    private final Map<String, String> metadata;
+
+    public User(String email, String name, List<Role> roles) {
+        this.id = UUID.randomUUID().toString();
+        this.email = email;
+        this.name = name;
+        this.createdAt = LocalDateTime.now();
+        this.roles = roles != null ? new ArrayList<>(roles) : List.of();
+        this.metadata = new HashMap<>();
+    }
+}
+```
+
+#### 3. Configuração/Setup em Testes
+```java
+// OK: Setup em testes pode ser longo
+@Test
+void shouldCreateOrderWithAllItems() {
+    // Setup pode ser 20-30 linhas de inicialização
+    var customer = Instancio.of(Customer.class)
+        .set(field(Customer::email), "test@example.com")
+        .set(field(Customer::isActive), true)
+        .create();
+    
+    var items = List.of(
+        Instancio.of(OrderItem.class).create(),
+        Instancio.of(OrderItem.class).create()
+    );
+    
+    var request = new CreateOrderRequest(customer.id(), items);
+    
+    // Act
+    var result = useCase.execute(request);
+    
+    // Assert
+    assertThat(result).isNotNull();
+}
+```
+
+#### 4. Um Fluxo Linear Sem Decisões
+```java
+// OK: Sequência de passos linear sem lógica condicional
+public void setupDatabase() {
+    createSchema();
+    insertBaseData();
+    buildIndexes();
+    validateData();
+    enableConstraints();
+}
+
+// Vs. ERRADO: Misturar inicialização com lógica
+public void setupDatabase() {
+    createSchema();
+    if (isDevelopment()) {
+        insertTestData();
+    } else {
+        insertProductionData();
+    }
+    buildIndexes();
+    if (shouldValidate()) {
+        validateData();
+    }
+    enableConstraints();
+    // ... etc
+}
+```
+
+### Exemplo Prático: Refatoração
+
+**Antes (50 linhas):**
+```java
+public void importCustomersFromCSV(String filePath) {
+    var file = new File(filePath);
+    if (!file.exists()) throw new FileNotFoundException(filePath);
+    
+    try (var reader = new BufferedReader(new FileReader(file))) {
+        var customers = new ArrayList<Customer>();
+        var line = reader.readLine();
+        
+        while ((line = reader.readLine()) != null) {
+            var parts = line.split(",");
+            if (parts.length != 4) continue;
+            
+            var customer = new Customer(
+                parts[0].trim(),
+                parts[1].trim(),
+                parts[2].trim(),
+                LocalDateTime.parse(parts[3].trim())
+            );
+            
+            if (customerRepository.findByEmail(customer.email()).isEmpty()) {
+                customers.add(customer);
+            }
+        }
+        
+        customerRepository.saveAll(customers);
+        
+        log.info("Imported {} customers from {}", customers.size(), filePath);
+    } catch (IOException e) {
+        throw new ImportException("Failed to import customers", e);
+    }
+}
+```
+
+**Depois (10 linhas na classe, resto em métodos auxiliares):**
+```java
+public void importCustomersFromCSV(String filePath) {
+    var file = validateFile(filePath);
+    var customers = readCustomersFromCSV(file);
+    var newCustomers = filterExisting(customers);
+    
+    customerRepository.saveAll(newCustomers);
+    log.info("Imported {} customers from {}", newCustomers.size(), filePath);
+}
+
+private File validateFile(String filePath) {
+    var file = new File(filePath);
+    if (!file.exists()) throw new FileNotFoundException(filePath);
+    return file;
+}
+
+private List<Customer> readCustomersFromCSV(File file) {
+    try (var reader = new BufferedReader(new FileReader(file))) {
+        return reader.lines()
+            .skip(1)  // Skip header
+            .map(this::parseCustomerLine)
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+    } catch (IOException e) {
+        throw new ImportException("Failed to read CSV file", e);
+    }
+}
+
+private Optional<Customer> parseCustomerLine(String line) {
+    var parts = line.split(",");
+    if (parts.length != 4) return Optional.empty();
+    
+    return Optional.of(new Customer(
+        parts[0].trim(),
+        parts[1].trim(),
+        parts[2].trim(),
+        LocalDateTime.parse(parts[3].trim())
+    ));
+}
+
+private List<Customer> filterExisting(List<Customer> customers) {
+    return customers.stream()
+        .filter(customer -> customerRepository.findByEmail(customer.email()).isEmpty())
+        .collect(Collectors.toList());
+}
+```
+
+**Benefícios:**
+- ✅ Cada método <= 12 linhas
+- ✅ Responsabilidade única
+- ✅ Fácil de testar (`testParseCustomerLine()`, `testFilterExisting()`)
+- ✅ Fácil de manter e modificar
+
+---
 
 ## Streams - Boas Praticas vs Anti-patterns
 
