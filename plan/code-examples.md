@@ -103,6 +103,18 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 20.5 [Quando NÃO Usar Interfaces Funcionais](#5-quando-nao-usar-interfaces-funcionais)
     - 20.6 [Anti-patterns com Interfaces Funcionais](#6-anti-patterns-com-interfaces-funcionais)
 
+21. [Limites de Injecao em UseCase - Quando Refatorar](#limites-de-injecao-em-usecase---quando-refatorar)
+    - 21.1 [Recomendações de Limite](#recomendacoes-de-limite)
+    - 21.2 [Sinais de Alerta (Code Smells)](#sinais-de-alerta-code-smells)
+    - 21.3 [Estratégias de Refatoração](#estrategias-de-refatoracao)
+    - 21.4 [Exemplo Completo: Refatoração Prática](#exemplo-completo-refatoracao-pratica)
+
+21. [Injecao de Dependencias em UseCases - Limites e Refatoracao](#injecao-de-dependencias-em-usecases---limites-e-refatoracao)
+    - 21.1 [Quantas Dependencias eh Demais?](#quantas-dependencias-eh-demais)
+    - 21.2 [Sinais de Alerta - UseCase Sobrecarregado](#sinais-de-alerta---usecase-sobrecarregado)
+    - 21.3 [Estrategias de Refatoracao](#estrategias-de-refatoracao)
+    - 21.4 [Padroes para Reduzir Injecoes](#padroes-para-reduzir-injecoes)
+
 ---
 ## Entidade de Dominio (MongoDB)
 ```java
@@ -3995,3 +4007,527 @@ private Result<Order> safeProcessOrder(Order order) {
 | **BiFunction<T,U,R>** | 2 | R | Operações, cálculos |
 | **UnaryOperator<T>** | 1 | T | Transformações mesmo tipo |
 | **BinaryOperator<T>** | 2 | T | Operações mesmo tipo |
+
+
+
+---
+
+## Limites de Injecao em UseCase - Quando Refatorar
+
+UseCase é um padrão poderoso para encapsular lógica de negócio, mas injetar muitas dependências é um code smell que indica problemas de design.
+
+### Recomendacoes de Limite
+
+| Número de Dependências | Status | Ação |
+|----------------------|--------|------|
+| **1-3** | ✅ Ideal | Seu UseCase está bem estruturado |
+| **4-5** | ⚠️ Aceitável | Monitorar, mas ainda viável |
+| **6-7** | 🚨 Limite crítico | Considere refatorar |
+| **8+** | ❌ PROBLEMA | Refatoração obrigatória |
+
+**Regra de Ouro:** Se você precisa injetar mais de 5 dependências, seu UseCase provavelmente está fazendo mais de uma coisa.
+
+### Sinais de Alerta (Code Smells)
+
+#### ❌ Anti-pattern: UseCase com Muitas Injeções
+
+```java
+// ERRADO: UseCase injetando 9+ dependências!
+@Service
+public class CreateOrderUseCase {
+    private final OrderRepository orderRepository;
+    private final CustomerRepository customerRepository;
+    private final ProductRepository productRepository;
+    private final PaymentProcessorFactory paymentProcessorFactory;
+    private final EmailService emailService;
+    private final SmsService smsService;
+    private final AuditService auditService;
+    private final InventoryService inventoryService;
+    private final NotificationService notificationService;
+    private final LogisticsService logisticsService;
+
+    public CreateOrderUseCase(
+        OrderRepository orderRepository,
+        CustomerRepository customerRepository,
+        ProductRepository productRepository,
+        PaymentProcessorFactory paymentProcessorFactory,
+        EmailService emailService,
+        SmsService smsService,
+        AuditService auditService,
+        InventoryService inventoryService,
+        NotificationService notificationService,
+        LogisticsService logisticsService
+    ) {
+        this.orderRepository = orderRepository;
+        this.customerRepository = customerRepository;
+        this.productRepository = productRepository;
+        this.paymentProcessorFactory = paymentProcessorFactory;
+        this.emailService = emailService;
+        this.smsService = smsService;
+        this.auditService = auditService;
+        this.inventoryService = inventoryService;
+        this.notificationService = notificationService;
+        this.logisticsService = logisticsService;
+    }
+
+    public OrderResponse execute(CreateOrderRequest request) {
+        // Validação
+        var customer = customerRepository.findById(request.customerId())
+            .orElseThrow(() -> new CustomerNotFoundException(request.customerId()));
+
+        // Verificar estoque
+        for (var item : request.items()) {
+            var product = productRepository.findById(item.productId())
+                .orElseThrow(() -> new ProductNotFoundException(item.productId()));
+            if (!inventoryService.hasStock(product.id(), item.quantity())) {
+                throw new InsufficientStockException(product.id());
+            }
+        }
+
+        // Processar pagamento
+        var paymentProcessor = paymentProcessorFactory.getProcessor(request.paymentMethod());
+        var paymentResult = paymentProcessor.process(request.payment());
+        if (!paymentResult.isSuccess()) {
+            throw new PaymentFailedException(paymentResult.reason());
+        }
+
+        // Criar ordem
+        var order = new Order(...);
+        var saved = orderRepository.save(order);
+
+        // Atualizar inventário
+        inventoryService.decreaseStock(saved.id());
+
+        // Notificações
+        emailService.sendOrderConfirmation(customer.email(), saved);
+        smsService.sendOrderConfirmation(customer.phone(), saved);
+        notificationService.notifyWarehouse(saved);
+
+        // Auditoria
+        auditService.log("order_created", saved.id(), customer.id());
+
+        // Logística
+        logisticsService.schedulePickup(saved);
+
+        return orderMapper.toResponse(saved);
+    }
+}
+
+// PROBLEMA: 
+// - Muitas responsabilidades
+// - Difícil de testar
+// - Alto acoplamento
+// - Viola Single Responsibility Principle
+```
+
+#### ✅ Sinais de que você PRECISA refatorar:
+
+1. **Construtor com mais de 5 parâmetros** - Dificuldade em ler e manter
+2. **UseCase fazendo validação, negócio, persistência, notificação, auditoria** - Múltiplas responsabilidades
+3. **Dificuldade em escrever testes** - Muitos mocks necessários
+4. **UseCase com muitas linhas** - Lógica espalhada
+5. **Dependências que deveriam ser do UseCase parent** - Falta de composição
+
+### Estrategias de Refatoracao
+
+#### Estratégia 1: Dividir em UseCases Menores
+
+```java
+// Dividir em 3 UseCases menores
+
+// 1. ValidateAndCreateOrder - Responsável apenas por validação e criação
+@Service
+public class ValidateAndCreateOrderUseCase {
+    private final OrderRepository orderRepository;
+    private final CustomerRepository customerRepository;
+    private final InventoryService inventoryService;
+
+    public ValidateAndCreateOrderUseCase(
+        OrderRepository orderRepository,
+        CustomerRepository customerRepository,
+        InventoryService inventoryService
+    ) {
+        this.orderRepository = orderRepository;
+        this.customerRepository = customerRepository;
+        this.inventoryService = inventoryService;
+    }
+
+    public Order execute(CreateOrderRequest request) {
+        var customer = customerRepository.findById(request.customerId())
+            .orElseThrow(() -> new CustomerNotFoundException(request.customerId()));
+
+        validateInventory(request);
+
+        return orderRepository.save(Order.from(request, customer));
+    }
+
+    private void validateInventory(CreateOrderRequest request) {
+        request.items().forEach(item -> {
+            if (!inventoryService.hasStock(item.productId(), item.quantity())) {
+                throw new InsufficientStockException(item.productId());
+            }
+        });
+    }
+}
+
+// 2. ProcessPaymentUseCase - Responsável apenas por pagamento
+@Service
+public class ProcessPaymentUseCase {
+    private final PaymentProcessorFactory paymentProcessorFactory;
+
+    public ProcessPaymentUseCase(PaymentProcessorFactory paymentProcessorFactory) {
+        this.paymentProcessorFactory = paymentProcessorFactory;
+    }
+
+    public PaymentResult execute(Order order, PaymentRequest paymentRequest) {
+        var processor = paymentProcessorFactory.getProcessor(paymentRequest.method());
+        var result = processor.process(paymentRequest);
+        
+        if (!result.isSuccess()) {
+            throw new PaymentFailedException(result.reason());
+        }
+        
+        return result;
+    }
+}
+
+// 3. NotifyOrderCreatedUseCase - Responsável apenas por notificações
+@Service
+public class NotifyOrderCreatedUseCase {
+    private final EmailService emailService;
+    private final SmsService smsService;
+    private final NotificationService notificationService;
+    private final AuditService auditService;
+    private final LogisticsService logisticsService;
+
+    public NotifyOrderCreatedUseCase(
+        EmailService emailService,
+        SmsService smsService,
+        NotificationService notificationService,
+        AuditService auditService,
+        LogisticsService logisticsService
+    ) {
+        this.emailService = emailService;
+        this.smsService = smsService;
+        this.notificationService = notificationService;
+        this.auditService = auditService;
+        this.logisticsService = logisticsService;
+    }
+
+    public void execute(Order order, Customer customer) {
+        emailService.sendOrderConfirmation(customer.email(), order);
+        smsService.sendOrderConfirmation(customer.phone(), order);
+        notificationService.notifyWarehouse(order);
+        auditService.log("order_created", order.id(), customer.id());
+        logisticsService.schedulePickup(order);
+    }
+}
+
+// 4. CreateOrderOrchestrator - Orquestra os 3 UseCases
+@Service
+public class CreateOrderOrchestrator {
+    private final ValidateAndCreateOrderUseCase validateAndCreate;
+    private final ProcessPaymentUseCase processPayment;
+    private final NotifyOrderCreatedUseCase notifyOrderCreated;
+    private final CustomerRepository customerRepository;
+
+    public CreateOrderOrchestrator(
+        ValidateAndCreateOrderUseCase validateAndCreate,
+        ProcessPaymentUseCase processPayment,
+        NotifyOrderCreatedUseCase notifyOrderCreated,
+        CustomerRepository customerRepository
+    ) {
+        this.validateAndCreate = validateAndCreate;
+        this.processPayment = processPayment;
+        this.notifyOrderCreated = notifyOrderCreated;
+        this.customerRepository = customerRepository;
+    }
+
+    public OrderResponse execute(CreateOrderRequest request) {
+        // 1. Validar e criar
+        var order = validateAndCreate.execute(request);
+
+        // 2. Processar pagamento
+        processPayment.execute(order, request.payment());
+
+        // 3. Notificar
+        var customer = customerRepository.findById(request.customerId()).orElseThrow();
+        notifyOrderCreated.execute(order, customer);
+
+        return OrderResponse.from(order);
+    }
+}
+```
+
+**Benefícios:**
+- ✅ Cada UseCase agora tem 2-4 dependências
+- ✅ Responsabilidade única clara
+- ✅ Fácil de testar individualmente
+- ✅ Possível reutilizar UseCases menores
+- ✅ Código mais legível
+
+#### Estratégia 2: Usar Facades para Agrupar Dependências
+
+```java
+// Criar uma Facade para agrupar dependências relacionadas
+
+// Facade para serviços de notificação
+@Component
+public class NotificationFacade {
+    private final EmailService emailService;
+    private final SmsService smsService;
+    private final NotificationService notificationService;
+
+    public NotificationFacade(
+        EmailService emailService,
+        SmsService smsService,
+        NotificationService notificationService
+    ) {
+        this.emailService = emailService;
+        this.smsService = smsService;
+        this.notificationService = notificationService;
+    }
+
+    public void notifyOrderCreated(Order order, Customer customer) {
+        emailService.sendOrderConfirmation(customer.email(), order);
+        smsService.sendOrderConfirmation(customer.phone(), order);
+        notificationService.notifyWarehouse(order);
+    }
+}
+
+// Facade para serviços de auditoria e logística
+@Component
+public class OperationsFacade {
+    private final AuditService auditService;
+    private final LogisticsService logisticsService;
+
+    public OperationsFacade(AuditService auditService, LogisticsService logisticsService) {
+        this.auditService = auditService;
+        this.logisticsService = logisticsService;
+    }
+
+    public void registerAndSchedule(Order order, String customerId) {
+        auditService.log("order_created", order.id(), customerId);
+        logisticsService.schedulePickup(order);
+    }
+}
+
+// UseCase agora com apenas 4 dependências
+@Service
+public class CreateOrderUseCase {
+    private final OrderRepository orderRepository;
+    private final CustomerRepository customerRepository;
+    private final NotificationFacade notificationFacade;
+    private final OperationsFacade operationsFacade;
+
+    public CreateOrderUseCase(
+        OrderRepository orderRepository,
+        CustomerRepository customerRepository,
+        NotificationFacade notificationFacade,
+        OperationsFacade operationsFacade
+    ) {
+        this.orderRepository = orderRepository;
+        this.customerRepository = customerRepository;
+        this.notificationFacade = notificationFacade;
+        this.operationsFacade = operationsFacade;
+    }
+
+    public OrderResponse execute(CreateOrderRequest request) {
+        var customer = customerRepository.findById(request.customerId())
+            .orElseThrow();
+        
+        var order = orderRepository.save(Order.from(request, customer));
+        
+        notificationFacade.notifyOrderCreated(order, customer);
+        operationsFacade.registerAndSchedule(order, customer.id());
+        
+        return OrderResponse.from(order);
+    }
+}
+```
+
+#### Estratégia 3: Event-Driven para Desacoplar
+
+```java
+// Publicar evento ao invés de injetar serviços
+
+@Service
+public class CreateOrderUseCase {
+    private final OrderRepository orderRepository;
+    private final CustomerRepository customerRepository;
+    private final ApplicationEventPublisher eventPublisher;
+
+    public CreateOrderUseCase(
+        OrderRepository orderRepository,
+        CustomerRepository customerRepository,
+        ApplicationEventPublisher eventPublisher
+    ) {
+        this.orderRepository = orderRepository;
+        this.customerRepository = customerRepository;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public OrderResponse execute(CreateOrderRequest request) {
+        var customer = customerRepository.findById(request.customerId())
+            .orElseThrow();
+        
+        var order = orderRepository.save(Order.from(request, customer));
+        
+        // Publicar evento - deixar listeners cuidarem do resto
+        eventPublisher.publishEvent(new OrderCreatedEvent(this, order, customer));
+        
+        return OrderResponse.from(order);
+    }
+}
+
+// Listeners desacoplados (injetam apenas o que precisam)
+
+@Component
+public class OrderNotificationListener {
+    private final EmailService emailService;
+    private final SmsService smsService;
+
+    @EventListener
+    public void onOrderCreated(OrderCreatedEvent event) {
+        var order = event.order();
+        var customer = event.customer();
+        emailService.sendOrderConfirmation(customer.email(), order);
+        smsService.sendOrderConfirmation(customer.phone(), order);
+    }
+}
+
+@Component
+public class OrderAuditListener {
+    private final AuditService auditService;
+
+    @EventListener
+    public void onOrderCreated(OrderCreatedEvent event) {
+        auditService.log("order_created", event.order().id(), event.customer().id());
+    }
+}
+
+@Component
+public class OrderLogisticsListener {
+    private final LogisticsService logisticsService;
+
+    @EventListener
+    public void onOrderCreated(OrderCreatedEvent event) {
+        logisticsService.schedulePickup(event.order());
+    }
+}
+```
+
+**Benefícios:**
+- ✅ UseCase injeita apenas 3 dependências
+- ✅ Listeners injetam apenas o que precisam
+- ✅ Totalmente desacoplado
+- ✅ Fácil adicionar novo listener sem modificar UseCase
+
+### Exemplo Completo: Refatoracao Pratica
+
+#### ANTES: UseCase com 8 injeções
+
+```java
+@Service
+public class TransferMoneyUseCase {
+    private final AccountRepository accountRepository;
+    private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
+    private final FraudDetectionService fraudDetectionService;
+    private final ExchangeRateService exchangeRateService;
+    private final AuditService auditService;
+    private final CacheService cacheService;
+    private final BalanceService balanceService;
+
+    // 8 dependências = PROBLEMA!
+    
+    public TransferResponse execute(TransferRequest request) {
+        // Lógica complexa aqui
+    }
+}
+```
+
+#### DEPOIS: Refatorado com 3 UseCases + 1 Orchestrator
+
+```java
+// UseCase 1: Validar e Preparar Transferência
+@Service
+public class PrepareTransferUseCase {
+    private final AccountRepository accountRepository;
+    private final FraudDetectionService fraudDetectionService;
+
+    public Transfer execute(TransferRequest request) {
+        var fromAccount = accountRepository.findById(request.fromAccountId()).orElseThrow();
+        var toAccount = accountRepository.findById(request.toAccountId()).orElseThrow();
+        
+        if (fraudDetectionService.isSuspicious(fromAccount, request.amount())) {
+            throw new SuspiciousTransferException();
+        }
+        
+        return Transfer.from(fromAccount, toAccount, request);
+    }
+}
+
+// UseCase 2: Processar Transferência
+@Service
+public class ProcessTransferUseCase {
+    private final TransactionRepository transactionRepository;
+    private final ExchangeRateService exchangeRateService;
+    private final BalanceService balanceService;
+
+    public Transaction execute(Transfer transfer) {
+        var amount = exchangeRateService.convert(transfer.amount(), transfer.currency());
+        balanceService.decreaseBalance(transfer.fromAccount().id(), amount);
+        balanceService.increaseBalance(transfer.toAccount().id(), amount);
+        
+        return transactionRepository.save(Transaction.from(transfer, amount));
+    }
+}
+
+// UseCase 3: Notificar e Auditar
+@Service
+public class NotifyTransferCompleteUseCase {
+    private final NotificationService notificationService;
+    private final AuditService auditService;
+    private final CacheService cacheService;
+
+    public void execute(Transaction transaction) {
+        notificationService.notifyTransferComplete(
+            transaction.fromAccount().owner().email(),
+            transaction
+        );
+        auditService.log("transfer_completed", transaction.id());
+        cacheService.invalidate("account:" + transaction.fromAccount().id());
+    }
+}
+
+// Orchestrator: Orquestra os 3 UseCases
+@Service
+public class TransferMoneyOrchestrator {
+    private final PrepareTransferUseCase prepareTransfer;
+    private final ProcessTransferUseCase processTransfer;
+    private final NotifyTransferCompleteUseCase notifyTransfer;
+
+    public TransferResponse execute(TransferRequest request) {
+        // 1. Preparar
+        var transfer = prepareTransfer.execute(request);
+        
+        // 2. Processar
+        var transaction = processTransfer.execute(transfer);
+        
+        // 3. Notificar
+        notifyTransfer.execute(transaction);
+        
+        return TransferResponse.from(transaction);
+    }
+}
+```
+
+**Resultado:**
+- ✅ Cada UseCase tem máximo 3 dependências
+- ✅ Responsabilidade única
+- ✅ Cada UseCase é independentemente testável
+- ✅ Reutilizável em outros contextos
+- ✅ Código mais limpo e mantível
+
+---
