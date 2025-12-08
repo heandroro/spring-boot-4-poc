@@ -397,4 +397,412 @@ public List<Product> findByCategory(String category) {
     return filtered;
 }
 ```
+
+## Design Patterns para IFs Complexos
+
+### 1. Strategy Pattern - Multiplos Comportamentos
+
+Quando temos multiplos IFs verificando tipos ou condicoes para executar diferentes logicas.
+
+✅ CERTO:
+```java
+// Interface da estrategia
+public interface DiscountStrategy {
+    BigDecimal apply(BigDecimal price);
+}
+
+// Implementacoes concretas
+public class PremiumDiscount implements DiscountStrategy {
+    @Override
+    public BigDecimal apply(BigDecimal price) {
+        return price.multiply(PREMIUM_RATE);
+    }
+}
+
+public class SeasonalDiscount implements DiscountStrategy {
+    @Override
+    public BigDecimal apply(BigDecimal price) {
+        return price.multiply(SEASONAL_RATE);
+    }
+}
+
+public class NoDiscount implements DiscountStrategy {
+    @Override
+    public BigDecimal apply(BigDecimal price) {
+        return price;
+    }
+}
+
+// Service usa strategy sem IFs
+@Service
+public class PricingService {
+    private final Map<String, DiscountStrategy> strategies;
+
+    public BigDecimal calculatePrice(Product product, Customer customer) {
+        var strategy = strategies.getOrDefault(customer.getType(), new NoDiscount());
+        return strategy.apply(product.getPrice());
+    }
+}
+```
+
+❌ ERRADO:
+```java
+public BigDecimal calculatePrice(Product product, Customer customer) {
+    if (customer.isPremium()) { // IF complexo
+        return product.getPrice().multiply(PREMIUM_RATE);
+    } else if (isSeasonalPromo()) { // Outro IF
+        return product.getPrice().multiply(SEASONAL_RATE);
+    } else if (customer.isVIP()) { // Outro IF
+        return product.getPrice().multiply(VIP_RATE);
+    } else {
+        return product.getPrice();
+    }
+}
+```
+
+### 2. State Pattern - Mudancas de Estado
+
+Quando temos IFs controlando transicoes de estado (Order: PENDING -> CONFIRMED -> SHIPPED).
+
+✅ CERTO:
+```java
+// Estados como enums ou interfaces
+public interface OrderState {
+    void confirm(Order order);
+    void ship(Order order);
+    void cancel(Order order);
+    String getStatus();
+}
+
+public class PendingState implements OrderState {
+    @Override
+    public void confirm(Order order) {
+        order.setState(new ConfirmedState());
+    }
+
+    @Override
+    public void ship(Order order) {
+        throw new IllegalStateException("Cannot ship pending order");
+    }
+
+    @Override
+    public String getStatus() {
+        return "PENDING";
+    }
+}
+
+public class ConfirmedState implements OrderState {
+    @Override
+    public void confirm(Order order) {
+        throw new IllegalStateException("Already confirmed");
+    }
+
+    @Override
+    public void ship(Order order) {
+        order.setState(new ShippedState());
+    }
+
+    @Override
+    public String getStatus() {
+        return "CONFIRMED";
+    }
+}
+
+// Order nao tem IFs
+public record Order(String id, OrderState state) {
+    public void confirm() {
+        state.confirm(this);
+    }
+
+    public void ship() {
+        state.ship(this);
+    }
+}
+```
+
+❌ ERRADO:
+```java
+public void confirm() {
+    if (status.equals("PENDING")) { // IF complexo
+        status = "CONFIRMED";
+    } else if (status.equals("CONFIRMED")) {
+        throw new IllegalStateException("Already confirmed");
+    } else {
+        throw new IllegalStateException("Cannot confirm in state: " + status);
+    }
+}
+
+public void ship() {
+    if (status.equals("CONFIRMED")) { // Outro IF
+        status = "SHIPPED";
+    } else {
+        throw new IllegalStateException("Cannot ship in state: " + status);
+    }
+}
+```
+
+### 3. Builder Pattern - Construcao Complexa
+
+Para evitar multiplos IFs durante construcao de objetos.
+
+✅ CERTO:
+```java
+public class OrderBuilder {
+    private Order order = new Order(null, new ArrayList<>(), null, null);
+
+    public OrderBuilder withCustomer(Customer customer) {
+        this.order = new Order(order.id(), order.items(), customer, order.total());
+        return this;
+    }
+
+    public OrderBuilder addItem(OrderItem item) {
+        var items = new ArrayList<>(order.items());
+        items.add(item);
+        this.order = new Order(order.id(), items, order.customer(), order.total());
+        return this;
+    }
+
+    public OrderBuilder withTotal(BigDecimal total) {
+        this.order = new Order(order.id(), order.items(), order.customer(), total);
+        return this;
+    }
+
+    public Order build() {
+        if (order.customer() == null) throw new IllegalStateException("Customer required");
+        if (order.items().isEmpty()) throw new IllegalStateException("At least one item required");
+        return order;
+    }
+}
+
+// Uso fluente, sem IFs no chamador
+var order = new OrderBuilder()
+    .withCustomer(customer)
+    .addItem(item1)
+    .addItem(item2)
+    .withTotal(total)
+    .build();
+```
+
+❌ ERRADO:
+```java
+public Order createOrder(Customer customer, List<OrderItem> items, BigDecimal total) {
+    if (customer == null) { // IFs de validacao espalhados
+        throw new IllegalStateException("Customer required");
+    }
+    if (items == null || items.isEmpty()) {
+        throw new IllegalStateException("At least one item required");
+    }
+    if (total == null || total.compareTo(BigDecimal.ZERO) <= 0) {
+        throw new IllegalStateException("Total invalid");
+    }
+    return new Order(UUID.randomUUID().toString(), items, customer, total);
+}
+```
+
+### 4. Chain of Responsibility - Pipeline de Validacoes
+
+Para evitar IFs sequenciais de validacao.
+
+✅ CERTO:
+```java
+public interface ValidationHandler {
+    void validate(CreateOrderRequest request);
+    void setNext(ValidationHandler next);
+}
+
+public class CustomerValidation implements ValidationHandler {
+    private ValidationHandler next;
+
+    @Override
+    public void validate(CreateOrderRequest request) {
+        if (request.customerId() == null || request.customerId().isBlank()) {
+            throw new ValidationException("Customer ID required");
+        }
+        if (next != null) next.validate(request);
+    }
+
+    @Override
+    public void setNext(ValidationHandler next) {
+        this.next = next;
+    }
+}
+
+public class ItemsValidation implements ValidationHandler {
+    private ValidationHandler next;
+
+    @Override
+    public void validate(CreateOrderRequest request) {
+        if (request.items().isEmpty()) {
+            throw new ValidationException("At least one item required");
+        }
+        if (next != null) next.validate(request);
+    }
+
+    @Override
+    public void setNext(ValidationHandler next) {
+        this.next = next;
+    }
+}
+
+// Encadeamento sem IFs
+var validator = new CustomerValidation();
+validator.setNext(new ItemsValidation());
+validator.setNext(new PaymentValidation());
+
+validator.validate(request); // Se alguma falha, lanca excecao
+```
+
+❌ ERRADO:
+```java
+public void validate(CreateOrderRequest request) {
+    if (request.customerId() == null || request.customerId().isBlank()) { // IF
+        throw new ValidationException("Customer ID required");
+    }
+    if (request.items().isEmpty()) { // IF
+        throw new ValidationException("At least one item required");
+    }
+    if (request.paymentMethod() == null) { // IF
+        throw new ValidationException("Payment method required");
+    }
+    if (request.total().compareTo(BigDecimal.ZERO) <= 0) { // IF
+        throw new ValidationException("Total invalid");
+    }
+    // Muitos IFs espalhados
+}
+```
+
+### 5. Factory Pattern - Criacao Baseada em Tipo
+
+Para evitar IFs decidindo qual tipo criar.
+
+✅ CERTO:
+```java
+public interface PaymentProcessor {
+    void process(BigDecimal amount);
+}
+
+public class CreditCardProcessor implements PaymentProcessor {
+    @Override
+    public void process(BigDecimal amount) {
+        // Processa cartao de credito
+    }
+}
+
+public class PayPalProcessor implements PaymentProcessor {
+    @Override
+    public void process(BigDecimal amount) {
+        // Processa via PayPal
+    }
+}
+
+@Component
+public class PaymentProcessorFactory {
+    private final Map<String, PaymentProcessor> processors;
+
+    public PaymentProcessorFactory(CreditCardProcessor cc, PayPalProcessor paypal) {
+        this.processors = Map.of(
+            "CREDIT_CARD", cc,
+            "PAYPAL", paypal
+        );
+    }
+
+    public PaymentProcessor getProcessor(String type) {
+        return processors.getOrDefault(type, new CreditCardProcessor());
+    }
+}
+
+// Service usa factory sem IF
+@Service
+public class OrderService {
+    private final PaymentProcessorFactory factory;
+
+    public void checkout(Order order) {
+        var processor = factory.getProcessor(order.getPaymentMethod());
+        processor.process(order.getTotal());
+    }
+}
+```
+
+❌ ERRADO:
+```java
+public void checkout(Order order) {
+    if (order.getPaymentMethod().equals("CREDIT_CARD")) { // IF
+        processCreditCard(order.getTotal());
+    } else if (order.getPaymentMethod().equals("PAYPAL")) { // IF
+        processPayPal(order.getTotal());
+    } else if (order.getPaymentMethod().equals("BITCOIN")) { // IF
+        processBitcoin(order.getTotal());
+    } else {
+        throw new IllegalArgumentException("Payment method not supported");
+    }
+}
+```
+
+### 6. Decorator Pattern - Adicionar Comportamentos
+
+Para adicionar comportamentos sem multiplicar IFs.
+
+✅ CERTO:
+```java
+public interface OrderProcessor {
+    Order process(Order order);
+}
+
+public class BaseOrderProcessor implements OrderProcessor {
+    @Override
+    public Order process(Order order) {
+        return order; // Processa basicamente
+    }
+}
+
+public abstract class OrderProcessorDecorator implements OrderProcessor {
+    protected OrderProcessor decorated;
+
+    public OrderProcessorDecorator(OrderProcessor decorated) {
+        this.decorated = decorated;
+    }
+}
+
+public class TaxProcessor extends OrderProcessorDecorator {
+    @Override
+    public Order process(Order order) {
+        var processed = decorated.process(order);
+        var taxedTotal = processed.total().multiply(TAX_RATE);
+        return new Order(processed.id(), processed.items(), processed.customer(), taxedTotal);
+    }
+}
+
+public class DiscountProcessor extends OrderProcessorDecorator {
+    @Override
+    public Order process(Order order) {
+        var processed = decorated.process(order);
+        var discountedTotal = processed.total().multiply(DISCOUNT_RATE);
+        return new Order(processed.id(), processed.items(), processed.customer(), discountedTotal);
+    }
+}
+
+// Composicao sem IFs
+var processor = new DiscountProcessor(new TaxProcessor(new BaseOrderProcessor()));
+var finalOrder = processor.process(order);
+```
+
+❌ ERRADO:
+```java
+public Order process(Order order, boolean applyTax, boolean applyDiscount) {
+    var total = order.total();
+    
+    if (applyTax) { // IF
+        total = total.multiply(TAX_RATE);
+    }
+    if (applyDiscount) { // IF
+        total = total.multiply(DISCOUNT_RATE);
+    }
+    if (applyTax && applyDiscount) { // IF para combinar
+        // Ajuste especial para quando ambas estao ativas
+        total = total.add(SPECIAL_ADJUSTMENT);
+    }
+    
+    return new Order(order.id(), order.items(), order.customer(), total);
+}
+```
 ```
