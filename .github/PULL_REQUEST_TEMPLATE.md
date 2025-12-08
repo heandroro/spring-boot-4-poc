@@ -143,6 +143,7 @@ class ProductServiceTest {
 ## Links Relacionados
 - Issue: #
 - Documentação: [plan/README.md](../plan/README.md)
+- Boas práticas: [CONTRIBUTING.md](../CONTRIBUTING.md) | [Copilot Instructions](../.github/instructions.md) | [VS Code Copilot](../.vscode/copilot-instructions.md)
 
 ## Screenshots (se aplicável)
 <!-- Adicione prints se for mudança visual -->
