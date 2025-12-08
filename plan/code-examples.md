@@ -2,6 +2,8 @@
 
 Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 
+🚫 **Lombok nao permitido:** Evite qualquer anotacao Lombok (`@Data`, `@Builder`, `@Getter`, `@Setter`, `@Value`, `@AllArgsConstructor`, `@NoArgsConstructor`). Prefira Records, construtores explicitos e MapStruct para mapeamento.
+
 ## Entidade de Dominio (MongoDB)
 ```java
 @Document(collection = "products")
@@ -232,4 +234,167 @@ class ProductRepositoryTest {
         assertThat(result.get().sku()).isEqualTo("TEST-SKU");
     }
 }
+```
+
+## Evitando IFs Desnecessarios
+
+### 1. Validacoes com Bean Validation ao inves de IFs manuais
+
+✅ CERTO:
+```java
+public record CreateProductRequest(
+    @NotBlank String sku,
+    @NotNull @DecimalMin("0.01") BigDecimal price
+) {}
+
+@PostMapping
+public ResponseEntity<ProductResponse> create(@Valid @RequestBody CreateProductRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(service.create(request));
+}
+// Validacao eh feita automaticamente, sem IFs
+```
+
+❌ ERRADO:
+```java
+public record CreateProductRequest(String sku, BigDecimal price) {}
+
+@PostMapping
+public ResponseEntity<?> create(@RequestBody CreateProductRequest request) {
+    if (request.sku() == null || request.sku().isBlank()) { // IF desnecessario
+        return ResponseEntity.badRequest().body("SKU required");
+    }
+    if (request.price() == null || request.price().compareTo(BigDecimal.ZERO) <= 0) { // IF desnecessario
+        return ResponseEntity.badRequest().body("Price invalid");
+    }
+    return ResponseEntity.ok(service.create(request));
+}
+```
+
+### 2. Optional ao inves de IF null
+
+✅ CERTO:
+```java
+public Optional<ProductResponse> findBySku(String sku) {
+    return repository.findBySku(sku).map(mapper::toResponse);
+}
+
+// No service/controller:
+var response = service.findBySku(sku)
+    .orElseThrow(() -> new ProductNotFoundException(sku));
+```
+
+❌ ERRADO:
+```java
+public ProductResponse findBySku(String sku) {
+    var product = repository.findBySku(sku);
+    if (product == null) { // IF desnecessario
+        throw new ProductNotFoundException(sku);
+    }
+    return mapper.toResponse(product);
+}
+```
+
+### 3. Query MongoDB ao inves de IF em memoria
+
+✅ CERTO:
+```java
+public interface ProductRepository extends MongoRepository<Product, String> {
+    @Query("{ 'price': { $gte: ?0, $lte: ?1 }, 'stock': { $gt: 0 } }")
+    List<Product> findAvailableInPriceRange(BigDecimal min, BigDecimal max);
+}
+
+var products = repository.findAvailableInPriceRange(min, max);
+// Filtragem no banco, sem IFs
+```
+
+❌ ERRADO:
+```java
+var allProducts = repository.findAll();
+var filtered = allProducts.stream()
+    .filter(p -> {
+        if (p.getPrice().compareTo(min) >= 0 && p.getPrice().compareTo(max) <= 0) { // IF desnecessario
+            if (p.getStock() > 0) { // IF desnecessario
+                return true;
+            }
+        }
+        return false;
+    })
+    .collect(toList());
+```
+
+### 4. Expressoes ternarias simples ao inves de IF/ELSE
+
+✅ CERTO:
+```java
+var status = order.isPaid() ? "CONFIRMED" : "PENDING";
+var discountedPrice = customer.isPremium() ? price.multiply(PREMIUM_DISCOUNT) : price;
+```
+
+❌ ERRADO:
+```java
+String status;
+if (order.isPaid()) { // IF desnecessario para logica simples
+    status = "CONFIRMED";
+} else {
+    status = "PENDING";
+}
+```
+
+### 5. Guard Clauses em vez de IF aninhados
+
+✅ CERTO:
+```java
+public ProductResponse create(CreateProductRequest request) {
+    if (repository.existsBySku(request.sku())) {
+        throw new DuplicateSkuException(request.sku());
+    }
+    if (!isAuthorized(getCurrentUser())) {
+        throw new UnauthorizedException();
+    }
+    // Logica principal aqui - nao aninhada
+    return saveProduct(request);
+}
+```
+
+❌ ERRADO:
+```java
+public ProductResponse create(CreateProductRequest request) {
+    if (!repository.existsBySku(request.sku())) { // IF aninhado
+        if (isAuthorized(getCurrentUser())) {
+            // Logica principal aqui - muito aninhada
+            return saveProduct(request);
+        } else {
+            throw new UnauthorizedException();
+        }
+    } else {
+        throw new DuplicateSkuException(request.sku());
+    }
+}
+```
+
+### 6. Spring Data features ao inves de IF manualmente
+
+✅ CERTO:
+```java
+public interface ProductRepository extends MongoRepository<Product, String> {
+    List<Product> findByCategory(String category);
+    boolean existsBySku(String sku);
+    void deleteByCategory(String category);
+}
+// Metodos gerados automaticamente, sem IF
+```
+
+❌ ERRADO:
+```java
+public List<Product> findByCategory(String category) {
+    var all = repository.findAll();
+    var filtered = new ArrayList<Product>();
+    for (var product : all) {
+        if (product.getCategory().equals(category)) { // IF desnecessario
+            filtered.add(product);
+        }
+    }
+    return filtered;
+}
+```
 ```
