@@ -80,17 +80,16 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 15.4 [Calculators](#4-calculators---logica-de-calculo-pura)
     - 15.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
 
+16. [Constantes vs Enums - Boas Praticas](#constantes-vs-enums---boas-praticas)
+    - 16.1 [Quando Usar Enums](#quando-usar-enums)
+    - 16.2 [Quando Usar Constantes](#quando-usar-constantes)
+    - 16.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
+
 17. [Tamanho de Metodos - Linhas, Complexidade e Quebras](#tamanho-de-metodos---linhas-complexidade-e-quebras)
     - 17.1 [Recomendacoes de Tamanho (Linhas)](#recomendacoes-de-tamanho-linhas)
     - 17.2 [Quando Quebrar em Metodos Menores](#quando-quebrar-em-metodos-menores)
     - 17.3 [Quando NÃO Quebrar em Metodos Menores](#quando-não-quebrar-em-metodos-menores)
     - 17.4 [Exemplo Prático: Refatoração](#exemplo-prático-refatoração)
-    - 15.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
-
-16. [Constantes vs Enums - Boas Praticas](#constantes-vs-enums---boas-praticas)
-    - 16.1 [Quando Usar Enums](#quando-usar-enums)
-    - 16.2 [Quando Usar Constantes](#quando-usar-constantes)
-    - 16.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
 
 ---
 
