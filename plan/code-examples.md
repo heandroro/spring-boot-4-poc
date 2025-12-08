@@ -46,6 +46,10 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 13.4 [Chain of Responsibility](#4-chain-of-responsibility---pipeline-de-validacoes)
     - 13.5 [Factory Pattern](#5-factory-pattern---criacao-baseada-em-tipo)
     - 13.6 [Decorator Pattern](#6-decorator-pattern---adicionar-comportamentos)
+14. [Constantes vs Enums - Boas Praticas](#constantes-vs-enums---boas-praticas)
+    - 14.1 [Quando Usar Enums](#quando-usar-enums)
+    - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
+    - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
 
 ---
 
@@ -1571,4 +1575,379 @@ public Order process(Order order, boolean applyTax, boolean applyDiscount) {
     return new Order(order.id(), order.items(), order.customer(), total);
 }
 ```
+
+## Constantes vs Enums - Boas Praticas
+
+### Quando Usar Enums
+
+Use Enums quando tem um **conjunto fechado e conhecido de valores** que são parte do **domínio** e precisam de comportamento.
+
+✅ CERTO - Enum para Status (Dominio):
+```java
+// domain/enums/OrderStatus.java
+public enum OrderStatus {
+    PENDING("Pendente", "Aguardando confirmacao"),
+    CONFIRMED("Confirmado", "Pedido confirmado"),
+    SHIPPED("Enviado", "Enviado para entrega"),
+    DELIVERED("Entregue", "Recebido pelo cliente"),
+    CANCELLED("Cancelado", "Pedido foi cancelado");
+
+    private final String displayName;
+    private final String description;
+
+    OrderStatus(String displayName, String description) {
+        this.displayName = displayName;
+        this.description = description;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public boolean isTerminal() {
+        return this == DELIVERED || this == CANCELLED;
+    }
+
+    public boolean canTransitionTo(OrderStatus next) {
+        return switch (this) {
+            case PENDING -> next == CONFIRMED || next == CANCELLED;
+            case CONFIRMED -> next == SHIPPED || next == CANCELLED;
+            case SHIPPED -> next == DELIVERED;
+            case DELIVERED, CANCELLED -> false;
+        };
+    }
+}
+
+// Uso
+@Document(collection = "orders")
+public record Order(
+    @Id String id,
+    OrderStatus status,  // Type-safe, nao String
+    List<OrderItem> items,
+    BigDecimal total
+) {}
+
+// Service
+@Service
+public class OrderService {
+    public void ship(Order order) {
+        if (!order.status().canTransitionTo(OrderStatus.SHIPPED)) {
+            throw new InvalidStateTransitionException();
+        }
+        // Atualizar status
+    }
+}
+```
+
+❌ ERRADO - Strings ou constantes para Status:
+```java
+public class OrderConstants {
+    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_CONFIRMED = "CONFIRMED";
+    public static final String STATUS_SHIPPED = "SHIPPED";
+}
+
+// Problema: String nao oferece type safety
+@Document(collection = "orders")
+public record Order(
+    @Id String id,
+    String status,  // Qualquer string eh aceito, nao validado
+    List<OrderItem> items,
+    BigDecimal total
+) {}
+
+// Service sem validacao de transicao
+public void ship(Order order) {
+    if ("PENDING".equals(order.status()) || "SHIPPED".equals(order.status())) {
+        // Logica duplicada
+    }
+}
+```
+
+### Quando Usar Constantes
+
+Use constantes quando tem **valores literais** que nao sao dominio (URLs, timeouts, limites, chaves externas).
+
+✅ CERTO - Constantes para Configuracao:
+```java
+// infrastructure/config/AppConstants.java
+public final class AppConstants {
+    private AppConstants() {} // Nao pode instanciar
+
+    // Timeout e limites
+    public static final int DEFAULT_TIMEOUT_SECONDS = 30;
+    public static final int MAX_RETRY_ATTEMPTS = 3;
+    public static final int BATCH_SIZE = 100;
+
+    // URLs e endpoints
+    public static final String STRIPE_API_BASE_URL = "https://api.stripe.com";
+    public static final String PAYMENT_WEBHOOK_PATH = "/api/webhooks/payment";
+
+    // Taxas e descontos
+    public static final BigDecimal TAX_RATE_SP = new BigDecimal("0.18");
+    public static final BigDecimal PREMIUM_DISCOUNT_RATE = new BigDecimal("0.10");
+
+    // Pagination
+    public static final int DEFAULT_PAGE_SIZE = 20;
+    public static final int MAX_PAGE_SIZE = 100;
+}
+
+// Uso
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+    @GetMapping
+    public Page<OrderResponse> listOrders(
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = AppConstants.DEFAULT_PAGE_SIZE + "") int size
+    ) {
+        return service.findAll(PageRequest.of(page, size));
+    }
+}
+
+@Configuration
+@ConfigurationProperties(prefix = "app.stripe")
+public record StripeConfig(
+    String apiKey,
+    String webhookSecret,
+    @DurationUnit(ChronoUnit.SECONDS) Duration timeout
+) {
+    public StripeConfig {
+        Objects.requireNonNull(apiKey, "Stripe API key is required");
+        if (timeout.getSeconds() < AppConstants.DEFAULT_TIMEOUT_SECONDS) {
+            throw new IllegalArgumentException("Timeout must be >= " + AppConstants.DEFAULT_TIMEOUT_SECONDS);
+        }
+    }
+}
+```
+
+❌ ERRADO - Constantes para Dominio (deve ser Enum):
+```java
+public class OrderConstants {
+    public static final String STATUS_PENDING = "PENDING";
+    public static final String STATUS_CONFIRMED = "CONFIRMED";
+    public static final String STATUS_SHIPPED = "SHIPPED";
+    public static final String STATUS_DELIVERED = "DELIVERED";
+    public static final String STATUS_CANCELLED = "CANCELLED";
+
+    // Isso eh dominio, nao deveria ser constante String
+}
+```
+
+### Padroes de Enum Avancado
+
+#### 1. Enum com Metadata (Lookup Dictionary)
+
+```java
+public enum PaymentMethod {
+    CREDIT_CARD("Credit Card", "credit_card", 3, true),
+    DEBIT_CARD("Debit Card", "debit_card", 1, true),
+    PIX("PIX", "pix", 0, false),
+    BANK_TRANSFER("Bank Transfer", "bank_transfer", 1, false),
+    WALLET("Wallet", "wallet", 0, true);
+
+    private final String displayName;
+    private final String code;
+    private final int processingDays;
+    private final boolean requiresVerification;
+
+    PaymentMethod(String displayName, String code, int processingDays, boolean requiresVerification) {
+        this.displayName = displayName;
+        this.code = code;
+        this.processingDays = processingDays;
+        this.requiresVerification = requiresVerification;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public static Optional<PaymentMethod> fromCode(String code) {
+        return Arrays.stream(values())
+            .filter(pm -> pm.code.equals(code))
+            .findFirst();
+    }
+
+    public boolean isInstant() {
+        return processingDays == 0;
+    }
+
+    public boolean requiresVerification() {
+        return requiresVerification;
+    }
+}
+
+// Uso
+@Service
+public class PaymentService {
+    public int estimateDeliveryDays(PaymentMethod method) {
+        return method.getProcessingDays();
+    }
+
+    public void validatePayment(PaymentMethod method, String verificationCode) {
+        if (method.requiresVerification() && verificationCode == null) {
+            throw new PaymentValidationException("Verification required for " + method.getDisplayName());
+        }
+    }
+}
+```
+
+#### 2. Enum com Comportamento (Strategy Pattern)
+
+```java
+public enum DiscountStrategy {
+    NO_DISCOUNT {
+        @Override
+        public BigDecimal apply(BigDecimal amount) {
+            return amount;
+        }
+    },
+    PERCENTAGE {
+        private static final BigDecimal RATE = new BigDecimal("0.10");
+
+        @Override
+        public BigDecimal apply(BigDecimal amount) {
+            return amount.multiply(RATE);
+        }
+    },
+    FIXED_AMOUNT {
+        private static final BigDecimal FIXED = new BigDecimal("50.00");
+
+        @Override
+        public BigDecimal apply(BigDecimal amount) {
+            var discounted = amount.subtract(FIXED);
+            return discounted.compareTo(BigDecimal.ZERO) > 0 ? discounted : BigDecimal.ZERO;
+        }
+    },
+    VOLUME {
+        @Override
+        public BigDecimal apply(BigDecimal amount) {
+            return amount.compareTo(new BigDecimal("1000")) > 0
+                ? amount.multiply(new BigDecimal("0.05"))
+                : BigDecimal.ZERO;
+        }
+    };
+
+    public abstract BigDecimal apply(BigDecimal amount);
+
+    public BigDecimal calculateFinalPrice(BigDecimal price) {
+        return price.subtract(apply(price));
+    }
+}
+
+// Uso - sem IFs!
+@Service
+public class PricingService {
+    public BigDecimal getFinalPrice(BigDecimal price, DiscountStrategy strategy) {
+        return strategy.calculateFinalPrice(price);
+    }
+}
+```
+
+#### 3. Enum com Comparacao (Hierarchy)
+
+```java
+public enum UserRole {
+    ADMIN(3, "Administrador"),
+    MANAGER(2, "Gerenciador"),
+    CUSTOMER(1, "Cliente"),
+    GUEST(0, "Visitante");
+
+    private final int level;
+    private final String displayName;
+
+    UserRole(int level, String displayName) {
+        this.level = level;
+        this.displayName = displayName;
+    }
+
+    public boolean hasPermission(UserRole requiredRole) {
+        return this.level >= requiredRole.level;
+    }
+
+    public boolean isHigherThan(UserRole other) {
+        return this.level > other.level;
+    }
+
+    public boolean isAdminOrHigher() {
+        return this.level >= ADMIN.level;
+    }
+}
+
+// Uso em validacao
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(
+        @PathVariable String id,
+        @AuthenticationPrincipal User currentUser
+    ) {
+        if (!currentUser.getRole().hasPermission(UserRole.MANAGER)) {
+            throw new AccessDeniedException("Only managers can delete users");
+        }
+        // Deletar usuario
+        return ResponseEntity.noContent().build();
+    }
+}
+```
+
+#### 4. Sealed + Enum para Validacao
+
+```java
+// Combina poder de enums com sealed classes
+public sealed interface TransactionType permits Transaction.INCOME, Transaction.EXPENSE, Transaction.TRANSFER {
+    String getCode();
+    boolean isDebit();
+}
+
+public enum Transaction {
+    INCOME("INCOME") {
+        @Override
+        public boolean isDebit() { return false; }
+    },
+    EXPENSE("EXPENSE") {
+        @Override
+        public boolean isDebit() { return true; }
+    },
+    TRANSFER("TRANSFER") {
+        @Override
+        public boolean isDebit() { return true; }
+    };
+
+    private final String code;
+
+    Transaction(String code) {
+        this.code = code;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    public abstract boolean isDebit();
+}
+```
+
+## Resumo - Decidir Entre Constantes e Enums
+
+| Criterio | Enum | Constante |
+|----------|------|-----------|
+| **Type Safety** | ✅ Sim | ❌ Nao (String/int) |
+| **Comportamento** | ✅ Pode ter metodos | ❌ Apenas valor |
+| **Dominio** | ✅ Usa | ❌ Nao usa |
+| **Validacao** | ✅ Em tempo de compilacao | ❌ Em runtime |
+| **Switch/Pattern Matching** | ✅ Exaustivo | ❌ Nao |
+| **Lookup/Busca** | ✅ Facil com metodos | ❌ Manual |
+| **Serializacao** | ✅ Nativa | ✅ Nativa |
+| **Exemplo** | OrderStatus, UserRole | TIMEOUT_SECONDS, MAX_SIZE |
 ```
