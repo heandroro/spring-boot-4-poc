@@ -109,6 +109,12 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 21.3 [Estratégias de Refatoração](#estrategias-de-refatoracao)
     - 21.4 [Exemplo Completo: Refatoração Prática](#exemplo-completo-refatoracao-pratica)
 
+22. [Classe Rica vs Anêmica - Encapsulamento e Comportamento](#classe-rica-vs-anemica---encapsulamento-e-comportamento)
+    - 22.1 [Classe Anêmica (Anti-pattern)](#classe-anemica-anti-pattern)
+    - 22.2 [Classe Rica (Padrão DDD)](#classe-rica-padrão-ddd)
+    - 22.3 [Comparação Prática](#comparacao-pratica)
+    - 22.4 [Quando Usar Cada Uma](#quando-usar-cada-uma)
+
 ---
 ## Entidade de Dominio (MongoDB)
 ```java
@@ -4523,5 +4529,366 @@ public class TransferMoneyOrchestrator {
 - ✅ Cada UseCase é independentemente testável
 - ✅ Reutilizável em outros contextos
 - ✅ Código mais limpo e mantível
+
+---
+
+
+## Classe Rica vs Anêmica - Encapsulamento e Comportamento
+
+No DDD (Domain-Driven Design), a diferença entre classe rica e anêmica é fundamental para criar modelos de domínio robustos e mantíveis.
+
+### Classe Anêmica (Anti-pattern)
+
+Uma classe anêmica é aquela que contém apenas dados (getters/setters) sem comportamento ou lógica de negócio. É um container passivo.
+
+#### ❌ ERRADO: Classe Anêmica
+
+```java
+// Anti-pattern: apenas dados, sem comportamento
+public record Order(
+    String id,
+    String customerId,
+    List<OrderItem> items,
+    BigDecimal totalPrice,
+    OrderStatus status,
+    LocalDateTime createdAt
+) {}
+
+// A lógica de negócio fica espalhada por UseCases/Services
+@Service
+public class UpdateOrderStatusUseCase {
+    private final OrderRepository repository;
+
+    public void execute(String orderId, OrderStatus newStatus) {
+        var order = repository.findById(orderId).orElseThrow();
+        
+        // Validações de negócio (deveriam estar na entidade)
+        if (order.status() == OrderStatus.COMPLETED) {
+            throw new IllegalStateException("Ordem já foi finalizada");
+        }
+        if (order.status() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Ordem já foi cancelada");
+        }
+        if (newStatus == OrderStatus.SHIPPED && order.items().isEmpty()) {
+            throw new IllegalStateException("Não pode enviar ordem sem itens");
+        }
+
+        // Mudar status (deveria ser um método da entidade)
+        order = new Order(
+            order.id(),
+            order.customerId(),
+            order.items(),
+            order.totalPrice(),
+            newStatus,
+            order.createdAt()
+        );
+        
+        repository.save(order);
+    }
+}
+
+// PROBLEMAS:
+// - Lógica de negócio espalhada pelos UseCases
+// - Difícil de reutilizar regras em múltiplos lugares
+// - Ordem é apenas um container de dados
+// - Violação do Encapsulamento
+// - Difícil de testar regras de negócio isoladamente
+```
+
+#### ❌ PROBLEMAS da Classe Anêmica:
+
+1. **Lógica espalhada** - Regras de negócio em múltiplos UseCases
+2. **Duplicação de código** - Validações em vários lugares
+3. **Difícil manutenção** - Mudar regra requer buscar em vários arquivos
+4. **Sem encapsulamento** - Qualquer código pode alterar estado
+5. **Testabilidade baixa** - Não consegue testar regras isoladas
+6. **Violação de SRP** - UseCase fica responsável por validações do domínio
+
+### Classe Rica (Padrão DDD)
+
+Uma classe rica encapsula tanto dados quanto comportamento. A entidade sabe como validar e transformar seus próprios dados.
+
+#### ✅ CORRETO: Classe Rica
+
+```java
+@Document(collection = "orders")
+public record Order(
+    @Id String id,
+    @Indexed String customerId,
+    List<OrderItem> items,
+    BigDecimal totalPrice,
+    OrderStatus status,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt
+) {
+    
+    // Validações e regras de negócio ENCAPSULADAS na entidade
+    
+    /**
+     * Validar se pode transicionar para um novo status
+     */
+    public void validateStatusTransition(OrderStatus newStatus) {
+        // Regra: não pode voltar de COMPLETED
+        if (this.status == OrderStatus.COMPLETED) {
+            throw new OrderAlreadyCompletedException(this.id);
+        }
+        
+        // Regra: não pode voltar de CANCELLED
+        if (this.status == OrderStatus.CANCELLED) {
+            throw new OrderAlreadyCancelledException(this.id);
+        }
+        
+        // Regra: não pode enviar ordem vazia
+        if (newStatus == OrderStatus.SHIPPED && this.items.isEmpty()) {
+            throw new CannotShipEmptyOrderException(this.id);
+        }
+        
+        // Regra: só pode cancelar ordem se não foi enviada
+        if (newStatus == OrderStatus.CANCELLED && this.status == OrderStatus.SHIPPED) {
+            throw new CannotCancelShippedOrderException(this.id);
+        }
+    }
+    
+    /**
+     * Transicionar para um novo status (com validações)
+     */
+    public Order transitionTo(OrderStatus newStatus) {
+        validateStatusTransition(newStatus);
+        return new Order(
+            this.id,
+            this.customerId,
+            this.items,
+            this.totalPrice,
+            newStatus,
+            this.createdAt,
+            LocalDateTime.now()
+        );
+    }
+    
+    /**
+     * Adicionar item à ordem
+     */
+    public Order addItem(OrderItem item) {
+        // Validação: não pode adicionar item a ordem finalizada
+        if (this.status == OrderStatus.COMPLETED || this.status == OrderStatus.SHIPPED) {
+            throw new CannotModifyShippedOrderException(this.id);
+        }
+        
+        var newItems = new ArrayList<>(this.items);
+        newItems.add(item);
+        
+        return new Order(
+            this.id,
+            this.customerId,
+            List.copyOf(newItems),
+            calculateTotal(newItems),
+            this.status,
+            this.createdAt,
+            LocalDateTime.now()
+        );
+    }
+    
+    /**
+     * Remover item da ordem
+     */
+    public Order removeItem(String itemId) {
+        // Validação: não pode remover de ordem finalizada
+        if (this.status == OrderStatus.COMPLETED || this.status == OrderStatus.SHIPPED) {
+            throw new CannotModifyShippedOrderException(this.id);
+        }
+        
+        var newItems = this.items.stream()
+            .filter(item -> !item.id().equals(itemId))
+            .toList();
+        
+        if (newItems.size() == this.items.size()) {
+            throw new ItemNotFoundException(itemId);
+        }
+        
+        return new Order(
+            this.id,
+            this.customerId,
+            newItems,
+            calculateTotal(newItems),
+            this.status,
+            this.createdAt,
+            LocalDateTime.now()
+        );
+    }
+    
+    /**
+     * Lógica privada de negócio
+     */
+    private static BigDecimal calculateTotal(List<OrderItem> items) {
+        return items.stream()
+            .map(item -> item.price().multiply(BigDecimal.valueOf(item.quantity())))
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+    
+    /**
+     * Métodos especializados para regras de domínio
+     */
+    public boolean isPending() {
+        return this.status == OrderStatus.PENDING;
+    }
+    
+    public boolean isShipped() {
+        return this.status == OrderStatus.SHIPPED;
+    }
+    
+    public boolean isCompleted() {
+        return this.status == OrderStatus.COMPLETED;
+    }
+    
+    public boolean isCancelled() {
+        return this.status == OrderStatus.CANCELLED;
+    }
+}
+
+// UseCase agora é simples e claro
+@Service
+public class UpdateOrderStatusUseCase {
+    private final OrderRepository repository;
+
+    public void execute(String orderId, OrderStatus newStatus) {
+        var order = repository.findById(orderId).orElseThrow();
+        
+        // Toda a lógica está encapsulada na entidade
+        var updatedOrder = order.transitionTo(newStatus);
+        
+        repository.save(updatedOrder);
+    }
+}
+
+// BENEFÍCIOS:
+// ✅ Lógica centralizada na entidade
+// ✅ UseCase é simples e legível
+// ✅ Fácil reutilizar regras de negócio
+// ✅ Encapsulamento correto
+// ✅ Testável isoladamente
+// ✅ Violação do SRP prevenida
+```
+
+### Comparacao Pratica
+
+| Aspecto | Classe Anêmica | Classe Rica |
+|---------|----------------|-------------|
+| **Dados** | ✅ Contém | ✅ Contém |
+| **Comportamento** | ❌ Não | ✅ Sim |
+| **Validações** | ❌ Em UseCases | ✅ Na entidade |
+| **Encapsulamento** | ❌ Fraco | ✅ Forte |
+| **Reutilização** | ❌ Baixa | ✅ Alta |
+| **Testabilidade** | ❌ Difícil | ✅ Fácil |
+| **Coesão** | ❌ Baixa | ✅ Alta |
+| **Manutenção** | ❌ Difícil | ✅ Fácil |
+
+### Quando Usar Cada Uma
+
+#### ✅ Use Classe Rica Para:
+
+1. **Entidades de Domínio** - Core do negócio
+   ```java
+   @Document
+   public record Customer(String id, String name, Email email) {
+       public void updateEmail(Email newEmail) { /* validações */ }
+       public boolean isActive() { /* lógica */ }
+   }
+   ```
+
+2. **Value Objects** - Conceitos de domínio
+   ```java
+   public record Money(BigDecimal amount, Currency currency) {
+       public Money add(Money other) { /* validações + lógica */ }
+       public Money multiply(BigDecimal factor) { /* validações + lógica */ }
+   }
+   ```
+
+3. **Agregados com regras complexas**
+   ```java
+   @Document
+   public record Invoice(String id, List<InvoiceItem> items) {
+       public void addItem(InvoiceItem item) { /* validações */ }
+       public BigDecimal getTotal() { /* cálculo */ }
+   }
+   ```
+
+#### ✅ Use Classe Anêmica Para:
+
+1. **DTOs de transferência de dados**
+   ```java
+   public record CreateOrderRequest(
+       @NotBlank String customerId,
+       @NotEmpty List<OrderItemRequest> items
+   ) {}
+   ```
+
+2. **Response para API** (dados puros)
+   ```java
+   public record OrderResponse(
+       String id,
+       String customerId,
+       BigDecimal total,
+       String status
+   ) {}
+   ```
+
+3. **Configurações** (apenas leitura)
+   ```java
+   @ConfigurationProperties(prefix = "app")
+   public record AppConfig(String name, int port, String environment) {}
+   ```
+
+#### ⚠️ Evitar:
+
+```java
+// ERRADO: Classe anêmica para entidade de domínio
+@Document
+public record Payment(
+    String id,
+    String orderId,
+    BigDecimal amount,
+    PaymentStatus status
+) {}
+// Deveria ter: processPayment(), validateAmount(), canRefund(), etc.
+
+// ERRADO: Classe rica para DTO
+public record OrderRequest(String customerId, List<Item> items) {
+    public void addValidations() { } // DTOs não devem ter lógica!
+}
+// DTOs devem ser simples containers
+```
+
+### Padrão Recomendado para este Projeto
+
+Para este projeto Spring Boot 4 com DDD:
+
+```
+┌─────────────────────────────────────────┐
+│ CAMADA DE DOMÍNIO (Classe RICA)         │
+├─────────────────────────────────────────┤
+│ @Document Entities                      │
+│ - Encapsulam dados + comportamento      │
+│ - Contêm validações de negócio          │
+│ - Imutáveis (Records)                   │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ CAMADA DE APLICAÇÃO (Classe ANÊMICA)    │
+├─────────────────────────────────────────┤
+│ DTOs (Requests/Responses)               │
+│ - Apenas dados                          │
+│ - Bean Validation (@NotNull, etc)       │
+│ - Sem lógica de negócio                 │
+└─────────────────────────────────────────┘
+
+┌─────────────────────────────────────────┐
+│ CAMADA DE APLICAÇÃO (Orchestração)      │
+├─────────────────────────────────────────┤
+│ UseCases @Service                       │
+│ - Orquestram fluxo                      │
+│ - Delegam validações à entidade         │
+│ - Gerenciam persistência                │
+└─────────────────────────────────────────┘
+```
 
 ---
