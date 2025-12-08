@@ -85,13 +85,13 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 16.2 [Quando Usar Constantes](#quando-usar-constantes)
     - 16.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
 
-18. [Resumo - Decidir Entre Constantes e Enums](#resumo---decidir-entre-constantes-e-enums)
+17. [Resumo - Decidir Entre Constantes e Enums](#resumo---decidir-entre-constantes-e-enums)
 
-17. [Tamanho de Metodos - Linhas, Complexidade e Quebras](#tamanho-de-metodos---linhas-complexidade-e-quebras)
-    - 17.1 [Recomendacoes de Tamanho (Linhas)](#recomendacoes-de-tamanho-linhas)
-    - 17.2 [Quando Quebrar em Metodos Menores](#quando-quebrar-em-metodos-menores)
-    - 17.3 [Quando NÃO Quebrar em Metodos Menores](#quando-nao-quebrar-em-metodos-menores)
-    - 17.4 [Exemplo Prático: Refatoração](#exemplo-prático-refatoração)
+18. [Tamanho de Metodos - Linhas, Complexidade e Quebras](#tamanho-de-metodos---linhas-complexidade-e-quebras)
+    - 18.1 [Recomendacoes de Tamanho (Linhas)](#recomendacoes-de-tamanho-linhas)
+    - 18.2 [Quando Quebrar em Metodos Menores](#quando-quebrar-em-metodos-menores)
+    - 18.3 [Quando NÃO Quebrar em Metodos Menores](#quando-nao-quebrar-em-metodos-menores)
+    - 18.4 [Exemplo Prático: Refatoração](#exemplo-prático-refatoração)
 
 19. [Tabela Decisoria: Qual Anotacao Usar?](#tabela-decisoria-qual-anotacao-usar)
 
@@ -108,12 +108,6 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 21.2 [Sinais de Alerta (Code Smells)](#sinais-de-alerta-code-smells)
     - 21.3 [Estratégias de Refatoração](#estrategias-de-refatoracao)
     - 21.4 [Exemplo Completo: Refatoração Prática](#exemplo-completo-refatoracao-pratica)
-
-21. [Injecao de Dependencias em UseCases - Limites e Refatoracao](#injecao-de-dependencias-em-usecases---limites-e-refatoracao)
-    - 21.1 [Quantas Dependencias eh Demais?](#quantas-dependencias-eh-demais)
-    - 21.2 [Sinais de Alerta - UseCase Sobrecarregado](#sinais-de-alerta---usecase-sobrecarregado)
-    - 21.3 [Estrategias de Refatoracao](#estrategias-de-refatoracao)
-    - 21.4 [Padroes para Reduzir Injecoes](#padroes-para-reduzir-injecoes)
 
 ---
 ## Entidade de Dominio (MongoDB)
