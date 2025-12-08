@@ -55,7 +55,8 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 15.2 [UseCase - Logica de Negocio](#usecase---logica-de-negocio)
     - 15.3 [@Component - Utilitarios e Helpers](#component---utilitarios-e-helpers)
     - 15.4 [@Bean - Configuracao e Terceiros](#bean---configuracao-e-terceiros)
-    - 15.5 [Anti-patterns: Quando NÃO Usar](#anti-patterns-quando-nao-usar)
+    - 15.5 [🔑 REGRA OBRIGATÓRIA: @Bean para Interfaces](#-regra-obrigatória-bean-para-interfaces)
+    - 15.6 [Anti-patterns: Quando NÃO Usar](#anti-patterns-quando-nao-usar)
     - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
     - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
 
@@ -2251,6 +2252,88 @@ public class CustomerService {
 }
 ```
 
+### 🔑 REGRA OBRIGATÓRIA: @Bean para Interfaces
+
+**TODO Bean que implementa uma interface DEVE ser declarado como `@Bean` em `@Configuration`, não como estereótipo (`@Service`, `@Component`, etc).**
+
+Isso garante:
+- ✅ Contrato explícito via interface
+- ✅ Injeção correta do tipo interface, não implementação
+- ✅ Facilita troca de implementações
+- ✅ Melhor desacoplamento
+
+✅ CERTO:
+```java
+// domain/PaymentProcessor.java - Interface
+public interface PaymentProcessor {
+    PaymentResult process(Payment payment);
+}
+
+// infrastructure/payment/StripePaymentProcessor.java - Implementacao
+public class StripePaymentProcessor implements PaymentProcessor {
+    private final RestClient stripeClient;
+    private final PaymentMapper mapper;
+
+    public StripePaymentProcessor(RestClient stripeClient, PaymentMapper mapper) {
+        this.stripeClient = stripeClient;
+        this.mapper = mapper;
+    }
+
+    @Override
+    public PaymentResult process(Payment payment) {
+        // Logica de processamento
+        return mapper.toResult(payment);
+    }
+}
+
+// infrastructure/config/PaymentConfig.java - Declarar como @Bean
+@Configuration
+public class PaymentConfig {
+    
+    @Bean
+    public PaymentProcessor paymentProcessor(RestClient stripeClient, PaymentMapper mapper) {
+        return new StripePaymentProcessor(stripeClient, mapper);
+    }
+}
+
+// Uso em UseCase - Injetar via interface
+public class ProcessPaymentUseCase {
+    private final PaymentProcessor paymentProcessor; // Interface!
+    private final OrderRepository orderRepository;
+
+    public ProcessPaymentUseCase(PaymentProcessor paymentProcessor, OrderRepository orderRepository) {
+        this.paymentProcessor = paymentProcessor;
+        this.orderRepository = orderRepository;
+    }
+
+    public PaymentResult execute(Order order) {
+        var result = paymentProcessor.process(order.getPayment());
+        if (result.isSuccess()) {
+            orderRepository.save(order);
+        }
+        return result;
+    }
+}
+```
+
+❌ ERRADO:
+```java
+// Nao use @Service ou @Component para classe com interface
+@Service
+public class StripePaymentProcessor implements PaymentProcessor {
+    // Isso quebra a injecao - Spring nao injetaria com PaymentProcessor
+}
+
+// Nao faça isso - injete a interface, nao a implementacao
+public class ProcessPaymentUseCase {
+    private final StripePaymentProcessor processor; // ERRADO - implementacao concreta!
+    
+    public ProcessPaymentUseCase(StripePaymentProcessor processor) {
+        this.processor = processor;
+    }
+}
+```
+
 ### Anti-patterns: Quando NÃO Usar
 
 #### ❌ Não misture Responsabilidades em Uma Classe
@@ -2403,10 +2486,62 @@ public interface CustomerMapper {
 }
 ```
 
+#### ❌ VIOLAÇÃO CRÍTICA: Não use Estereotipos para Classes com Interface
+
+```java
+// ERRADO: Usar @Service/Component para classe que implementa interface
+public interface PaymentProcessor {
+    PaymentResult process(Payment payment);
+}
+
+@Service // ERRADO! Viola a regra de interfaces
+public class StripePaymentProcessor implements PaymentProcessor {
+    @Override
+    public PaymentResult process(Payment payment) {
+        // ...
+    }
+}
+
+// Isso causa problema na injecao:
+public class CreateOrderUseCase {
+    // Spring nao consegue injetar a interface quando usa @Service
+    private final PaymentProcessor processor; // Falha ao tentar injetar StripePaymentProcessor como PaymentProcessor
+}
+
+// CERTO: Usar @Bean em @Configuration
+public interface PaymentProcessor {
+    PaymentResult process(Payment payment);
+}
+
+public class StripePaymentProcessor implements PaymentProcessor {
+    @Override
+    public PaymentResult process(Payment payment) {
+        // ...
+    }
+}
+
+@Configuration
+public class PaymentConfig {
+    @Bean
+    public PaymentProcessor paymentProcessor(RestClient client) {
+        return new StripePaymentProcessor(client);
+    }
+}
+
+// Agora funciona perfeitamente:
+public class CreateOrderUseCase {
+    private final PaymentProcessor processor; // Injecao funciona!
+    
+    public CreateOrderUseCase(PaymentProcessor processor) {
+        this.processor = processor;
+    }
+}
+
 ## Tabela Decisoria: Qual Anotacao Usar?
 
 | Classe | Anotacao | Razao |
 |--------|----------|-------|
+| **PaymentProcessor (interface) + StripePaymentProcessor (impl)** | `@Bean` | **REGRA: Todo Bean com interface usa @Bean** |
 | **CustomerRepository (Spring Data)** | Nao precisa | Spring Data cria automaticamente |
 | **RegisterCustomerUseCase** | Componente | Logica de negocio (caso de uso) |
 | **PaginationHelper** | `@Component` | Utilitario reutilizavel |
