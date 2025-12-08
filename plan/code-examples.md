@@ -6,21 +6,32 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 
 ## 📋 Índice
 
+### PARTE I: Fundamentos da Arquitetura (Camadas DDD)
+
 1. [Entidade de Dominio (MongoDB)](#entidade-de-dominio-mongodb)
 2. [DTO com Bean Validation](#dto-com-bean-validation)
 3. [Mapper com MapStruct](#mapper-com-mapstruct)
 4. [UseCase com Regras e Constructor Injection](#usecase-com-regras-e-constructor-injection)
+
+### PARTE II: Web Layer (REST, Testes e Tratamento de Erros)
+
 5. [Controller REST com @PreAuthorize e Status Corretos](#controller-rest-com-preauthorize-e-status-corretos)
 6. [Tratamento de Erros com ProblemDetail](#tratamento-de-erros-com-problemdetail)
 7. [Teste Unitario com JUnit 6, Mockito e Instancio](#teste-unitario-com-junit-6-mockito-e-instancio)
 8. [Teste de Repository com Testcontainers](#teste-de-repository-com-testcontainers)
-9. [Evitando IFs Desnecessarios](#evitando-ifs-desnecessarios)
-   - 9.1 [Validacoes com Bean Validation](#1-validacoes-com-bean-validation-ao-inves-de-ifs-manuais)
-   - 9.2 [Optional ao inves de IF null](#2-optional-ao-inves-de-if-null)
-   - 9.3 [Query MongoDB ao inves de IF em memoria](#3-query-mongodb-ao-inves-de-if-em-memoria)
-   - 9.4 [Expressoes ternarias](#4-expressoes-ternarias-simples-ao-inves-de-ifelse)
-   - 9.5 [Guard Clauses](#5-guard-clauses-em-vez-de-if-aninhados)
-   - 9.6 [Spring Data features](#6-spring-data-features-ao-inves-de-if-manualmente)
+
+### PARTE III: Padrões Arquiteturais e Injeção de Dependências
+
+9. [Spring Annotations - @Bean, @Component, UseCase, @Repository](#spring-annotations---bean-component-usecase-repository)
+   - 9.1 [@Repository - Acesso a Dados](#repository---acesso-a-dados)
+   - 9.2 [UseCase - Logica de Negocio](#usecase---logica-de-negocio)
+   - 9.3 [@Component - Utilitarios e Helpers](#component---utilitarios-e-helpers)
+   - 9.4 [@Bean - Configuracao e Terceiros](#bean---configuracao-e-terceiros)
+   - 9.5 [🔑 REGRA OBRIGATÓRIA: @Bean para Interfaces](#-regra-obrigatória-bean-para-interfaces)
+   - 9.6 [Anti-patterns: Quando NÃO Usar](#anti-patterns-quando-nao-usar)
+
+### PARTE IV: Java Moderno (25) - Recursos Avancados
+
 10. [Java 25 Features - Explore Melhor](#java-25-features---explore-melhor)
     - 10.1 [Pattern Matching em Switch](#1-pattern-matching-em-switch-record-patterns)
     - 10.2 [Sequenced Collections](#2-sequenced-collections---getfirst-e-getlast)
@@ -28,43 +39,51 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 10.4 [Sealed Classes](#4-sealed-classes---controle-de-hierarquia)
     - 10.5 [Records com Validacao Compacta](#5-records-com-validacao-compacta)
     - 10.6 [Virtual Threads](#6-virtual-threads-preludio)
-11. [Spring Boot 4 Features - Explore Melhor](#spring-boot-4-features---explore-melhor)
-    - 11.1 [RestClient](#1-restclient-substitui-resttemplate)
-    - 11.2 [ProblemDetail (RFC 7807)](#2-problemdetail-rfc-7807)
-    - 11.3 [@Observed (Micrometer)](#3-observability-com-observed-micrometer)
-    - 11.4 [ConfigurationProperties Typed](#4-configurationproperties-typed)
-12. [Helpers e Utility Classes - Quando e Como Usar](#helpers-e-utility-classes---quando-e-como-usar)
-    - 12.1 [Converters/Parsers](#1-convertersparsers---transformacoes-de-dados)
-    - 12.2 [Validators](#2-validators---logica-de-validacao-complexa)
-    - 12.3 [Formatters](#3-formatters---formatacao-de-saida)
-    - 12.4 [Calculators](#4-calculators---logica-de-calculo-pura)
-    - 12.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
-13. [Design Patterns para IFs Complexos](#design-patterns-para-ifs-complexos)
-    - 13.1 [Strategy Pattern](#1-strategy-pattern---multiplos-comportamentos)
-    - 13.2 [State Pattern](#2-state-pattern---mudancas-de-estado)
-    - 13.3 [Builder Pattern](#3-builder-pattern---construcao-complexa)
-    - 13.4 [Chain of Responsibility](#4-chain-of-responsibility---pipeline-de-validacoes)
-    - 13.5 [Factory Pattern](#5-factory-pattern---criacao-baseada-em-tipo)
-    - 13.6 [Decorator Pattern](#6-decorator-pattern---adicionar-comportamentos)
-14. [Constantes vs Enums - Boas Praticas](#constantes-vs-enums---boas-praticas)
-    - 14.1 [Quando Usar Enums](#quando-usar-enums)
-    - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
-    - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
-16. [Streams - Boas Praticas vs Anti-patterns](#streams---boas-praticas-vs-anti-patterns)
-    - 16.1 [Filter + Map + Collect](#1-filter--map--collect)
-    - 16.2 [FlatMap para Colecoes Aninhadas](#2-flatmap-para-colecoes-aninhadas)
-    - 16.3 [Terminal Operations](#3-terminal-operations---collect-foreach-reduce)
-    - 16.4 [Performance e Lazy Evaluation](#4-performance-e-lazy-evaluation)
-    - 16.5 [Evitar Anti-patterns](#5-anti-patterns-em-streams)
-15. [Spring Annotations - @Bean, @Component, UseCase, @Repository](#spring-annotations---bean-component-usecase-repository)
-    - 15.1 [@Repository - Acesso a Dados](#repository---acesso-a-dados)
-    - 15.2 [UseCase - Logica de Negocio](#usecase---logica-de-negocio)
-    - 15.3 [@Component - Utilitarios e Helpers](#component---utilitarios-e-helpers)
-    - 15.4 [@Bean - Configuracao e Terceiros](#bean---configuracao-e-terceiros)
-    - 15.5 [🔑 REGRA OBRIGATÓRIA: @Bean para Interfaces](#-regra-obrigatória-bean-para-interfaces)
-    - 15.6 [Anti-patterns: Quando NÃO Usar](#anti-patterns-quando-nao-usar)
-    - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
-    - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
+
+11. [Streams - Boas Praticas vs Anti-patterns](#streams---boas-praticas-vs-anti-patterns)
+    - 11.1 [Filter + Map + Collect](#1-filter--map--collect)
+    - 11.2 [FlatMap para Colecoes Aninhadas](#2-flatmap-para-colecoes-aninhadas)
+    - 11.3 [Terminal Operations](#3-terminal-operations---collect-foreach-reduce)
+    - 11.4 [Performance e Lazy Evaluation](#4-performance-e-lazy-evaluation)
+    - 11.5 [Evitar Anti-patterns](#5-anti-patterns-em-streams)
+
+### PARTE V: Spring Boot 4 - Features Modernas
+
+12. [Spring Boot 4 Features - Explore Melhor](#spring-boot-4-features---explore-melhor)
+    - 12.1 [RestClient](#1-restclient-substitui-resttemplate)
+    - 12.2 [ProblemDetail (RFC 7807)](#2-problemdetail-rfc-7807)
+    - 12.3 [@Observed (Micrometer)](#3-observability-com-observed-micrometer)
+    - 12.4 [ConfigurationProperties Typed](#4-configurationproperties-typed)
+
+### PARTE VI: Clean Code - Boas Práticas e Padrões
+
+13. [Evitando IFs Desnecessarios](#evitando-ifs-desnecessarios)
+    - 13.1 [Validacoes com Bean Validation](#1-validacoes-com-bean-validation-ao-inves-de-ifs-manuais)
+    - 13.2 [Optional ao inves de IF null](#2-optional-ao-inves-de-if-null)
+    - 13.3 [Query MongoDB ao inves de IF em memoria](#3-query-mongodb-ao-inves-de-if-em-memoria)
+    - 13.4 [Expressoes ternarias](#4-expressoes-ternarias-simples-ao-inves-de-ifelse)
+    - 13.5 [Guard Clauses](#5-guard-clauses-em-vez-de-if-aninhados)
+    - 13.6 [Spring Data features](#6-spring-data-features-ao-inves-de-if-manualmente)
+
+14. [Design Patterns para IFs Complexos](#design-patterns-para-ifs-complexos)
+    - 14.1 [Strategy Pattern](#1-strategy-pattern---multiplos-comportamentos)
+    - 14.2 [State Pattern](#2-state-pattern---mudancas-de-estado)
+    - 14.3 [Builder Pattern](#3-builder-pattern---construcao-complexa)
+    - 14.4 [Chain of Responsibility](#4-chain-of-responsibility---pipeline-de-validacoes)
+    - 14.5 [Factory Pattern](#5-factory-pattern---criacao-baseada-em-tipo)
+    - 14.6 [Decorator Pattern](#6-decorator-pattern---adicionar-comportamentos)
+
+15. [Helpers e Utility Classes - Quando e Como Usar](#helpers-e-utility-classes---quando-e-como-usar)
+    - 15.1 [Converters/Parsers](#1-convertersparsers---transformacoes-de-dados)
+    - 15.2 [Validators](#2-validators---logica-de-validacao-complexa)
+    - 15.3 [Formatters](#3-formatters---formatacao-de-saida)
+    - 15.4 [Calculators](#4-calculators---logica-de-calculo-pura)
+    - 15.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
+
+16. [Constantes vs Enums - Boas Praticas](#constantes-vs-enums---boas-praticas)
+    - 16.1 [Quando Usar Enums](#quando-usar-enums)
+    - 16.2 [Quando Usar Constantes](#quando-usar-constantes)
+    - 16.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
 
 ---
 
