@@ -814,6 +814,311 @@ public class PaymentConfig {
 }
 ```
 
+## Helpers e Utility Classes - Quando e Como Usar
+
+Helpers devem ser **utilitários puros** (sem estado), **testáveis** e **reutilizáveis**. Evite acumular lógica neles.
+
+### 1. Converters/Parsers - Transformacoes de Dados
+
+Quando precisa converter entre tipos ou formatos.
+
+✅ CERTO:
+```java
+// infrastructure/converter/MoneyConverter.java
+public final class MoneyConverter {
+    private MoneyConverter() {} // Nao pode instanciar
+
+    public static String formatCurrency(BigDecimal value) {
+        return String.format("R$ %.2f", value);
+    }
+
+    public static BigDecimal parseAmount(String formatted) {
+        return new BigDecimal(formatted.replaceAll("[^0-9.]", ""));
+    }
+
+    public static boolean isValidAmount(BigDecimal value) {
+        return value != null && value.compareTo(BigDecimal.ZERO) > 0;
+    }
+}
+
+// Uso em mapper ou converter
+@Mapper(componentModel = "spring", uses = MoneyConverter.class)
+public interface OrderMapper {
+    @Mapping(target = "totalFormatted", expression = "java(MoneyConverter.formatCurrency(order.total()))")
+    OrderResponse toResponse(Order order);
+}
+```
+
+❌ ERRADO:
+```java
+@Service
+public class OrderService {
+    // Nao coloque helpers em services
+    public String formatCurrency(BigDecimal value) {
+        return String.format("R$ %.2f", value);
+    }
+}
+```
+
+### 2. Validators - Logica de Validacao Complexa
+
+Quando validacao vai além de Bean Validation.
+
+✅ CERTO:
+```java
+// domain/validator/OrderValidator.java
+public final class OrderValidator {
+    private OrderValidator() {}
+
+    public static void validateOrder(Order order) {
+        if (order.items().isEmpty()) {
+            throw new OrderValidationException("Order must have at least one item");
+        }
+
+        for (var item : order.items()) {
+            if (item.quantity() <= 0) {
+                throw new OrderValidationException("Item quantity must be positive");
+            }
+        }
+
+        if (order.total().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new OrderValidationException("Order total must be positive");
+        }
+    }
+
+    public static boolean isValidEmail(String email) {
+        return email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$");
+    }
+}
+
+// Uso em service
+@Service
+public class OrderService {
+    public OrderResponse create(CreateOrderRequest request) {
+        var order = mapper.toEntity(request);
+        OrderValidator.validateOrder(order); // Chamada explícita
+        return repository.save(order);
+    }
+}
+```
+
+❌ ERRADO:
+```java
+@Service
+public class OrderService {
+    public OrderResponse create(CreateOrderRequest request) {
+        var order = mapper.toEntity(request);
+        
+        // Validacao espalhada no service
+        if (order.items().isEmpty()) {
+            throw new OrderValidationException("...");
+        }
+        if (order.items().stream().anyMatch(i -> i.quantity() <= 0)) {
+            throw new OrderValidationException("...");
+        }
+        
+        return repository.save(order);
+    }
+}
+```
+
+### 3. Formatters - Formatacao de Saida
+
+Quando precisa formatar valores para exibicao.
+
+✅ CERTO:
+```java
+// infrastructure/formatter/DateTimeFormatter.java
+public final class DateTimeFormatter {
+    private DateTimeFormatter() {}
+
+    public static String formatBrazilianDate(LocalDate date) {
+        return date.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
+    public static String formatBrazilianDateTime(LocalDateTime dateTime) {
+        return dateTime.format(java.time.format.DateTimeFormatter
+            .ofPattern("dd/MM/yyyy HH:mm:ss")
+            .withLocale(Locale.of("pt", "BR")));
+    }
+
+    public static String formatOrderStatus(OrderStatus status) {
+        return switch (status) {
+            case PENDING -> "Pendente";
+            case CONFIRMED -> "Confirmado";
+            case SHIPPED -> "Enviado";
+            case DELIVERED -> "Entregue";
+            case CANCELLED -> "Cancelado";
+        };
+    }
+}
+
+// Uso em mapper
+@Mapper(componentModel = "spring", uses = DateTimeFormatter.class)
+public interface OrderMapper {
+    @Mapping(target = "createdAtFormatted", 
+             expression = "java(DateTimeFormatter.formatBrazilianDateTime(order.createdAt()))")
+    @Mapping(target = "statusFormatted",
+             expression = "java(DateTimeFormatter.formatOrderStatus(order.status()))")
+    OrderResponse toResponse(Order order);
+}
+```
+
+❌ ERRADO:
+```java
+// DTO com logica de formatacao
+public record OrderResponse(
+    String id,
+    String createdAtFormatted
+) {
+    public OrderResponse(Order order) {
+        this(order.id(), formatBrazilianDate(order.createdAt())); // Logica no DTO
+    }
+
+    private static String formatBrazilianDate(LocalDateTime dt) {
+        return dt.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
+    }
+}
+```
+
+### 4. Calculators - Logica de Calculo Pura
+
+Quando temos calculos reusaveis, especialmente para dominio.
+
+✅ CERTO:
+```java
+// domain/calculator/DiscountCalculator.java
+public final class DiscountCalculator {
+    private DiscountCalculator() {}
+
+    private static final BigDecimal PREMIUM_RATE = new BigDecimal("0.10"); // 10%
+    private static final BigDecimal VOLUME_DISCOUNT_THRESHOLD = new BigDecimal("1000");
+    private static final BigDecimal VOLUME_RATE = new BigDecimal("0.05"); // 5%
+
+    public static BigDecimal calculateDiscount(Customer customer, Order order) {
+        var basePrice = order.total();
+
+        if (customer.isPremium()) {
+            return basePrice.multiply(PREMIUM_RATE);
+        }
+
+        if (basePrice.compareTo(VOLUME_DISCOUNT_THRESHOLD) > 0) {
+            return basePrice.multiply(VOLUME_RATE);
+        }
+
+        return BigDecimal.ZERO;
+    }
+
+    public static BigDecimal applyTax(BigDecimal amount, String region) {
+        var taxRate = switch (region) {
+            case "SP" -> new BigDecimal("0.18"); // 18%
+            case "RJ" -> new BigDecimal("0.20"); // 20%
+            default -> new BigDecimal("0.15"); // 15%
+        };
+        
+        return amount.multiply(taxRate.add(BigDecimal.ONE));
+    }
+
+    public static BigDecimal calculateFinalPrice(Order order, Customer customer) {
+        var discount = calculateDiscount(customer, order);
+        var afterDiscount = order.total().subtract(discount);
+        return applyTax(afterDiscount, customer.region());
+    }
+}
+
+// Uso em service
+@Service
+public class PricingService {
+    public BigDecimal getFinalPrice(Order order, Customer customer) {
+        return DiscountCalculator.calculateFinalPrice(order, customer);
+    }
+}
+```
+
+❌ ERRADO:
+```java
+@Service
+public class PricingService {
+    // Calculos espalhados no service
+    public BigDecimal getFinalPrice(Order order, Customer customer) {
+        var basePrice = order.total();
+        BigDecimal discount = BigDecimal.ZERO;
+        
+        if (customer.isPremium()) {
+            discount = basePrice.multiply(new BigDecimal("0.10"));
+        } else if (basePrice.compareTo(new BigDecimal("1000")) > 0) {
+            discount = basePrice.multiply(new BigDecimal("0.05"));
+        }
+        
+        var afterDiscount = basePrice.subtract(discount);
+        var taxRate = customer.region().equals("SP") ? new BigDecimal("0.18") : new BigDecimal("0.15");
+        
+        return afterDiscount.multiply(taxRate.add(BigDecimal.ONE));
+    }
+}
+```
+
+### 5. Collection Utilities - Operacoes em Colecoes
+
+Utilitarios para operacoes comuns em colecoes sem criar streams verbose.
+
+✅ CERTO:
+```java
+// infrastructure/util/CollectionHelper.java
+public final class CollectionHelper {
+    private CollectionHelper() {}
+
+    public static <T> boolean isNullOrEmpty(Collection<T> collection) {
+        return collection == null || collection.isEmpty();
+    }
+
+    public static <T> List<T> emptyIfNull(List<T> list) {
+        return list != null ? list : Collections.emptyList();
+    }
+
+    public static <T> T getFirstOrNull(List<T> list) {
+        return list != null && !list.isEmpty() ? list.getFirst() : null;
+    }
+
+    public static <T> List<T> filterByPredicate(List<T> list, java.util.function.Predicate<T> predicate) {
+        return emptyIfNull(list).stream()
+            .filter(predicate)
+            .toList();
+    }
+}
+
+// Uso
+@Service
+public class OrderService {
+    public List<OrderItem> getAvailableItems(Order order) {
+        return CollectionHelper.filterByPredicate(
+            order.items(),
+            item -> item.quantity() > 0
+        );
+    }
+}
+```
+
+❌ ERRADO:
+```java
+@Service
+public class OrderService {
+    public List<OrderItem> getAvailableItems(Order order) {
+        if (order.items() == null) {
+            return new ArrayList<>();
+        }
+        
+        return order.items().stream()
+            .filter(item -> item.quantity() > 0)
+            .toList();
+    }
+    
+    public boolean hasItems(Order order) {
+        return order.items() != null && !order.items().isEmpty();
+    }
+}
+```
+
 ## Design Patterns para IFs Complexos
 
 ### 1. Strategy Pattern - Multiplos Comportamentos
