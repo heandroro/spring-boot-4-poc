@@ -50,6 +50,12 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
     - 14.1 [Quando Usar Enums](#quando-usar-enums)
     - 14.2 [Quando Usar Constantes](#quando-usar-constantes)
     - 14.3 [Padroes de Enum Avancado](#padroes-de-enum-avancado)
+16. [Streams - Boas Praticas vs Anti-patterns](#streams---boas-praticas-vs-anti-patterns)
+    - 16.1 [Filter + Map + Collect](#1-filter--map--collect)
+    - 16.2 [FlatMap para Colecoes Aninhadas](#2-flatmap-para-colecoes-aninhadas)
+    - 16.3 [Terminal Operations](#3-terminal-operations---collect-foreach-reduce)
+    - 16.4 [Performance e Lazy Evaluation](#4-performance-e-lazy-evaluation)
+    - 16.5 [Evitar Anti-patterns](#5-anti-patterns-em-streams)
 15. [Spring Annotations - @Bean, @Component, UseCase, @Repository](#spring-annotations---bean-component-usecase-repository)
     - 15.1 [@Repository - Acesso a Dados](#repository---acesso-a-dados)
     - 15.2 [UseCase - Logica de Negocio](#usecase---logica-de-negocio)
@@ -1958,6 +1964,336 @@ public enum Transaction {
 | **Serializacao** | ✅ Nativa | ✅ Nativa |
 | **Exemplo** | OrderStatus, UserRole | TIMEOUT_SECONDS, MAX_SIZE |
 ```
+
+## Streams - Boas Praticas vs Anti-patterns
+
+Streams são fundamentais em Java moderno. Use com limpeza de código (Clean Code principles).
+
+### 1. Filter + Map + Collect
+
+✅ CERTO - Legível e Declarativo:
+```java
+// Transformar lista de customers para emails
+List<String> emails = customers.stream()
+    .map(Customer::email)
+    .collect(Collectors.toList());
+
+// Filtrar e transformar
+List<CustomerResponse> activeEmails = customers.stream()
+    .filter(Customer::isActive)
+    .map(customerMapper::toResponse)
+    .collect(Collectors.toList());
+
+// Mais complexo: agrupar e contar
+Map<String, Long> customersByRegion = customers.stream()
+    .collect(Collectors.groupingBy(Customer::region, Collectors.counting()));
+
+// Coletar em set
+Set<String> uniqueRegions = customers.stream()
+    .map(Customer::region)
+    .collect(Collectors.toSet());
+```
+
+❌ ERRADO - Loops Imperativos (Evite):
+```java
+// Nao use loops manuais quando pode usar stream
+List<String> emails = new ArrayList<>();
+for (Customer customer : customers) {
+    emails.add(customer.email());
+}
+
+// Nao use multiplos loops
+List<CustomerResponse> activeEmails = new ArrayList<>();
+for (Customer customer : customers) {
+    if (customer.isActive()) {
+        activeEmails.add(customerMapper.toResponse(customer));
+    }
+}
+
+// Nao use acumuladores mutaveis
+Map<String, Long> customersByRegion = new HashMap<>();
+for (Customer customer : customers) {
+    String region = customer.region();
+    customersByRegion.put(region, customersByRegion.getOrDefault(region, 0L) + 1);
+}
+```
+
+### 2. FlatMap para Colecoes Aninhadas
+
+✅ CERTO - FlatMap para Niveis Multiplos:
+```java
+// Extrair todos os itens de pedidos de multiplos clientes
+List<OrderItem> allItems = customers.stream()
+    .flatMap(customer -> customer.orders().stream())
+    .flatMap(order -> order.items().stream())
+    .collect(Collectors.toList());
+
+// Mais legível com método helper
+List<OrderItem> allItems = customers.stream()
+    .flatMap(customer -> getOrderItems(customer))
+    .collect(Collectors.toList());
+
+private List<OrderItem> getOrderItems(Customer customer) {
+    return customer.orders().stream()
+        .flatMap(order -> order.items().stream())
+        .collect(Collectors.toList());
+}
+
+// Filtrar aninhado
+List<OrderItem> paidItems = customers.stream()
+    .flatMap(customer -> customer.orders().stream())
+    .filter(order -> order.isPaid())
+    .flatMap(order -> order.items().stream())
+    .collect(Collectors.toList());
+```
+
+❌ ERRADO - Loops Aninhados:
+```java
+// Evite loops aninhados profundos
+List<OrderItem> allItems = new ArrayList<>();
+for (Customer customer : customers) {
+    for (Order order : customer.orders()) {
+        for (OrderItem item : order.items()) {
+            allItems.add(item);
+        }
+    }
+}
+
+// Nao use break/continue em streams - use filter
+for (Customer customer : customers) {
+    if (!customer.isActive()) continue; // Evite
+    for (Order order : customer.orders()) {
+        if (!order.isPaid()) continue;  // Evite
+        for (OrderItem item : order.items()) {
+            allItems.add(item);
+        }
+    }
+}
+```
+
+### 3. Terminal Operations - collect, forEach, reduce
+
+✅ CERTO - Usar Terminal Operations Apropriadas:
+```java
+// Coletar em Lista
+List<String> names = customers.stream()
+    .map(Customer::name)
+    .collect(Collectors.toList());
+
+// forEach apenas para side-effects (logging, envio)
+customers.stream()
+    .filter(Customer::isActive)
+    .forEach(customer -> emailService.send(customer.email()));
+
+// reduce para agregacao
+BigDecimal totalSpent = orders.stream()
+    .map(Order::total)
+    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+// findFirst com Optional
+Optional<Customer> premium = customers.stream()
+    .filter(Customer::isPremium)
+    .findFirst();
+
+// anyMatch / allMatch para validacao
+boolean hasActiveCustomers = customers.stream()
+    .anyMatch(Customer::isActive);
+
+boolean allPaid = orders.stream()
+    .allMatch(Order::isPaid);
+```
+
+❌ ERRADO - Terminal Operations Ineficientes:
+```java
+// Nao use forEach para colecionar dados (use collect)
+List<String> names = new ArrayList<>();
+customers.stream()
+    .map(Customer::name)
+    .forEach(names::add); // ERRADO - side effect
+
+// Nao colete apenas para iterar novamente
+List<String> result = customers.stream()
+    .filter(Customer::isActive)
+    .collect(Collectors.toList());
+result.forEach(System.out::println); // Ineficiente
+
+// Nao use collect quando findFirst/anyMatch bastaria
+boolean exists = customers.stream()
+    .filter(c -> c.email().equals("test@example.com"))
+    .collect(Collectors.toList())
+    .size() > 0; // ERRADO
+
+// Use:
+boolean exists = customers.stream()
+    .anyMatch(c -> c.email().equals("test@example.com")); // Certo
+```
+
+### 4. Performance e Lazy Evaluation
+
+✅ CERTO - Entender Lazy Evaluation:
+```java
+// Streams sao lazy - nada executa ate o terminal operation
+var expensive = customers.stream()
+    .filter(this::isExpensiveCheck)  // Nao roda ainda
+    .map(this::complexTransform)      // Nao roda ainda
+    .limit(10);                        // Nao roda ainda
+    // .collect() - AQUI executa tudo
+
+// Limite resultado ANTES de transformacoes caras
+List<String> topEmails = customers.stream()
+    .limit(10)                              // Primeiro limitar
+    .map(this::complexTransformation)       // Depois transformar
+    .collect(Collectors.toList());
+
+// Use parallelStream para operacoes pesadas (cuidado!)
+List<String> processedItems = largeList.parallelStream()
+    .filter(item -> item.meets(criteria()))
+    .map(item -> expensiveTransformation(item))
+    .collect(Collectors.toList());
+
+// Short-circuit operations (param eficiente)
+Optional<Customer> first = customers.stream()
+    .filter(Customer::isActive)
+    .findFirst();  // Para assim que achar
+```
+
+❌ ERRADO - Performance Ruim:
+```java
+// Nao colete sem necessidade
+var result = customers.stream()
+    .filter(Customer::isActive)
+    .collect(Collectors.toList())
+    .subList(0, 10);  // ERRADO - coleta todos, depois limita
+
+// Correto:
+var result = customers.stream()
+    .filter(Customer::isActive)
+    .limit(10)
+    .collect(Collectors.toList());
+
+// Nao use parallelStream casualmente
+var result = smallList.parallelStream()  // Overhead nao vale
+    .map(x -> x * 2)
+    .collect(Collectors.toList());
+
+// Nao reutilize streams (sao one-shot)
+Stream<String> stream = customers.stream()
+    .map(Customer::email);
+stream.forEach(System.out::println);
+stream.forEach(System.out::println);  // ERRO - stream ja consumido
+```
+
+### 5. Anti-patterns em Streams
+
+#### ❌ Nao Use Streams Para Side Effects Principais
+
+```java
+// ERRADO: Stream como controle de fluxo
+customers.stream()
+    .filter(Customer::isActive)
+    .forEach(customer -> {
+        var order = createOrder(customer);
+        orderRepository.save(order);
+        emailService.send(customer.email());
+    });
+
+// CERTO: Use UseCase ou Service para logica de negocio
+public class CreateOrdersForActiveCustomersUseCase {
+    private final CustomerRepository customerRepository;
+    private final OrderRepository orderRepository;
+    private final EmailService emailService;
+
+    public CreateOrdersForActiveCustomersUseCase(
+        CustomerRepository customerRepository,
+        OrderRepository orderRepository,
+        EmailService emailService
+    ) {
+        this.customerRepository = customerRepository;
+        this.orderRepository = orderRepository;
+        this.emailService = emailService;
+    }
+
+    public void execute() {
+        var activeCustomers = customerRepository.findAllActive();
+        
+        activeCustomers.forEach(customer -> {
+            var order = createOrder(customer);
+            orderRepository.save(order);
+            emailService.send(customer.email());
+        });
+    }
+}
+```
+
+#### ❌ Nao Use Streams Complexos Sem Extracoes
+
+```java
+// ERRADO: Stream muito longo e complexo
+List<OrderResponse> responses = orders.stream()
+    .filter(order -> order.getCustomer().isActive() && order.getTotal().compareTo(BigDecimal.ZERO) > 0)
+    .map(order -> {
+        var customer = order.getCustomer();
+        var items = order.getItems().stream()
+            .map(item -> new ItemResponse(item.getId(), item.getName()))
+            .collect(Collectors.toList());
+        return new OrderResponse(order.getId(), customer.getEmail(), items, order.getTotal());
+    })
+    .sorted(Comparator.comparing(OrderResponse::getTotal).reversed())
+    .collect(Collectors.toList());
+
+// CERTO: Extrair em metodos pequenos e testáveis
+List<OrderResponse> responses = orders.stream()
+    .filter(this::isValidOrder)
+    .map(this::toOrderResponse)
+    .sorted(byTotalDescending())
+    .collect(Collectors.toList());
+
+private boolean isValidOrder(Order order) {
+    return order.getCustomer().isActive() && 
+           order.getTotal().compareTo(BigDecimal.ZERO) > 0;
+}
+
+private OrderResponse toOrderResponse(Order order) {
+    var customer = order.getCustomer();
+    var items = order.getItems().stream()
+        .map(this::toItemResponse)
+        .collect(Collectors.toList());
+    return new OrderResponse(order.getId(), customer.getEmail(), items, order.getTotal());
+}
+
+private ItemResponse toItemResponse(OrderItem item) {
+    return new ItemResponse(item.getId(), item.getName());
+}
+
+private Comparator<OrderResponse> byTotalDescending() {
+    return Comparator.comparing(OrderResponse::getTotal).reversed();
+}
+```
+
+#### ❌ Nao Use Null em Streams
+
+```java
+// ERRADO: Null dentro de streams
+List<String> emails = customers.stream()
+    .map(Customer::email)
+    .filter(email -> email != null)  // Nao deveria chegar aqui
+    .collect(Collectors.toList());
+
+// CERTO: Use Optional + filter
+List<String> emails = customers.stream()
+    .map(Customer::optionalEmail)    // Retorna Optional<String>
+    .filter(Optional::isPresent)
+    .map(Optional::get)
+    .collect(Collectors.toList());
+
+// Ou melhor ainda:
+List<String> emails = customers.stream()
+    .map(Customer::optionalEmail)
+    .flatMap(Function.identity())  // Optional.stream() em Java 9+
+    .collect(Collectors.toList());
+```
+
+---
 
 ## Spring Annotations - @Bean, @Component, UseCase, @Repository
 
