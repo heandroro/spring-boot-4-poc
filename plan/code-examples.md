@@ -4,6 +4,51 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 
 🚫 **Lombok nao permitido:** Evite qualquer anotacao Lombok (`@Data`, `@Builder`, `@Getter`, `@Setter`, `@Value`, `@AllArgsConstructor`, `@NoArgsConstructor`). Prefira Records, construtores explicitos e MapStruct para mapeamento.
 
+## 📋 Índice
+
+1. [Entidade de Dominio (MongoDB)](#entidade-de-dominio-mongodb)
+2. [DTO com Bean Validation](#dto-com-bean-validation)
+3. [Mapper com MapStruct](#mapper-com-mapstruct)
+4. [Service com Regras e Constructor Injection](#service-com-regras-e-constructor-injection)
+5. [Controller REST com @PreAuthorize e Status Corretos](#controller-rest-com-preauthorize-e-status-corretos)
+6. [Tratamento de Erros com ProblemDetail](#tratamento-de-erros-com-problemdetail)
+7. [Teste Unitario com JUnit 6, Mockito e Instancio](#teste-unitario-com-junit-6-mockito-e-instancio)
+8. [Teste de Repository com Testcontainers](#teste-de-repository-com-testcontainers)
+9. [Evitando IFs Desnecessarios](#evitando-ifs-desnecessarios)
+   - 9.1 [Validacoes com Bean Validation](#1-validacoes-com-bean-validation-ao-inves-de-ifs-manuais)
+   - 9.2 [Optional ao inves de IF null](#2-optional-ao-inves-de-if-null)
+   - 9.3 [Query MongoDB ao inves de IF em memoria](#3-query-mongodb-ao-inves-de-if-em-memoria)
+   - 9.4 [Expressoes ternarias](#4-expressoes-ternarias-simples-ao-inves-de-ifelse)
+   - 9.5 [Guard Clauses](#5-guard-clauses-em-vez-de-if-aninhados)
+   - 9.6 [Spring Data features](#6-spring-data-features-ao-inves-de-if-manualmente)
+10. [Java 25 Features - Explore Melhor](#java-25-features---explore-melhor)
+    - 10.1 [Pattern Matching em Switch](#1-pattern-matching-em-switch-record-patterns)
+    - 10.2 [Sequenced Collections](#2-sequenced-collections---getfirst-e-getlast)
+    - 10.3 [Text Blocks](#3-text-blocks-para-queries-mongodb-e-sql)
+    - 10.4 [Sealed Classes](#4-sealed-classes---controle-de-hierarquia)
+    - 10.5 [Records com Validacao Compacta](#5-records-com-validacao-compacta)
+    - 10.6 [Virtual Threads](#6-virtual-threads-preludio)
+11. [Spring Boot 4 Features - Explore Melhor](#spring-boot-4-features---explore-melhor)
+    - 11.1 [RestClient](#1-restclient-substitui-resttemplate)
+    - 11.2 [ProblemDetail (RFC 7807)](#2-problemdetail-rfc-7807)
+    - 11.3 [@Observed (Micrometer)](#3-observability-com-observed-micrometer)
+    - 11.4 [ConfigurationProperties Typed](#4-configurationproperties-typed)
+12. [Helpers e Utility Classes - Quando e Como Usar](#helpers-e-utility-classes---quando-e-como-usar)
+    - 12.1 [Converters/Parsers](#1-convertersparsers---transformacoes-de-dados)
+    - 12.2 [Validators](#2-validators---logica-de-validacao-complexa)
+    - 12.3 [Formatters](#3-formatters---formatacao-de-saida)
+    - 12.4 [Calculators](#4-calculators---logica-de-calculo-pura)
+    - 12.5 [Collection Utilities](#5-collection-utilities---operacoes-em-colecoes)
+13. [Design Patterns para IFs Complexos](#design-patterns-para-ifs-complexos)
+    - 13.1 [Strategy Pattern](#1-strategy-pattern---multiplos-comportamentos)
+    - 13.2 [State Pattern](#2-state-pattern---mudancas-de-estado)
+    - 13.3 [Builder Pattern](#3-builder-pattern---construcao-complexa)
+    - 13.4 [Chain of Responsibility](#4-chain-of-responsibility---pipeline-de-validacoes)
+    - 13.5 [Factory Pattern](#5-factory-pattern---criacao-baseada-em-tipo)
+    - 13.6 [Decorator Pattern](#6-decorator-pattern---adicionar-comportamentos)
+
+---
+
 ## Entidade de Dominio (MongoDB)
 ```java
 @Document(collection = "products")
