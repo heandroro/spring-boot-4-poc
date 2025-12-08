@@ -19,6 +19,17 @@ public record Product(
 public record ProductSnapshot(String description, BigDecimal originalPrice) {}
 ```
 
+Evitar:
+```java
+@Document
+@Data // Lombok nao permitido
+public class Product {
+    @Id ObjectId id; // nao exponha ObjectId
+    String sku; // sem indice
+    String name;
+}
+```
+
 ## DTO com Bean Validation
 ```java
 public record CreateProductRequest(
@@ -29,12 +40,29 @@ public record CreateProductRequest(
 ) {}
 ```
 
+Evitar:
+```java
+public record CreateProductRequest(String sku, String name, BigDecimal price, Integer stock) {}
+// Sem Bean Validation -> abre brechas de dados invalidos
+```
+
 ## Mapper com MapStruct
 ```java
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
     Product toEntity(CreateProductRequest request);
     ProductResponse toResponse(Product product);
+}
+```
+
+Evitar:
+```java
+public class ProductMapperManual {
+    // Mapeamento manual aumenta risco de esquecer campos e nao aplica convencoes
+    public Product toEntity(CreateProductRequest request) {
+        var p = new Product(null, request.sku(), request.name(), request.price(), request.stock(), null, null, null);
+        return p;
+    }
 }
 ```
 
@@ -61,6 +89,19 @@ public class ProductService {
 }
 ```
 
+Evitar:
+```java
+@Service
+public class ProductServiceBad {
+    @Autowired private ProductRepository repository; // field injection
+
+    public Product create(CreateProductRequest request) {
+        // sem regra de negocio e sem mapper
+        return repository.save(new Product(...));
+    }
+}
+```
+
 ## Controller REST com @PreAuthorize e Status Corretos
 ```java
 @RestController
@@ -81,6 +122,17 @@ public class ProductController {
 }
 ```
 
+Evitar:
+```java
+@RestController
+public class ProductControllerBad {
+    @PostMapping("/products")
+    public Product create(@RequestBody Product product) { // retorna entidade e sem validacao
+        return repository.save(product); // pula service e regras
+    }
+}
+```
+
 ## Tratamento de Erros com ProblemDetail
 ```java
 @RestControllerAdvice
@@ -92,6 +144,17 @@ public class GlobalExceptionHandler {
         problem.setTitle("SKU duplicado");
         problem.setDetail(ex.getMessage());
         return ResponseEntity.unprocessableEntity().body(problem);
+    }
+}
+```
+
+Evitar:
+```java
+@RestControllerAdvice
+public class GlobalExceptionHandlerBad {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handle(Exception ex) {
+        return ResponseEntity.status(500).body("Erro generico"); // sem ProblemDetail e mistura erros
     }
 }
 ```
@@ -124,6 +187,14 @@ class ProductServiceTest {
         assertThat(result).isEqualTo(response);
         verify(repository).save(entity);
     }
+}
+```
+
+Evitar:
+```java
+@SpringBootTest // pesado para unit
+class ProductServiceSlowTest {
+    @Autowired ProductService service; // teste de integracao involuntario
 }
 ```
 
