@@ -95,6 +95,14 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 
 19. [Tabela Decisoria: Qual Anotacao Usar?](#tabela-decisoria-qual-anotacao-usar)
 
+20. [Interfaces Funcionais - Consumer, Predicate, Supplier e Outras](#interfaces-funcionais---consumer-predicate-supplier-e-outras)
+    - 20.1 [Consumer e BiConsumer - Executar sem Retorno](#1-consumer-e-biconsumer---executar-sem-retorno)
+    - 20.2 [Predicate e BiPredicate - Validacoes e Filtros](#2-predicate-e-bipredicate---validacoes-e-filtros)
+    - 20.3 [Supplier - Gerar Valores](#3-supplier---gerar-valores)
+    - 20.4 [Function e BiFunction - Transformacoes](#4-function-e-bifunction---transformacoes)
+    - 20.5 [Quando NÃO Usar Interfaces Funcionais](#5-quando-nao-usar-interfaces-funcionais)
+    - 20.6 [Anti-patterns com Interfaces Funcionais](#6-anti-patterns-com-interfaces-funcionais)
+
 ---
 ## Entidade de Dominio (MongoDB)
 ```java
@@ -3460,3 +3468,530 @@ private List<Customer> filterExisting(List<Customer> customers) {
 | **SendEmailUseCase** | Componente | UseCase de envio de email |
 
 
+
+
+
+---
+
+## Interfaces Funcionais - Consumer, Predicate, Supplier e Outras
+
+Interfaces funcionais são ferramentas poderosas para escrever código mais limpo e expressivo. Mas como em qualquer ferramenta, seu uso deve ser criterioso.
+
+### 1. Consumer e BiConsumer - Executar sem Retorno
+
+`Consumer<T>` executa uma ação com um valor, sem retornar nada. `BiConsumer<T, U>` recebe dois parâmetros.
+
+#### ✅ CERTO: Consumer para Efeitos Colaterais Simples
+
+```java
+// Bom: Enviar email com Consumer
+Consumer<String> sendEmail = email -> {
+    var emailService = new EmailService();
+    emailService.send(email, "Welcome!");
+};
+
+sendEmail.accept("user@example.com");
+
+// Bom: BiConsumer para ações com dois valores
+BiConsumer<String, String> logUserAction = (userId, action) -> {
+    System.out.printf("User %s performed: %s%n", userId, action);
+};
+
+logUserAction.accept("123", "login");
+
+// Bom: Consumer em Streams
+List<Order> orders = List.of(...);
+orders.forEach(order -> {
+    auditService.log("order_created", order.id());
+    emailService.sendOrderConfirmation(order);
+});
+```
+
+#### ✅ CERTO: Consumer em Event Listeners
+
+```java
+// application/event/OrderEventListener.java
+@Component
+public class OrderEventListener {
+    private final AuditService auditService;
+    private final EmailService emailService;
+
+    public OrderEventListener(AuditService auditService, EmailService emailService) {
+        this.auditService = auditService;
+        this.emailService = emailService;
+    }
+
+    // Consumer: processar evento de ordem criada
+    @EventListener
+    public void onOrderCreated(OrderCreatedEvent event) {
+        Consumer<Order> processOrder = order -> {
+            auditService.log("order_created", order.id());
+            emailService.sendOrderConfirmation(order);
+            notifyWarehouse(order);
+        };
+        
+        processOrder.accept(event.order());
+    }
+
+    private void notifyWarehouse(Order order) {
+        // Notificar warehouse
+    }
+}
+```
+
+#### ❌ ERRADO: Consumer para Lógica Complexa
+
+```java
+// ERRADO: Consumer com lógica demais (fica ilegível)
+Consumer<Order> complexLogic = order -> {
+    if (order.total() > 1000) {
+        var discount = order.total() * 0.1;
+        var newTotal = order.total() - discount;
+        if (order.customer().loyaltyPoints() > 100) {
+            // Mais validações...
+            // Código ilegível em lambda
+        }
+    }
+};
+
+// CERTO: Extrair para método ou UseCase
+public void processLargeOrder(Order order) {
+    if (order.total() > 1000) {
+        var discountedTotal = calculateDiscount(order);
+        applyLoyaltyBonus(order);
+    }
+}
+```
+
+### 2. Predicate e BiPredicate - Validacoes e Filtros
+
+`Predicate<T>` retorna boolean. Ideal para validações e filtros.
+
+#### ✅ CERTO: Predicate para Filtros Simples
+
+```java
+// Bom: Predicate em stream filters
+Predicate<Order> isHighValue = order -> order.total().compareTo(new BigDecimal("1000")) > 0;
+Predicate<Order> isPending = order -> order.status() == OrderStatus.PENDING;
+
+List<Order> highValuePendingOrders = orders.stream()
+    .filter(isHighValue)
+    .filter(isPending)
+    .collect(Collectors.toList());
+
+// Bom: Compor Predicates
+Predicate<Customer> isActive = customer -> customer.isActive();
+Predicate<Customer> isPremium = customer -> customer.tier() == CustomerTier.PREMIUM;
+Predicate<Customer> isActiveAndPremium = isActive.and(isPremium);
+
+List<Customer> premiumCustomers = customers.stream()
+    .filter(isActiveAndPremium)
+    .collect(Collectors.toList());
+```
+
+#### ✅ CERTO: BiPredicate para Comparações
+
+```java
+// Bom: BiPredicate para validar relacoes
+BiPredicate<LocalDateTime, LocalDateTime> isWithinRange = 
+    (startDate, endDate) -> startDate.isBefore(endDate);
+
+BiPredicate<BigDecimal, BigDecimal> isPriceValid = 
+    (price, costPrice) -> price.compareTo(costPrice) > 0;
+
+// Uso
+if (isWithinRange.test(order.createdAt(), order.deliveredAt())) {
+    // Ordem entregue no prazo
+}
+
+if (isPriceValid.test(product.salePrice(), product.costPrice())) {
+    // Preço venda > preço custo
+}
+```
+
+#### ✅ CERTO: Validador com Predicate
+
+```java
+// infrastructure/validator/OrderValidator.java
+@Component
+public class OrderValidator {
+    
+    public boolean isValid(Order order) {
+        return hasValidItems(order)
+            .and(hasValidCustomer(order))
+            .and(hasSufficientStock(order))
+            .test(order);
+    }
+
+    private Predicate<Order> hasValidItems(Order order) {
+        return o -> !o.items().isEmpty() && 
+                    o.items().stream().allMatch(item -> item.quantity() > 0);
+    }
+
+    private Predicate<Order> hasValidCustomer(Order order) {
+        return o -> o.customer() != null && o.customer().isActive();
+    }
+
+    private Predicate<Order> hasSufficientStock(Order order) {
+        return o -> o.items().stream()
+                     .allMatch(item -> item.product().stock() >= item.quantity());
+    }
+}
+```
+
+#### ❌ ERRADO: Predicate com Side Effects
+
+```java
+// ERRADO: Predicate com efeitos colaterais (quebra princípios funcionais)
+Predicate<Order> invalidPredicate = order -> {
+    auditService.log("checking_order", order.id()); // Side effect!
+    emailService.send(order.customer().email(), "Checking..."); // Side effect!
+    return order.total().compareTo(BigDecimal.ZERO) > 0;
+};
+
+// CERTO: Separar validação de efeito colateral
+Predicate<Order> hasPositiveTotal = order -> order.total().compareTo(BigDecimal.ZERO) > 0;
+
+orders.stream()
+    .filter(hasPositiveTotal)
+    .forEach(order -> auditService.log("checking_order", order.id()));
+```
+
+### 3. Supplier - Gerar Valores
+
+`Supplier<T>` gera um valor sem receber parâmetros. Útil para lazy initialization e factory patterns.
+
+#### ✅ CERTO: Supplier para Lazy Initialization
+
+```java
+// Bom: Supplier para criar valores sob demanda
+Supplier<DatabaseConnection> connectionSupplier = () -> new DatabaseConnection("jdbc:mysql://localhost");
+
+// Conexão só é criada quando chamado
+DatabaseConnection conn = connectionSupplier.get();
+
+// Bom: Supplier em Optional
+Optional.ofNullable(order)
+    .orElseGet(() -> Order.empty());
+
+// Bom: Supplier com configuração complexa
+Supplier<RestClient> restClientSupplier = () -> RestClient.builder()
+    .baseUrl("https://api.example.com")
+    .defaultHeader("Authorization", "Bearer " + System.getenv("API_KEY"))
+    .build();
+```
+
+#### ✅ CERTO: Factory com Supplier
+
+```java
+// infrastructure/factory/PaymentProcessorFactory.java
+@Component
+public class PaymentProcessorFactory {
+    private final Map<PaymentMethod, Supplier<PaymentProcessor>> suppliers;
+
+    public PaymentProcessorFactory(
+        StripePaymentProcessor stripe,
+        PayPalPaymentProcessor paypal,
+        Pix2PaymentProcessor pix
+    ) {
+        this.suppliers = Map.of(
+            PaymentMethod.STRIPE, () -> stripe,
+            PaymentMethod.PAYPAL, () -> paypal,
+            PaymentMethod.PIX, () -> pix
+        );
+    }
+
+    public PaymentProcessor getProcessor(PaymentMethod method) {
+        return suppliers.getOrDefault(
+            method, 
+            () -> { throw new PaymentMethodNotSupportedException(method); }
+        ).get();
+    }
+}
+```
+
+#### ✅ CERTO: Supplier em Configuration
+
+```java
+// infrastructure/config/ApplicationConfig.java
+@Configuration
+public class ApplicationConfig {
+    
+    @Bean
+    public Supplier<LocalDateTime> systemTime() {
+        return LocalDateTime::now; // Supplier para hora atual
+    }
+    
+    @Bean
+    public Supplier<UUID> uuidGenerator() {
+        return UUID::randomUUID; // Supplier para gerar IDs
+    }
+}
+
+// Uso em UseCase
+@Service
+public class CreateOrderUseCase {
+    private final Supplier<UUID> uuidGenerator;
+    private final Supplier<LocalDateTime> systemTime;
+
+    public CreateOrderUseCase(Supplier<UUID> uuidGenerator, Supplier<LocalDateTime> systemTime) {
+        this.uuidGenerator = uuidGenerator;
+        this.systemTime = systemTime;
+    }
+
+    public OrderResponse execute(CreateOrderRequest request) {
+        var order = new Order(
+            uuidGenerator.get(),  // Gera novo ID
+            request.customerId(),
+            systemTime.get(),      // Pega hora atual
+            request.items()
+        );
+        return orderRepository.save(order);
+    }
+}
+```
+
+#### ❌ ERRADO: Supplier para Lógica Determinística
+
+```java
+// ERRADO: Supplier desnecessário para valor constante
+Supplier<String> appName = () -> "MyApp";
+var name = appName.get(); // Overcomplicated!
+
+// CERTO: Constante simples
+public static final String APP_NAME = "MyApp";
+var name = APP_NAME;
+```
+
+### 4. Function e BiFunction - Transformacoes
+
+`Function<T, R>` transforma um valor de tipo T em tipo R.
+
+#### ✅ CERTO: Function para Transformacoes
+
+```java
+// Bom: Function em streams
+Function<Order, OrderResponse> toResponse = order -> OrderResponse.builder()
+    .id(order.id())
+    .customerId(order.customerId())
+    .total(order.total())
+    .status(order.status())
+    .build();
+
+List<OrderResponse> responses = orders.stream()
+    .map(toResponse)
+    .collect(Collectors.toList());
+
+// Bom: Function chainada
+Function<String, String> trim = String::trim;
+Function<String, String> uppercase = String::toUpperCase;
+Function<String, String> normalize = trim.andThen(uppercase);
+
+var result = normalize.apply("  hello  "); // "HELLO"
+```
+
+#### ✅ CERTO: BiFunction para Operações com Dois Valores
+
+```java
+// Bom: BiFunction para cálculos
+BiFunction<BigDecimal, Integer, BigDecimal> applyDiscount = 
+    (price, discountPercent) -> price.multiply(
+        BigDecimal.valueOf(100 - discountPercent)
+            .divide(BigDecimal.valueOf(100))
+    );
+
+var discountedPrice = applyDiscount.apply(new BigDecimal("100"), 10); // 90
+
+// Bom: BiFunction em map reduce
+BiFunction<BigDecimal, Order, BigDecimal> addOrderTotal = 
+    (accumulator, order) -> accumulator.add(order.total());
+
+BigDecimal totalSales = orders.stream()
+    .reduce(BigDecimal.ZERO, addOrderTotal, BigDecimal::add);
+```
+
+### 5. Quando NÃO Usar Interfaces Funcionais
+
+#### ❌ ERRADO: Interfaces Funcionais para Lógica Complexa
+
+```java
+// ERRADO: Lambda gigante (ilegível)
+Function<Order, OrderResponse> complexTransform = order -> {
+    var items = order.items().stream()
+        .filter(item -> item.quantity() > 0)
+        .map(item -> new OrderItemResponse(
+            item.productId(),
+            item.product().name(),
+            item.quantity(),
+            item.unitPrice(),
+            item.unitPrice().multiply(BigDecimal.valueOf(item.quantity()))
+        ))
+        .collect(Collectors.toList());
+    
+    var discountedTotal = order.total().multiply(BigDecimal.valueOf(0.9));
+    var taxes = discountedTotal.multiply(BigDecimal.valueOf(0.18));
+    var finalTotal = discountedTotal.add(taxes);
+    
+    return new OrderResponse(order.id(), items, finalTotal, order.status());
+};
+
+// CERTO: Extrair para método na classe
+public class OrderResponseMapper {
+    public OrderResponse toResponse(Order order) {
+        var items = mapItems(order.items());
+        var total = calculateTotal(order, items);
+        return new OrderResponse(order.id(), items, total, order.status());
+    }
+    
+    private List<OrderItemResponse> mapItems(List<OrderItem> items) {
+        return items.stream()
+            .filter(item -> item.quantity() > 0)
+            .map(this::toItemResponse)
+            .collect(Collectors.toList());
+    }
+    
+    private BigDecimal calculateTotal(Order order, List<OrderItemResponse> items) {
+        var discounted = order.total().multiply(BigDecimal.valueOf(0.9));
+        var taxes = discounted.multiply(BigDecimal.valueOf(0.18));
+        return discounted.add(taxes);
+    }
+}
+```
+
+#### ❌ ERRADO: Interfaces Funcionais para Regras de Negócio
+
+```java
+// ERRADO: Regras de negócio complexas em lambda
+Predicate<Order> shouldProcess = order -> {
+    var daysOld = ChronoUnit.DAYS.between(order.createdAt(), LocalDateTime.now());
+    if (daysOld > 30) return false;
+    
+    if (order.customer().tier() == CustomerTier.BRONZE && order.total().compareTo(new BigDecimal("50")) < 0) {
+        return false;
+    }
+    
+    return true;
+};
+
+// CERTO: UseCase dedicado
+@Service
+public class ValidateOrderProcessingUseCase {
+    private final OrderRepository orderRepository;
+
+    public boolean shouldProcess(String orderId) {
+        var order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(orderId));
+        
+        return !isOrderTooOld(order) && meetsMinimumRequirements(order);
+    }
+
+    private boolean isOrderTooOld(Order order) {
+        var daysOld = ChronoUnit.DAYS.between(order.createdAt(), LocalDateTime.now());
+        return daysOld > 30;
+    }
+
+    private boolean meetsMinimumRequirements(Order order) {
+        return !(order.customer().tier() == CustomerTier.BRONZE 
+                 && order.total().compareTo(new BigDecimal("50")) < 0);
+    }
+}
+```
+
+### 6. Anti-patterns com Interfaces Funcionais
+
+#### ❌ ERRADO: Interfaces Funcionais com State Mutável
+
+```java
+// ERRADO: Lambda alterando variável externa
+List<Integer> numbers = List.of(1, 2, 3, 4, 5);
+List<Integer> doubled = new ArrayList<>();
+numbers.forEach(n -> doubled.add(n * 2)); // Mutando doubled!
+
+// CERTO: Usar streams e collect
+List<Integer> doubled = numbers.stream()
+    .map(n -> n * 2)
+    .collect(Collectors.toList());
+```
+
+#### ❌ ERRADO: Lambdas Muito Longas
+
+```java
+// ERRADO: Lambda que virou método (ilegível)
+orders.forEach(order -> {
+    var items = order.items();
+    if (items.isEmpty()) return;
+    
+    var total = BigDecimal.ZERO;
+    for (var item : items) {
+        total = total.add(item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())));
+    }
+    
+    if (total.compareTo(new BigDecimal("1000")) > 0) {
+        emailService.sendHighValueNotification(order.customer().email(), total);
+        auditService.log("high_value_order", order.id());
+    }
+});
+
+// CERTO: Extrair para UseCase
+@Service
+public class ProcessHighValueOrdersUseCase {
+    private final EmailService emailService;
+    private final AuditService auditService;
+
+    public void execute(List<Order> orders) {
+        orders.stream()
+            .filter(this::isHighValue)
+            .forEach(this::notifyAndAudit);
+    }
+
+    private boolean isHighValue(Order order) {
+        return order.calculateTotal().compareTo(new BigDecimal("1000")) > 0;
+    }
+
+    private void notifyAndAudit(Order order) {
+        emailService.sendHighValueNotification(order.customer().email(), order.calculateTotal());
+        auditService.log("high_value_order", order.id());
+    }
+}
+```
+
+#### ❌ ERRADO: Ignorar Exceções em Lambdas
+
+```java
+// ERRADO: Exceções silenciosas em forEach
+orders.forEach(order -> {
+    try {
+        processOrder(order);
+    } catch (Exception e) {
+        // Silenciando erro! Péssima prática
+    }
+});
+
+// CERTO: Mapear erro ou retornar Result
+orders.stream()
+    .map(this::safeProcessOrder)
+    .filter(result -> result.isSuccess())
+    .forEach(result -> handleSuccess(result));
+
+private Result<Order> safeProcessOrder(Order order) {
+    try {
+        return Result.success(processOrder(order));
+    } catch (Exception e) {
+        return Result.failure(e);
+    }
+}
+```
+
+### Tabela Decisória: Qual Interface Funcional Usar?
+
+| Interface | Parâmetros | Retorno | Caso de Uso |
+|-----------|-----------|---------|-----------|
+| **Consumer<T>** | 1 | Nenhum | Efeitos colaterais, logging, eventos |
+| **BiConsumer<T,U>** | 2 | Nenhum | Operações com dois valores |
+| **Predicate<T>** | 1 | Boolean | Filtros, validações |
+| **BiPredicate<T,U>** | 2 | Boolean | Comparações, validações compostas |
+| **Supplier<T>** | 0 | T | Lazy init, factories, geradores |
+| **Function<T,R>** | 1 | R | Transformações, mapeamentos |
+| **BiFunction<T,U,R>** | 2 | R | Operações, cálculos |
+| **UnaryOperator<T>** | 1 | T | Transformações mesmo tipo |
+| **BinaryOperator<T>** | 2 | T | Operações mesmo tipo |
