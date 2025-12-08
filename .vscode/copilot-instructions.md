@@ -51,6 +51,10 @@ Este projeto segue padrões específicos. Use este guia ao gerar ou sugerir cód
 - Evitar comentários óbvios
 - Separar lógica complexa
 
+## 🌐 Idioma
+- Responder e sugerir código em **Portuguese (pt-BR)** por padrão.
+- Mude para inglês somente se o usuário pedir explicitamente.
+
 ## ✅ Exemplos
 
 ### Entity com Record

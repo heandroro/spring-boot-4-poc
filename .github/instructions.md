@@ -2,6 +2,10 @@
 
 Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD** (domain/application/infrastructure/web).
 
+## Idioma
+- Responder e comentar preferencialmente em **Portuguese (pt-BR)**.
+- Use English apenas quando o solicitante pedir explicitamente.
+
 ## Arquitetura DDD
 - `domain/`: Entidades, Value Objects, Repository interfaces (core puro)
 - `application/`: Services, Business Logic (depende só de domain)
