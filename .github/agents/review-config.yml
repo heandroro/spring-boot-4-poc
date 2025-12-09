@@ -105,13 +105,43 @@ filters:
     - "*.jar"
     - "*.war"
   
-  # Focar em extensões específicas
+  # Focar em extensões específicas de CÓDIGO
   include_patterns:
     - "*.java"
-    - "*.md"
     - "*.yml"
     - "*.yaml"
     - "*.properties"
+  
+  # Arquivos Markdown: Review SELETIVO
+  # ✅ Revisar: Apenas arquivos técnicos críticos
+  markdown_review:
+    enabled: true
+    only_these_files:
+      # Documentação técnica crítica
+      - "README.md"
+      - "CONTRIBUTING.md"
+      - ".github/instructions.md"
+      - "docs/api.md"
+      - "docs/security.md"
+      - "docs/deployment.md"
+    
+    # ❌ Ignorar: Documentação geral/planejamento
+    exclude_markdown:
+      - "plan/**/*.md"              # Planejamento interno
+      - "docs/architecture-diagrams.md"  # Diagramas
+      - "docs/github-approval-strategy.md"  # Estratégias/processos
+      - "**/CHANGELOG.md"           # Histórico de mudanças
+      - "**/executive-summary.md"   # Sumário executivo
+      - "**/roadmap.md"             # Roadmap do projeto
+      - "**/code-examples.md"       # Exemplos (muito extenso)
+    
+    # O que revisar em Markdown (quando habilitado)
+    review_aspects:
+      - broken_links              # Links quebrados
+      - code_blocks_syntax        # Sintaxe de blocos de código
+      - security_leaks            # Senhas/tokens expostos em exemplos
+      - outdated_commands         # Comandos desatualizados
+      - incorrect_paths           # Caminhos de arquivo incorretos
 
 # Integrações
 # NOTA: As permissões do GitHub Copilot são gerenciadas automaticamente pelo GitHub.
