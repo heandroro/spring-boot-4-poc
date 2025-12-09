@@ -1,0 +1,12 @@
+# GitHub Repository Settings for Copilot PR Descriptions
+# https://docs.github.com/en/copilot/using-github-copilot/using-github-copilot-for-pull-requests
+
+# Auto-generate PR descriptions using Copilot
+# When creating a PR, Copilot will automatically suggest a description
+auto_generate_pr_description: true
+
+# Language for generated descriptions
+description_language: pt-BR
+
+# Use repository context for better descriptions
+use_repository_context: true

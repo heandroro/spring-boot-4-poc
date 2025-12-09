@@ -10,7 +10,28 @@ Este diretório contém configurações de agentes do GitHub Copilot para automa
 > - 🔮 Preparação para features futuras do GitHub Copilot
 > - 📖 Documentação de padrões de revisão do projeto
 
-## 📋 Agentes Disponíveis
+## 📋 Agentes e Features Disponíveis
+
+### 🤖 Auto-geração de Descrição de PR
+**Arquivo**: `../.github/copilot.yml` | **Config Detalhada**: `../.github/copilot-pr-description.yml`
+
+O Copilot gera automaticamente uma descrição completa do PR quando você o cria.
+
+**Como funciona:**
+1. Ao criar um PR no GitHub, o Copilot analisa automaticamente os commits e mudanças
+2. Gera uma descrição estruturada em português com:
+   - 📋 Resumo das mudanças
+   - 🎯 Motivação
+   - 🔧 Mudanças principais
+   - 📂 Arquivos modificados agrupados
+   - 🧪 Como testar
+3. Você pode aceitar, editar ou regenerar a descrição
+
+**Configurado para:**
+- ✅ Idioma: Português (pt-BR)
+- ✅ Formato detalhado com emojis
+- ✅ Contexto do projeto (.github/instructions.md, CONTRIBUTING.md)
+- ✅ Warnings automáticos para mudanças críticas (segurança, configuração)
 
 ### 1. Review Agent (Agente de Revisão)
 **Arquivo**: `review.md` | **Config**: `review-config.yml`

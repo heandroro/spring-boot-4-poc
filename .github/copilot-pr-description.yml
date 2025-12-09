@@ -1,0 +1,83 @@
+# GitHub Copilot - Configuração para Geração Automática de Descrição de PR
+# Quando habilitado, o Copilot gerará automaticamente uma descrição ao criar o PR
+
+# Habilitar geração automática
+enabled: true
+
+# Idioma das descrições
+language: pt-BR
+
+# Incluir na descrição gerada
+include:
+  - summary              # Resumo das mudanças
+  - changed_files        # Lista de arquivos modificados
+  - commit_messages      # Mensagens de commit como contexto
+  - code_changes         # Destaques de mudanças importantes no código
+  - impact_analysis      # Análise de impacto das mudanças
+  - testing_notes        # Notas sobre testes (se aplicável)
+
+# Formato da descrição
+format:
+  use_emojis: true       # Usar emojis para categorização
+  use_sections: true     # Separar em seções (Resumo, Mudanças, Impacto)
+  include_checklist: false  # Não incluir checklist (já está no template)
+  code_examples: true    # Incluir exemplos de código quando relevante
+
+# Contexto adicional para o Copilot considerar
+context_sources:
+  - .github/instructions.md           # Padrões do projeto
+  - .github/PULL_REQUEST_TEMPLATE.md  # Template do PR
+  - CONTRIBUTING.md                   # Guia de contribuição
+  - plan/code-examples.md             # Exemplos de boas práticas
+
+# Estilo de descrição
+style:
+  tone: professional     # Opções: professional, casual, detailed
+  detail_level: detailed # Opções: brief, normal, detailed
+  focus_on:
+    - architecture       # Destacar mudanças arquiteturais
+    - security           # Destacar mudanças de segurança
+    - breaking_changes   # Destacar breaking changes
+    - new_features       # Destacar novas features
+    - bug_fixes          # Destacar correções de bugs
+
+# Template de estrutura (o Copilot seguirá esta estrutura)
+structure_template: |
+  ## 📋 Resumo
+  
+  [Descrição concisa das mudanças]
+  
+  ## 🎯 Motivação
+  
+  [Por que essas mudanças foram feitas]
+  
+  ## 🔧 Mudanças Principais
+  
+  - [Lista de mudanças principais com detalhes]
+  
+  ## 📂 Arquivos Modificados
+  
+  [Resumo agrupado por tipo: Código / Testes / Documentação / Configuração]
+  
+  ## ⚠️ Breaking Changes (se houver)
+  
+  [Mudanças que quebram compatibilidade]
+  
+  ## 🧪 Como Testar
+  
+  [Instruções para testar as mudanças]
+  
+  ## 📸 Screenshots/Exemplos (se aplicável)
+  
+  [Exemplos de uso ou screenshots se for mudança visual/API]
+
+# Avisos/Warnings automáticos baseados em padrões
+auto_warnings:
+  - pattern: "*.yml"
+    warning: "⚠️ Mudanças em configuração - validar em todos os ambientes"
+  - pattern: "SecurityConfig.java"
+    warning: "🔒 Mudanças de segurança - revisar cuidadosamente"
+  - pattern: "build.gradle.kts"
+    warning: "📦 Dependências alteradas - verificar compatibilidade"
+  - pattern: "application*.yml"
+    warning: "⚙️ Propriedades da aplicação alteradas - atualizar documentação se necessário"
