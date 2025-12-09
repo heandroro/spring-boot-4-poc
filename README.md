@@ -62,4 +62,18 @@ Notes
  - To avoid failures when Docker is unavailable, the Testcontainers-based test is guarded by `@EnabledIfEnvironmentVariable` and only runs when `ENABLE_DOCKER_TESTS=true`.
 
 JUnit platform
-- The project uses the JUnit Jupiter platform. If you require specific “JUnit 6” coordinates, please update the dependency accordingly; public releases currently use the JUnit 5 (Jupiter) line.
+- The project uses the JUnit Jupiter platform. If you require specific "JUnit 6" coordinates, please update the dependency accordingly; public releases currently use the JUnit 5 (Jupiter) line.
+
+## 📚 Documentation
+
+Detailed technical documentation is available in the [docs/](docs/) directory:
+
+- **[Architecture](docs/architecture.md)** - DDD layers, design decisions
+- **[Security](docs/security.md)** - JWT, authorization, CORS
+- **[API Reference](docs/api.md)** - REST endpoints, contracts
+- **[MongoDB](docs/mongodb.md)** - Schema design, indexes, queries
+- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
+- **[Deployment](docs/deployment.md)** - Environment setup, Docker
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues
+
+> **Note:** README.md is kept concise. For detailed information, see the linked documentation files.
