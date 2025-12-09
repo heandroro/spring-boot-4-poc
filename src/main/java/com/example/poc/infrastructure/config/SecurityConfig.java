@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -55,10 +54,16 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         return request -> {
             CorsConfiguration config = new CorsConfiguration();
-            config.setAllowedOrigins(splitByComma(allowedOrigins));
+            List<String> origins = splitByComma(allowedOrigins);
+            config.setAllowedOrigins(origins);
             config.setAllowedMethods(splitByComma(allowedMethods));
             config.setAllowedHeaders(List.of("*"));
             config.setAllowCredentials(false);
+            // Prevent misconfiguration: credentials require explicit origins
+            boolean hasWildcard = origins.contains("*");
+            if (hasWildcard && config.getAllowCredentials() != null && config.getAllowCredentials()) {
+                throw new IllegalStateException("CORS: Cannot use allowCredentials=true with wildcard origins");
+            }
             // NOTE: If you need to support credentials (cookies, authorization headers) in the future,
             // you must specify explicit origins instead of '*'. Browsers reject requests with
             // credentials if allowed origins is '*'. See CORS specification for details.
