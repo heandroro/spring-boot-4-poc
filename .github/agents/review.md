@@ -6,10 +6,11 @@ Este agente realiza revisões de código em Pull Requests, considerando os comen
 
 O agente de review deve:
 
-1. **Ler e considerar os comentários do PR**: Analisar todos os comentários existentes no Pull Request para entender o contexto da discussão e as preocupações já levantadas
-2. **Verificar conformidade com os padrões do projeto**: Validar que o código segue as diretrizes em `.github/instructions.md` e `.github/PULL_REQUEST_TEMPLATE.md`
-3. **Focar nas mudanças incrementais**: Revisar apenas as alterações do PR, não o código base completo
-4. **Fornecer feedback construtivo**: Oferecer sugestões práticas e específicas
+1. **Responder em Português (pt-BR)**: Todos os comentários, sugestões e feedback devem ser fornecidos em português
+2. **Ler e considerar os comentários do PR**: Analisar todos os comentários existentes no Pull Request para entender o contexto da discussão e as preocupações já levantadas
+3. **Verificar conformidade com os padrões do projeto**: Validar que o código segue as diretrizes em `.github/instructions.md` e `.github/PULL_REQUEST_TEMPLATE.md`
+4. **Focar nas mudanças incrementais**: Revisar apenas as alterações do PR, não o código base completo
+5. **Fornecer feedback construtivo**: Oferecer sugestões práticas e específicas
 
 ## Contexto para Review
 
@@ -83,6 +84,18 @@ Este agente está integrado com:
 - **instructions.md**: Padrões gerais do projeto
 - **PULL_REQUEST_TEMPLATE.md**: Checklist de implementação
 - **copilot-instructions.md**: Instruções específicas do VS Code Copilot
+
+## 🌐 Idioma - IMPORTANTE
+
+**O agente deve comentar em Português (pt-BR)** por padrão. Isso garante:
+- ✅ Consistência com a documentação do projeto (toda em português)
+- ✅ Melhor compreensão pela equipe brasileira/portuguesa
+- ✅ Alinhamento com comentários do `instructions.md`
+- ✅ Padrão definido em `review-config.yml` com `language: "pt-BR"`
+
+**Excepção**: Se um usuário explicitamente pedir feedback em inglês (ex: "Please review in English"), o agente deve mudar para inglês apenas para aquele PR.
+
+Exemplos de feedback em português são fornecidos em `.github/agents/EXAMPLE.md`.
 
 ## Configuração
 

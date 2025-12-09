@@ -11,7 +11,9 @@ description: "Agente de revisão de código que considera comentários do PR"
 version: "1.0"
 
 # Idioma padrão para feedback
-language: "pt-BR"  # Usar inglês somente se explicitamente solicitado
+# ✅ CONFIGURADO: Todos os comentários e sugestões do agente serão em Português (pt-BR)
+# Mude para "en-US" somente se explicitamente solicitado pelo usuário
+language: "pt-BR"
 
 # Habilitar leitura de comentários do PR
 # Esta configuração solicita que o agente leia comentários existentes no PR
