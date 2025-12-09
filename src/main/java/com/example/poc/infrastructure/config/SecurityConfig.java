@@ -58,12 +58,16 @@ public class SecurityConfig {
             config.setAllowedOrigins(origins);
             config.setAllowedMethods(splitByComma(allowedMethods));
             config.setAllowedHeaders(List.of("*"));
-            config.setAllowCredentials(false);
+            
             // Prevent misconfiguration: credentials require explicit origins
+            // This validation is defensive programming for future configuration changes
             boolean hasWildcard = origins.contains("*");
-            if (hasWildcard && config.getAllowCredentials() != null && config.getAllowCredentials()) {
+            boolean allowCredentials = false; // Currently hardcoded, but this validation protects against future changes
+            if (hasWildcard && allowCredentials) {
                 throw new IllegalStateException("CORS: Cannot use allowCredentials=true with wildcard origins");
             }
+            config.setAllowCredentials(allowCredentials);
+            
             // NOTE: If you need to support credentials (cookies, authorization headers) in the future,
             // you must specify explicit origins instead of '*'. Browsers reject requests with
             // credentials if allowed origins is '*'. See CORS specification for details.
