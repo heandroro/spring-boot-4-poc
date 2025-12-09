@@ -60,9 +60,10 @@ public class SecurityConfig {
             config.setAllowedHeaders(List.of("*"));
             
             // Prevent misconfiguration: credentials require explicit origins
+            // TODO: Make allowCredentials configurable when JWT authentication is implemented
             // This validation is defensive programming for future configuration changes
             boolean hasWildcard = origins.contains("*");
-            boolean allowCredentials = false; // Currently hardcoded, but this validation protects against future changes
+            boolean allowCredentials = false; // Currently hardcoded to false for security
             if (hasWildcard && allowCredentials) {
                 throw new IllegalStateException("CORS: Cannot use allowCredentials=true with wildcard origins");
             }
