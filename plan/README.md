@@ -31,6 +31,9 @@ Passo a passo detalhado para configuração, dependências e implementação.
 ### 6. [roadmap.md](roadmap.md) - 🗓️ ROADMAP COMPLETO
 Timeline de 5 semanas com todas as fases, tarefas e entregas.
 
+### 7. [code-examples.md](code-examples.md) - 🧩 EXEMPLOS PRATICOS
+Exemplos curtos aplicando as boas praticas (Records, Bean Validation, MapStruct, @PreAuthorize, ProblemDetail, Testcontainers).
+
 ---
 
 ## 🚀 Início Rápido

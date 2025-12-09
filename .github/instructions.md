@@ -2,6 +2,10 @@
 
 Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD** (domain/application/infrastructure/web).
 
+## Idioma
+- Responder e comentar preferencialmente em **Portuguese (pt-BR)**.
+- Use English apenas quando o solicitante pedir explicitamente.
+
 ## Arquitetura DDD
 - `domain/`: Entidades, Value Objects, Repository interfaces (core puro)
 - `application/`: Services, Business Logic (depende só de domain)
@@ -60,5 +64,14 @@ Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD
 ✅ Testes: 80%+ cobertura, Instancio, Testcontainers
 ✅ Segurança: @PreAuthorize, BCrypt, sem dados sensíveis em DTOs
 ✅ API: Status HTTP corretos, paginação, Bean Validation
+
+## GitHub Copilot Review Agent
+Este repositório possui um agente de revisão configurado que:
+- ✅ **Lê comentários do PR** durante a revisão para contextualizar feedback
+- ✅ **Considera discussões existentes** para evitar duplicação de feedback
+- ✅ **Valida conformidade** com os padrões do projeto automaticamente
+- ✅ **Prioriza segurança** e funcionalidade antes de estilo
+
+Configuração: [agents/review.md](agents/review.md) | [agents/review-config.yml](agents/review-config.yml)
 
 Ver detalhes completos em: [CONTRIBUTING.md](../CONTRIBUTING.md) | [Plan](../plan/README.md)

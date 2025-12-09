@@ -31,6 +31,8 @@ Este projeto segue padrões específicos. Use este guia ao gerar ou sugerir cód
 - **Instancio**: `Instancio.create(Product.class)` para fixtures
 - **Mockito**: `@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`
 - **Testcontainers**: MongoDB real em integração
+- **Gradle wrapper**: Sempre usar o wrapper (`./gradlew test`) em vez do binário local (`gradle test`) para reprodutibilidade entre ambientes e CI/CD
+- **Antes de commitar**: garantir que o projeto builda (`./gradlew build`) e, se houver mudanças em testes, que eles passam (`./gradlew test`)
 
 ## 🔒 Segurança
 - **@PreAuthorize**: Controle de acesso por role
@@ -48,6 +50,10 @@ Este projeto segue padrões específicos. Use este guia ao gerar ou sugerir cód
 - Métodos pequenos (máximo 20 linhas)
 - Evitar comentários óbvios
 - Separar lógica complexa
+
+## 🌐 Idioma
+- Responder e sugerir código em **Portuguese (pt-BR)** por padrão.
+- Mude para inglês somente se o usuário pedir explicitamente.
 
 ## ✅ Exemplos
 

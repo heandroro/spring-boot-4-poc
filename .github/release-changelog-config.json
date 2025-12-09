@@ -1,0 +1,35 @@
+{
+    "categories": [
+        {
+            "title": "### 🚀 Features",
+            "labels": [
+                "feature",
+                "enhancement"
+            ]
+        },
+        {
+            "title": "### 🐛 Fixes",
+            "labels": [
+                "bug",
+                "fix"
+            ]
+        },
+        {
+            "title": "### 🧪 Tests",
+            "labels": [
+                "test",
+                "tests"
+            ]
+        },
+        {
+            "title": "### 🧹 Chores",
+            "labels": [
+                "chore",
+                "maintenance"
+            ]
+        }
+    ],
+    "template": "# Changelog\n\n## Changes\n{{CHANGELOG}}\n",
+    "pr_template": "- {{TITLE}} (#{{NUMBER}}) @{{AUTHOR}}",
+    "empty_template": "# Changelog\n\nNenhuma mudança categorizada para este release."
+}
