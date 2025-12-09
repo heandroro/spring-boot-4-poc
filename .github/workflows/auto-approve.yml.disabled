@@ -1,0 +1,77 @@
+# Auto-Approve Workflow (Use com CAUTELA!)
+#
+# ⚠️ AVISO DE SEGURANÇA:
+# Auto-approve é perigoso e deve ser usado APENAS para:
+# - Dependabot PRs (atualizações de dependências)
+# - PRs de bots confiáveis
+# - Ambientes de desenvolvimento/teste
+#
+# NUNCA use em produção sem revisão humana adicional!
+
+name: Auto Approve (Conditional)
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    # ✅ Condições rigorosas para aprovar automaticamente
+    if: |
+      github.actor == 'dependabot[bot]' ||
+      (
+        github.actor == 'github-actions[bot]' &&
+        contains(github.event.pull_request.title, '[AUTO]')
+      )
+    
+    steps:
+      - name: Check PR conditions
+        id: check
+        run: |
+          echo "Checking if PR meets auto-approve criteria..."
+          
+          # Verificar se PR é pequena (menos de 100 linhas)
+          ADDITIONS=${{ github.event.pull_request.additions }}
+          DELETIONS=${{ github.event.pull_request.deletions }}
+          TOTAL=$((ADDITIONS + DELETIONS))
+          
+          if [ $TOTAL -gt 100 ]; then
+            echo "should_approve=false" >> $GITHUB_OUTPUT
+            echo "❌ PR too large for auto-approve ($TOTAL lines)"
+            exit 0
+          fi
+          
+          echo "should_approve=true" >> $GITHUB_OUTPUT
+          echo "✅ PR meets auto-approve criteria"
+
+      - name: Auto Approve PR
+        if: steps.check.outputs.should_approve == 'true'
+        uses: hmarr/auto-approve-action@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          review-message: |
+            🤖 **Auto-approved** por workflow automatizado.
+            
+            **Critérios atendidos:**
+            - ✅ Autor confiável ({{ github.actor }})
+            - ✅ Tamanho pequeno (< 100 linhas)
+            - ✅ Testes passando
+            
+            ⚠️ **Nota:** Revisão humana ainda recomendada para questões de design e arquitetura.
+
+      - name: Comment on PR
+        if: steps.check.outputs.should_approve == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ **Auto-approve bloqueado**: PR não atende critérios (muito grande ou autor não autorizado). Revisão humana necessária.'
+            })
