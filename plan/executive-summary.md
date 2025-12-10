@@ -45,7 +45,7 @@ Sistema backend completo para e-commerce/marketplace desenvolvido com **Spring B
 | **Framework** | Spring Boot | 4.x |
 | **Banco de Dados** | MongoDB | 7.0 |
 | **Mapeamento** | MapStruct | Latest |
-| **Testes** | JUnit Jupiter | 5.x |
+| **Testes** | JUnit Jupiter | 6.x |
 | **Dados de Teste** | Instancio | Latest |
 | **Containers** | Testcontainers | Latest |
 | **Autenticação** | JWT (jjwt) | Latest |
@@ -215,7 +215,7 @@ COMPLETED
 
 ## 🎯 Métricas de Sucesso
 
-- [ ] **Cobertura de Testes:** >80%
+- [ ] **Cobertura de Testes:** >90%
 - [ ] **Performance:** Resposta < 500ms (p95)
 - [ ] **Disponibilidade:** 99.9% uptime
 - [ ] **Segurança:** Zero vulnerabilidades críticas

@@ -10,11 +10,14 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 - **MapStruct**: Type-safe DTO ↔ Entity mapping
 - **Gradle Kotlin DSL**: Type-safe build configuration with IDE support
 
-### GitHub Copilot Review Agent
-- **Smart PR Reviews**: Automated code review agent that reads and considers PR comments
-- **Context-Aware**: Avoids duplicate feedback by analyzing existing discussions
-- **Standards Validation**: Automatically checks DDD, security, testing, and MongoDB best practices
-- See [.github/agents/README.md](.github/agents/README.md) for details
+### GitHub Copilot Automation
+- **Smart PR Reviews**: Automated code review in Portuguese (pt-BR)
+- **Auto-generated PR Descriptions**: Copilot generates detailed PR descriptions automatically
+- **Context-Aware**: Reads PR comments to avoid duplicate feedback
+- **Selective Review**: Focuses on code (Java, YAML), ignores planning docs
+- **Standards Validation**: DDD, security, testing, and MongoDB best practices
+
+📖 **Details:** [.github/agents/README.md](.github/agents/README.md) | [GitHub Strategy](docs/github-approval-strategy.md)
 
 ### Testing Stack
 - **JUnit 6 (Jupiter)**: Modern testing framework with `@DisplayName`
@@ -62,4 +65,22 @@ Notes
  - To avoid failures when Docker is unavailable, the Testcontainers-based test is guarded by `@EnabledIfEnvironmentVariable` and only runs when `ENABLE_DOCKER_TESTS=true`.
 
 JUnit platform
-- The project uses the JUnit Jupiter platform. If you require specific “JUnit 6” coordinates, please update the dependency accordingly; public releases currently use the JUnit 5 (Jupiter) line.
+- The project uses the JUnit Jupiter platform. If you require specific "JUnit 6" coordinates, please update the dependency accordingly; public releases currently use the JUnit 5 (Jupiter) line.
+
+## 📚 Documentation
+
+This README provides a concise overview. Detailed documentation is in [docs/](docs/):
+
+- **[Architecture](docs/architecture.md)** - DDD layers, design decisions
+- **[Security](docs/security.md)** - JWT, authorization, CORS
+- **[API Reference](docs/api.md)** - REST endpoints, contracts
+- **[MongoDB](docs/mongodb.md)** - Schema design, indexes, queries
+- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
+- **[Deployment](docs/deployment.md)** - Environment setup, Docker
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues
+- **[GitHub Strategy](docs/github-approval-strategy.md)** - Copilot approval workflow
+
+### README Maintenance
+Copilot can automatically update this README on each significant commit. See [.github/README-UPDATE-INSTRUCTIONS.md](.github/README-UPDATE-INSTRUCTIONS.md) for automation workflow.
+
+> **Note:** README.md is kept concise. For detailed information, see the linked documentation files.

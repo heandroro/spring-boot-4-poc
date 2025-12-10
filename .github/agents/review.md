@@ -32,6 +32,23 @@ Valide conformidade com:
 - **Segurança**: @PreAuthorize, BCrypt, JWT, validação de dados sensíveis
 - **REST API**: Status HTTP corretos, Bean Validation, Paginação
 
+### 2.1 Arquivos Markdown - Review SELETIVO
+**Revisar apenas quando:**
+- ✅ Arquivos técnicos críticos: `README.md`, `CONTRIBUTING.md`, `docs/api.md`, `docs/security.md`
+- ✅ Documentação de configuração: `.github/instructions.md`
+
+**Focar em:**
+- 🔗 Links quebrados
+- 🔒 Senhas/tokens expostos em exemplos
+- 📝 Sintaxe incorreta de código em blocos
+- 🚫 Comandos desatualizados ou caminhos errados
+
+**NÃO revisar:**
+- ❌ Arquivos de planejamento (`plan/*.md`)
+- ❌ Diagramas e roadmaps
+- ❌ CHANGELOG e histórico
+- ❌ Documentação interna/estratégias
+
 ### 3. Checklist da Template do PR
 Verifique se os itens do checklist em `.github/PULL_REQUEST_TEMPLATE.md` foram atendidos:
 - ✅ Arquitetura e separação de camadas

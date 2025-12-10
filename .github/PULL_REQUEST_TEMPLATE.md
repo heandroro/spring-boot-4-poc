@@ -78,7 +78,6 @@ Alternativamente, no GitHub:
 - [ ] Documentação OpenAPI/Swagger atualizada
 
 ### 📚 Documentação
-- [ ] JavaDoc em métodos públicos complexos
 - [ ] README atualizado se houver mudanças em setup
 - [ ] Diagramas atualizados em `plan/architecture-diagrams.md` se necessário
 - [ ] CHANGELOG.md atualizado com a mudança
