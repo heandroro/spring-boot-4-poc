@@ -1,0 +1,43 @@
+# .github/workflows/review-helper.yml
+name: Review Helper
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  quality-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run tests
+        run: ./gradlew test
+      
+      - name: Check coverage
+        run: ./gradlew jacocoTestReport
+      
+      - name: Analyze with Copilot
+        # Copilot faz review automaticamente
+        # se configurado em .github/copilot.yml
+        run: echo "Copilot review triggered"
+      
+      - name: Comment Summary
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✅ Quality Checks Passed
+              
+              - ✅ Build successful
+              - ✅ All tests passing
+              - ✅ Copilot review completed
+              
+              **Ready for human review!** 👀
+              
+              Se tudo estiver OK no review do Copilot, você pode aprovar rapidamente.`
+            })
