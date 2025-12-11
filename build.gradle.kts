@@ -19,6 +19,11 @@ repositories {
 }
 
 dependencies {
+    // TODO: Mudar para Undertow quando Spring Boot 4 suportar oficialmente
+    // implementation("org.springframework.boot:spring-boot-starter-web") {
+    //     exclude(group = "org.springframework.boot", module = "spring-boot-starter-tomcat")
+    // }
+    // implementation("org.springframework.boot:spring-boot-starter-undertow")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-validation")
