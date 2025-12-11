@@ -19,10 +19,19 @@ import java.util.Objects;
  * Represents a customer in the system. This is an aggregate root that manages
  * customer-related business logic and domain events.
  * 
+ * Design Decision: Uses traditional class (NOT Record) because:
+ * 1. Aggregate roots manage mutable state (credit, status changes)
+ * 2. Rich domain logic requires multiple methods (useCredit, restoreCredit, etc.)
+ * 3. Domain events must be collected and cleared in transient field
+ * 4. Constructor must be private to enforce factory method pattern
+ * 
+ * Value Objects (Money, Email, Address) ARE Records - they're immutable and stateless.
+ * 
  * Aggregate Invariants:
  * - A customer must have a unique email
  * - Customer status must be one of valid states (ACTIVE, INACTIVE, SUSPENDED)
  * - Credit limit must be non-negative
+ * - Available credit never exceeds credit limit
  * 
  * References:
  * - architecture.md: Aggregate Root pattern, Entity vs Value Object
@@ -52,7 +61,8 @@ public class Customer {
     private transient List<DomainEvent> events = new ArrayList<>();
 
     /**
-     * Private constructor - use factory method instead
+     * Private constructor - enforces factory method pattern
+     * MongoDB and reflection-based frameworks can still instantiate via no-arg constructor
      */
     private Customer() {
     }
@@ -60,10 +70,15 @@ public class Customer {
     /**
      * Factory method to create a new customer
      * 
-     * @param name customer name
-     * @param email customer email
-     * @param address customer address
-     * @param creditLimit initial credit limit
+     * This is the ONLY way to create a valid Customer instance.
+     * It ensures all invariants are met and the CustomerCreatedEvent is raised.
+     * 
+     * @param name customer name (required, non-blank)
+     * @param email customer email (required, valid format)
+     * @param address customer address (required, valid)
+     * @param creditLimit initial credit limit (required, non-negative)
+     * @return newly created Customer with ACTIVE status
+     * @throws NullPointerException if any required parameter is null
      * @throws IllegalArgumentException if any parameter is invalid
      */
     public static Customer create(String name, Email email, Address address, Money creditLimit) {
