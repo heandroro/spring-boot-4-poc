@@ -50,8 +50,7 @@ public record Address(
         city = city.trim();
         state = StringUtils.isBlank(state) ? null : state.trim();
         postalCode = postalCode.trim();
-        country = StringUtils.isBlank(country) ? null : country.trim();
-        country = country != null ? country : DEFAULT_COUNTRY;
+        country = StringUtils.isBlank(country) ? DEFAULT_COUNTRY : country.trim();
     }
 
     /**
@@ -73,11 +72,7 @@ public record Address(
             sb.append(", ").append(state);
         }
         
-        sb.append(" ").append(postalCode);
-        
-        if (!StringUtils.isBlank(country)) {
-            sb.append(", ").append(country);
-        }
+        sb.append(" ").append(postalCode).append(", ").append(country);
         
         return sb.toString();
     }
