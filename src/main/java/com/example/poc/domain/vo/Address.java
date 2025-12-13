@@ -1,6 +1,6 @@
 package com.example.poc.domain.vo;
 
-import java.util.Objects;
+import jakarta.validation.constraints.NotBlank;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -13,28 +13,55 @@ import org.apache.commons.lang3.StringUtils;
  * - Street, city, and postal code are required
  * - Country defaults to "United States"
  * 
+ * Bean Validation annotations (@NotBlank) provide declarative validation rules
+ * that work with Spring's validation framework at API boundaries, simplifying validation.
+ * 
  * References:
  * - architecture.md: Value Objects pattern
  * - code-examples.md: Section 22 - Rich Classes
  */
 public record Address(
+    @NotBlank(message = "Street must not be blank")
     String street,
+    
+    @NotBlank(message = "City must not be blank")
     String city,
+    
     String state,
+    
+    @NotBlank(message = "Postal code must not be blank")
     String postalCode,
+    
     String country
 ) {
 
     public static final String DEFAULT_COUNTRY = "United States";
 
     /**
-     * Constructor with validation
+     * Constructor with validation and normalization
+     * Bean Validation annotations provide declarative rules,
+     * constructor ensures fail-fast behavior for direct instantiation
      */
     public Address {
-        Objects.requireNonNull(street, "Street must not be null");
-        Objects.requireNonNull(city, "City must not be null");
-        Objects.requireNonNull(postalCode, "Postal code must not be null");
+        // Validate required fields (null checks)
+        if (street == null) {
+            throw new NullPointerException("Street must not be null");
+        }
+        if (city == null) {
+            throw new NullPointerException("City must not be null");
+        }
+        if (postalCode == null) {
+            throw new NullPointerException("Postal code must not be null");
+        }
         
+        // Trim whitespace
+        street = street.trim();
+        city = city.trim();
+        state = StringUtils.isBlank(state) ? null : state.trim();
+        postalCode = postalCode.trim();
+        country = StringUtils.isBlank(country) ? DEFAULT_COUNTRY : country.trim();
+        
+        // Validate not blank (simplified with Bean Validation annotations)
         if (street.isBlank()) {
             throw new IllegalArgumentException("Street must not be blank");
         }
@@ -44,13 +71,6 @@ public record Address(
         if (postalCode.isBlank()) {
             throw new IllegalArgumentException("Postal code must not be blank");
         }
-        
-        // Trim whitespace
-        street = street.trim();
-        city = city.trim();
-        state = StringUtils.isBlank(state) ? null : state.trim();
-        postalCode = postalCode.trim();
-        country = StringUtils.isBlank(country) ? DEFAULT_COUNTRY : country.trim();
     }
 
     /**
