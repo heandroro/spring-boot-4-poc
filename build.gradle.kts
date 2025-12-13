@@ -39,6 +39,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
+    // JavaFaker for realistic test data (names, addresses, emails)
+    // Exclude snakeyaml to avoid version conflicts with Spring Boot's managed version
     testImplementation("com.github.javafaker:javafaker:1.0.2") {
         exclude(group = "org.yaml", module = "snakeyaml")
     }
