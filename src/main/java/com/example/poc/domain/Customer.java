@@ -65,6 +65,8 @@ public class Customer {
      * MongoDB and reflection-based frameworks can still instantiate via no-arg constructor
      */
     private Customer() {
+        // Initialize transient field to avoid NullPointerException after MongoDB deserialization
+        this.events = new ArrayList<>();
     }
 
     /**
@@ -190,8 +192,8 @@ public class Customer {
         
         // Can't reduce limit below current usage
         Money used = creditLimit.subtract(availableCredit);
-        if (newLimit.isGreaterThan(used)) {
-            // It's ok to reduce
+        if (newLimit.isGreaterThanOrEqual(used)) {
+            // It's ok to reduce (even if newLimit equals used, resulting in zero available credit)
             this.creditLimit = newLimit;
             // Adjust available credit proportionally
             this.availableCredit = newLimit.subtract(used);
