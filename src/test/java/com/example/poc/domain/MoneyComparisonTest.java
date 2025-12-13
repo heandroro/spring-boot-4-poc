@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Demonstrates the correct pattern for comparing Money values.
  * 
- * This test addresses the compilation error mentioned in job 57984872962:
+ * This test addresses the Customer credit limit validation compilation error:
  * - WRONG: newLimit.isGreaterThanOrEqual(used) - method doesn't exist
  * - CORRECT: !used.isGreaterThan(newLimit) - equivalent to newLimit >= used
  */
@@ -93,6 +93,27 @@ class MoneyComparisonTest {
         assertThatThrownBy(() -> usd.isGreaterThan(eur))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Cannot operate on different currencies");
+    }
+    
+    @Test
+    @DisplayName("Should throw exception for negative multiplication factor")
+    void shouldThrowExceptionForNegativeFactor() {
+        var money = new Money(new BigDecimal("100.00"), USD);
+        
+        assertThatThrownBy(() -> money.multiply(new BigDecimal("-1.5")))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Multiplication factor cannot be negative");
+    }
+    
+    @Test
+    @DisplayName("Should throw exception when subtraction would result in negative amount")
+    void shouldThrowExceptionForNegativeSubtraction() {
+        var money1 = new Money(new BigDecimal("100.00"), USD);
+        var money2 = new Money(new BigDecimal("150.00"), USD);
+        
+        assertThatThrownBy(() -> money1.subtract(money2))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Subtraction result cannot be negative");
     }
     
     /**

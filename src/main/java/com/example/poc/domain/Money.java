@@ -47,28 +47,37 @@ public record Money(BigDecimal amount, Currency currency) {
     /**
      * Subtracts another money amount from this one.
      * Both amounts must be in the same currency.
+     * The result must not be negative.
      *
      * @param other the money to subtract
      * @return a new Money instance with the difference
-     * @throws IllegalArgumentException if currencies don't match
+     * @throws IllegalArgumentException if currencies don't match or result would be negative
      */
     public Money subtract(Money other) {
         validateSameCurrency(other);
         BigDecimal result = this.amount.subtract(other.amount);
         if (result.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Result cannot be negative");
+            throw new IllegalArgumentException(
+                String.format("Subtraction result cannot be negative: %s - %s",
+                    this.amount, other.amount)
+            );
         }
         return new Money(result, this.currency);
     }
     
     /**
      * Multiplies this money amount by a factor.
+     * The factor must be non-negative to ensure the result is non-negative.
      *
-     * @param factor the multiplication factor
+     * @param factor the multiplication factor (must be non-negative)
      * @return a new Money instance with the product
+     * @throws IllegalArgumentException if factor is negative
      */
     public Money multiply(BigDecimal factor) {
         Objects.requireNonNull(factor, "Factor cannot be null");
+        if (factor.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Multiplication factor cannot be negative");
+        }
         return new Money(this.amount.multiply(factor), this.currency);
     }
     

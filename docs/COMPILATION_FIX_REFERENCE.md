@@ -72,6 +72,6 @@ public class Customer {
 ```
 
 ## Reference
-- Original Issue: Job 57984872962
+- Issue: Customer credit limit validation compilation error
 - File: `src/main/java/com/example/poc/domain/Customer.java`
-- Line: 193 (in planned implementation)
+- Context: Credit limit must be validated to ensure it's not less than the amount already used
