@@ -1,11 +1,13 @@
 package com.example.poc.infrastructure.event;
 
+import static org.instancio.Select.all;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.instancio.Instancio;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,6 @@ import com.example.poc.domain.Customer;
 import com.example.poc.domain.event.DomainEvent;
 import com.example.poc.domain.vo.Address;
 import com.example.poc.domain.vo.Email;
-import com.example.poc.domain.vo.Money;
 import com.example.poc.domain.vo.Money;
 
 /**
@@ -38,13 +39,21 @@ class DomainEventPublisherTest {
     @Test
     @DisplayName("should publish single domain event without errors")
     void testPublishSingleEvent() {
-        // Given
-        Customer customer = Customer.create(
-                "Event Test Customer",
-                new Email("event@example.com"),
-                Address.of("123 Event St", "EventCity", "EC", "12345"),
-                Money.of(new BigDecimal("1000.00"))
-        );
+        // Given - Using Instancio generators to create test data with proper formatting
+        String name = Instancio.of(String.class)
+                .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a #a#a#a#a"))
+                .create();
+        Email email = new Email(Instancio.of(String.class)
+                .generate(all(String.class), gen -> gen.net().email())
+                .create());
+        Address address = Instancio.of(Address.class)
+                .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a#a#a#a"))
+                .create();
+        Money creditLimit = Money.of(Instancio.of(BigDecimal.class)
+                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
+                .create());
+        
+        Customer customer = Customer.create(name, email, address, creditLimit);
         
         List<DomainEvent> events = customer.pullEvents();
         DomainEvent event = events.get(0);
@@ -56,19 +65,35 @@ class DomainEventPublisherTest {
     @Test
     @DisplayName("should publish multiple domain events without errors")
     void testPublishMultipleEvents() {
-        // Given
+        // Given - Using Instancio generators to create test data with proper formatting
         Customer customer1 = Customer.create(
-                "Customer 1",
-                new Email("customer1@example.com"),
-                Address.of("111 Test St", "City1", "ST1", "11111"),
-                Money.of(new BigDecimal("1000.00"))
+                Instancio.of(String.class)
+                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a #a#a#a#a"))
+                        .create(),
+                new Email(Instancio.of(String.class)
+                        .generate(all(String.class), gen -> gen.net().email())
+                        .create()),
+                Instancio.of(Address.class)
+                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a#a#a#a"))
+                        .create(),
+                Money.of(Instancio.of(BigDecimal.class)
+                        .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
+                        .create())
         );
         
         Customer customer2 = Customer.create(
-                "Customer 2",
-                new Email("customer2@example.com"),
-                Address.of("222 Test Ave", "City2", "ST2", "22222"),
-                Money.of(new BigDecimal("2000.00"))
+                Instancio.of(String.class)
+                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a #a#a#a#a"))
+                        .create(),
+                new Email(Instancio.of(String.class)
+                        .generate(all(String.class), gen -> gen.net().email())
+                        .create()),
+                Instancio.of(Address.class)
+                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a#a#a#a"))
+                        .create(),
+                Money.of(Instancio.of(BigDecimal.class)
+                        .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
+                        .create())
         );
         
         List<DomainEvent> events = new ArrayList<>();
