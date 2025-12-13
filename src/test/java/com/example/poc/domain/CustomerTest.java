@@ -242,6 +242,7 @@ class CustomerTest {
         
         // Then
         assertEquals(new BigDecimal("700.00"), customer.getCreditLimit().amount());
+        assertEquals(new BigDecimal("700.00"), customer.getAvailableCredit().amount());
     }
 
     @Test
