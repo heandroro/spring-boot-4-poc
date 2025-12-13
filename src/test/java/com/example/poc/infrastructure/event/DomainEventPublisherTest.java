@@ -39,15 +39,15 @@ class DomainEventPublisherTest {
     @Test
     @DisplayName("should publish single domain event without errors")
     void testPublishSingleEvent() {
-        // Given - Using Instancio generators to create test data with proper formatting
+        // Given - Using Instancio generators to create realistic test data
         String name = Instancio.of(String.class)
-                .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a #a#a#a#a"))
+                .generate(all(String.class), gen -> gen.text().loremIpsum().words(2))
                 .create();
         Email email = new Email(Instancio.of(String.class)
                 .generate(all(String.class), gen -> gen.net().email())
                 .create());
         Address address = Instancio.of(Address.class)
-                .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a#a#a#a"))
+                .generate(all(String.class), gen -> gen.text().loremIpsum().words(1))
                 .create();
         Money creditLimit = Money.of(Instancio.of(BigDecimal.class)
                 .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
@@ -65,16 +65,16 @@ class DomainEventPublisherTest {
     @Test
     @DisplayName("should publish multiple domain events without errors")
     void testPublishMultipleEvents() {
-        // Given - Using Instancio generators to create test data with proper formatting
+        // Given - Using Instancio generators to create realistic test data
         Customer customer1 = Customer.create(
                 Instancio.of(String.class)
-                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a #a#a#a#a"))
+                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(2))
                         .create(),
                 new Email(Instancio.of(String.class)
                         .generate(all(String.class), gen -> gen.net().email())
                         .create()),
                 Instancio.of(Address.class)
-                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a#a#a#a"))
+                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(1))
                         .create(),
                 Money.of(Instancio.of(BigDecimal.class)
                         .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
@@ -83,13 +83,13 @@ class DomainEventPublisherTest {
         
         Customer customer2 = Customer.create(
                 Instancio.of(String.class)
-                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a #a#a#a#a"))
+                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(2))
                         .create(),
                 new Email(Instancio.of(String.class)
                         .generate(all(String.class), gen -> gen.net().email())
                         .create()),
                 Instancio.of(Address.class)
-                        .generate(all(String.class), gen -> gen.text().pattern("#a#a#a#a#a#a#a"))
+                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(1))
                         .create(),
                 Money.of(Instancio.of(BigDecimal.class)
                         .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
