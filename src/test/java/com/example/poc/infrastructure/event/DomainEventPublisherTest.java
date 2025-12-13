@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.instancio.Instancio;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +19,17 @@ import com.example.poc.domain.event.DomainEvent;
 import com.example.poc.domain.vo.Address;
 import com.example.poc.domain.vo.Email;
 import com.example.poc.domain.vo.Money;
+import com.github.javafaker.Faker;
 
 /**
  * Integration tests for Domain Event Publishing
  * 
  * Tests that events can be published without errors.
  * Event listeners are tested separately in CustomerEventHandlerTest.
+ * 
+ * Uses JavaFaker with Instancio for realistic test data generation:
+ * - JavaFaker generates realistic names, addresses, emails
+ * - Instancio handles object creation and field constraints
  * 
  * References:
  * - architecture.md: Event-Driven Architecture
@@ -35,20 +41,26 @@ class DomainEventPublisherTest {
 
     @Autowired
     private DomainEventPublisher eventPublisher;
+    
+    private Faker faker;
+    
+    @BeforeEach
+    void setUp() {
+        faker = new Faker();
+    }
 
     @Test
     @DisplayName("should publish single domain event without errors")
     void testPublishSingleEvent() {
-        // Given - Using Instancio generators to create realistic test data
-        String name = Instancio.of(String.class)
-                .generate(all(String.class), gen -> gen.text().loremIpsum().words(2))
-                .create();
-        Email email = new Email(Instancio.of(String.class)
-                .generate(all(String.class), gen -> gen.net().email())
-                .create());
-        Address address = Instancio.of(Address.class)
-                .generate(all(String.class), gen -> gen.text().loremIpsum().words(1))
-                .create();
+        // Given - Using JavaFaker with Instancio to create realistic test data
+        String name = faker.name().fullName();
+        Email email = new Email(faker.internet().emailAddress());
+        Address address = Address.of(
+                faker.address().streetAddress(),
+                faker.address().city(),
+                faker.address().stateAbbr(),
+                faker.address().zipCode()
+        );
         Money creditLimit = Money.of(Instancio.of(BigDecimal.class)
                 .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
                 .create());
@@ -65,32 +77,30 @@ class DomainEventPublisherTest {
     @Test
     @DisplayName("should publish multiple domain events without errors")
     void testPublishMultipleEvents() {
-        // Given - Using Instancio generators to create realistic test data
+        // Given - Using JavaFaker with Instancio to create realistic test data
         Customer customer1 = Customer.create(
-                Instancio.of(String.class)
-                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(2))
-                        .create(),
-                new Email(Instancio.of(String.class)
-                        .generate(all(String.class), gen -> gen.net().email())
-                        .create()),
-                Instancio.of(Address.class)
-                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(1))
-                        .create(),
+                faker.name().fullName(),
+                new Email(faker.internet().emailAddress()),
+                Address.of(
+                        faker.address().streetAddress(),
+                        faker.address().city(),
+                        faker.address().stateAbbr(),
+                        faker.address().zipCode()
+                ),
                 Money.of(Instancio.of(BigDecimal.class)
                         .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
                         .create())
         );
         
         Customer customer2 = Customer.create(
-                Instancio.of(String.class)
-                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(2))
-                        .create(),
-                new Email(Instancio.of(String.class)
-                        .generate(all(String.class), gen -> gen.net().email())
-                        .create()),
-                Instancio.of(Address.class)
-                        .generate(all(String.class), gen -> gen.text().loremIpsum().words(1))
-                        .create(),
+                faker.name().fullName(),
+                new Email(faker.internet().emailAddress()),
+                Address.of(
+                        faker.address().streetAddress(),
+                        faker.address().city(),
+                        faker.address().stateAbbr(),
+                        faker.address().zipCode()
+                ),
                 Money.of(Instancio.of(BigDecimal.class)
                         .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
                         .create())
