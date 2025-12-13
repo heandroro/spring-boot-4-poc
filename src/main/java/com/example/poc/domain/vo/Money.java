@@ -110,6 +110,16 @@ public record Money(BigDecimal amount, String currency) {
     }
 
     /**
+     * Check if amount is greater than or equal to other
+     */
+    public boolean isGreaterThanOrEqual(Money other) {
+        if (!this.currency.equals(other.currency)) {
+            throw new IllegalArgumentException("Cannot compare different currencies");
+        }
+        return this.amount.compareTo(other.amount) >= 0;
+    }
+
+    /**
      * Format for display: "USD 100.00"
      */
     public String format() {
