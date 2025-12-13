@@ -1,6 +1,7 @@
 package com.example.poc.domain.vo;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Objects;
 
 /**
@@ -113,6 +114,6 @@ public record Money(BigDecimal amount, String currency) {
      * Format for display: "USD 100.00"
      */
     public String format() {
-        return currency + " " + amount.setScale(2, BigDecimal.ROUND_HALF_UP);
+        return currency + " " + amount.setScale(2, RoundingMode.HALF_UP);
     }
 }
