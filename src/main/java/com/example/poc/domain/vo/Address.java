@@ -1,6 +1,7 @@
 package com.example.poc.domain.vo;
 
 import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Address Value Object
@@ -47,9 +48,9 @@ public record Address(
         // Trim whitespace
         street = street.trim();
         city = city.trim();
-        state = state != null ? state.trim() : null;
+        state = StringUtils.isBlank(state) ? null : state.trim();
         postalCode = postalCode.trim();
-        country = country != null ? country.trim() : DEFAULT_COUNTRY;
+        country = StringUtils.isBlank(country) ? DEFAULT_COUNTRY : country.trim();
     }
 
     /**
@@ -67,15 +68,11 @@ public record Address(
         StringBuilder sb = new StringBuilder();
         sb.append(street).append(", ").append(city);
         
-        if (state != null && !state.isBlank()) {
+        if (!StringUtils.isBlank(state)) {
             sb.append(", ").append(state);
         }
         
-        sb.append(" ").append(postalCode);
-        
-        if (country != null && !country.isBlank()) {
-            sb.append(", ").append(country);
-        }
+        sb.append(" ").append(postalCode).append(", ").append(country);
         
         return sb.toString();
     }
