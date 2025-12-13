@@ -19,6 +19,10 @@ repositories {
 }
 
 dependencies {
+    // Using Tomcat (default). Undertow is supported but spring-boot-starter-undertow
+    // is not available in Spring Boot 4.0.0's dependency management yet.
+    // See: https://spring.io/projects/spring-boot (lists Undertow as supported)
+    // TODO: Migrate to Undertow when available in Spring Boot 4.x BOM
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -27,6 +31,8 @@ dependencies {
 
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+
+    implementation("org.apache.commons:commons-lang3:3.17.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")
