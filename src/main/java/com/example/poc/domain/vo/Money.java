@@ -27,11 +27,11 @@ public record Money(BigDecimal amount, String currency) {
     public Money {
         Objects.requireNonNull(amount, "Amount must not be null");
         Objects.requireNonNull(currency, "Currency must not be null");
-        
+
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("Amount must be non-negative, got: " + amount);
         }
-        
+
         if (currency.isBlank()) {
             throw new IllegalArgumentException("Currency must not be blank");
         }
@@ -59,8 +59,7 @@ public record Money(BigDecimal amount, String currency) {
     public Money add(Money other) {
         if (!this.currency.equals(other.currency)) {
             throw new IllegalArgumentException(
-                "Cannot add different currencies: " + this.currency + " + " + other.currency
-            );
+                    "Cannot add different currencies: " + this.currency + " + " + other.currency);
         }
         return new Money(this.amount.add(other.amount), this.currency);
     }
@@ -68,13 +67,13 @@ public record Money(BigDecimal amount, String currency) {
     /**
      * Subtract another Money value
      * 
-     * @throws IllegalArgumentException if currencies don't match or result is negative
+     * @throws IllegalArgumentException if currencies don't match or result is
+     *                                  negative
      */
     public Money subtract(Money other) {
         if (!this.currency.equals(other.currency)) {
             throw new IllegalArgumentException(
-                "Cannot subtract different currencies: " + this.currency + " - " + other.currency
-            );
+                    "Cannot subtract different currencies: " + this.currency + " - " + other.currency);
         }
         BigDecimal result = this.amount.subtract(other.amount);
         if (result.signum() < 0) {
