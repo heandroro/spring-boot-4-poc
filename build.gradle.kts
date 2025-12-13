@@ -39,6 +39,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
+    testImplementation("com.github.javafaker:javafaker:1.0.2") {
+        exclude(group = "org.yaml", module = "snakeyaml")
+    }
     testImplementation("org.testcontainers:mongodb:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 }
