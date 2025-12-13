@@ -8,8 +8,7 @@ import com.example.poc.web.CustomerDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mapstruct.factory.Mappers;
 
 import java.math.BigDecimal;
 
@@ -27,12 +26,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * - api.md: REST API contract
  * - code-examples.md: Section 7 - MapStruct integration
  */
-@SpringBootTest
 @DisplayName("Customer Mapper Tests")
 class CustomerMapperTest {
 
-    @Autowired
-    private CustomerMapper mapper;
+    private final CustomerMapper mapper = Mappers.getMapper(CustomerMapper.class);
 
     private Customer testCustomer;
     private Email testEmail;
