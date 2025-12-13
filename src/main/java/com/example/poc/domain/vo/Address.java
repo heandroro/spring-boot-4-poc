@@ -1,5 +1,6 @@
 package com.example.poc.domain.vo;
 
+import java.util.Objects;
 import jakarta.validation.constraints.NotBlank;
 import org.apache.commons.lang3.StringUtils;
 
@@ -43,16 +44,10 @@ public record Address(
      * constructor ensures fail-fast behavior for direct instantiation
      */
     public Address {
-        // Validate required fields (null checks)
-        if (street == null) {
-            throw new NullPointerException("Street must not be null");
-        }
-        if (city == null) {
-            throw new NullPointerException("City must not be null");
-        }
-        if (postalCode == null) {
-            throw new NullPointerException("Postal code must not be null");
-        }
+        // Validate required fields (null checks using Objects for consistency)
+        Objects.requireNonNull(street, "Street must not be null");
+        Objects.requireNonNull(city, "City must not be null");
+        Objects.requireNonNull(postalCode, "Postal code must not be null");
         
         // Trim whitespace
         street = street.trim();
