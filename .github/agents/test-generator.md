@@ -216,6 +216,257 @@ Gere testes para:
 - ✅ Status HTTP correto
 - ✅ Mensagens de erro estruturadas
 
+### Web (Controllers com MockMvc)
+
+**Template: Controller Test com MockMvc**
+
+```java
+package com.example.poc.web;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.instancio.Instancio;
+import com.github.javafaker.Faker;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+
+import static org.instancio.Select.field;
+import static org.instancio.Select.all;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.hamcrest.Matchers.*;
+
+/**
+ * Unit tests for {Controller}
+ * 
+ * Uses MockMvc to test REST endpoints without starting full server.
+ * Service layer is mocked to isolate controller logic.
+ */
+@WebMvcTest({Controller}.class)
+@DisplayName("{Controller} Tests")
+class {Controller}Test {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockBean
+    private {Service} service;
+
+    private Faker faker = new Faker();
+
+    @Test
+    @DisplayName("should create entity and return 201")
+    void shouldCreateEntity() throws Exception {
+        // Given
+        BigDecimal amount = generatePositiveMoney();
+        {Dto} requestDto = Instancio.of({Dto}.class)
+            .set(field({Dto}::id), null)
+            .set(field({Dto}::name), faker.name().fullName())
+            .set(field({Dto}::creditLimit), amount)
+            .create();
+        
+        {Dto} responseDto = Instancio.of({Dto}.class)
+            .set(field({Dto}::id), "123")
+            .set(field({Dto}::name), requestDto.name())
+            .create();
+
+        when(service.create(any({Dto}.class))).thenReturn(responseDto);
+
+        // When/Then
+        mockMvc.perform(post("/api/{endpoint}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto)))
+            .andExpect(status().isCreated())
+            .andExpect(header().exists("Location"))
+            .andExpect(jsonPath("$.id").value("123"))
+            .andExpect(jsonPath("$.name").value(requestDto.name()));
+
+        verify(service).create(any({Dto}.class));
+    }
+
+    @Test
+    @DisplayName("should return 200 when entity exists")
+    void shouldReturnEntityWhenExists() throws Exception {
+        // Given
+        String id = "123";
+        {Dto} dto = Instancio.of({Dto}.class)
+            .set(field({Dto}::id), id)
+            .set(field({Dto}::name), faker.name().fullName())
+            .create();
+
+        when(service.findById(id)).thenReturn(Optional.of(dto));
+
+        // When/Then
+        mockMvc.perform(get("/api/{endpoint}/{id}", id))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(id))
+            .andExpect(jsonPath("$.name").value(dto.name()));
+
+        verify(service).findById(id);
+    }
+
+    @Test
+    @DisplayName("should return 404 when entity not found")
+    void shouldReturn404WhenNotFound() throws Exception {
+        // Given
+        String id = "nonexistent";
+        when(service.findById(id)).thenReturn(Optional.empty());
+
+        // When/Then
+        mockMvc.perform(get("/api/{endpoint}/{id}", id))
+            .andExpect(status().isNotFound());
+
+        verify(service).findById(id);
+    }
+
+    @Test
+    @DisplayName("should return 400 for validation errors")
+    void shouldReturn400ForValidationErrors() throws Exception {
+        // Given
+        {Dto} invalidDto = Instancio.of({Dto}.class)
+            .set(field({Dto}::name), "")  // Blank name (invalid)
+            .set(field({Dto}::email), "invalid-email")  // Invalid format
+            .create();
+
+        // When/Then
+        mockMvc.perform(post("/api/{endpoint}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDto)))
+            .andExpect(status().isBadRequest())
+            .andExpect(header().string("Content-Type", containsString("application/problem+json")))
+            .andExpect(jsonPath("$.title").value("Validation failed"))
+            .andExpect(jsonPath("$.errors").isArray())
+            .andExpect(jsonPath("$.errors[*].field", hasItem("name")))
+            .andExpect(jsonPath("$.errors[*].field", hasItem("email")));
+
+        verify(service, never()).create(any());
+    }
+
+    @Test
+    @DisplayName("should return 400 for business rule violation")
+    void shouldReturn400ForBusinessRuleViolation() throws Exception {
+        // Given
+        {Dto} dto = createValidDto();
+        when(service.create(any({Dto}.class)))
+            .thenThrow(new IllegalArgumentException("Business rule violated"));
+
+        // When/Then
+        mockMvc.perform(post("/api/{endpoint}")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.title").value("Bad Request"))
+            .andExpect(jsonPath("$.detail").value("Business rule violated"));
+
+        verify(service).create(any({Dto}.class));
+    }
+
+    @Test
+    @DisplayName("should update entity and return 200")
+    void shouldUpdateEntity() throws Exception {
+        // Given
+        String id = "123";
+        {Dto} updateDto = createValidDto();
+        {Dto} updatedDto = Instancio.of({Dto}.class)
+            .set(field({Dto}::id), id)
+            .create();
+
+        when(service.update(eq(id), any({Dto}.class))).thenReturn(updatedDto);
+
+        // When/Then
+        mockMvc.perform(put("/api/{endpoint}/{id}", id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateDto)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(id));
+
+        verify(service).update(eq(id), any({Dto}.class));
+    }
+
+    @Test
+    @DisplayName("should delete entity and return 204")
+    void shouldDeleteEntity() throws Exception {
+        // Given
+        String id = "123";
+        doNothing().when(service).delete(id);
+
+        // When/Then
+        mockMvc.perform(delete("/api/{endpoint}/{id}", id))
+            .andExpect(status().isNoContent());
+
+        verify(service).delete(id);
+    }
+
+    @Test
+    @DisplayName("should list entities with pagination")
+    void shouldListEntitiesWithPagination() throws Exception {
+        // Given
+        // Service retorna Page<Dto>
+
+        // When/Then
+        mockMvc.perform(get("/api/{endpoint}")
+                .param("page", "0")
+                .param("size", "10")
+                .param("sort", "name,asc"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.pageable").exists())
+            .andExpect(jsonPath("$.totalElements").exists());
+
+        verify(service).findAll(any());
+    }
+
+    // === Helper Methods ===
+
+    private {Dto} createValidDto() {
+        BigDecimal amount = generatePositiveMoney();
+        return Instancio.of({Dto}.class)
+            .set(field({Dto}::id), null)
+            .set(field({Dto}::name), faker.name().fullName())
+            .set(field({Dto}::email), faker.internet().emailAddress())
+            .set(field({Dto}::creditLimit), amount)
+            .create();
+    }
+
+    private BigDecimal generatePositiveMoney() {
+        return Instancio.of(BigDecimal.class)
+            .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
+                .min(BigDecimal.ONE)
+                .max(new BigDecimal("10000.00")))
+            .create();
+    }
+}
+```
+
+**Cobertura de Testes para Controllers:**
+- ✅ POST (201 Created) - Criação com sucesso
+- ✅ GET by ID (200 OK) - Busca com sucesso
+- ✅ GET by ID (404 Not Found) - Entidade não existe
+- ✅ POST (400 Bad Request) - Validação falha
+- ✅ POST (400 Bad Request) - Regra de negócio violada
+- ✅ PUT (200 OK) - Atualização com sucesso
+- ✅ DELETE (204 No Content) - Deleção com sucesso
+- ✅ GET list (200 OK) - Listagem com paginação
+
+**Assertions Importantes:**
+- Status HTTP correto
+- Headers (Location, Content-Type)
+- Estrutura JSON (jsonPath)
+- RFC 7807 para erros (ProblemDetail)
+- Verificação de chamadas ao service (Mockito verify)
+
 ## Anti-Padrões
 
 ### ❌ Não Faça
