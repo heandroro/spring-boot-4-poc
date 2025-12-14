@@ -156,6 +156,8 @@ public record CreateProductRequest(
 ) {}
 ```
 
+> Regra: use Bean Validation por anotações. Não implemente validações manuais em construtores (classes ou records).
+
 Evitar:
 ```java
 public record CreateProductRequest(String sku, String name, BigDecimal price, Integer stock) {}
