@@ -28,7 +28,7 @@ Valide conformidade com:
 - **Java 25 Features**: Records (não Lombok), Pattern Matching, Sequenced Collections
 - **Spring Boot 4**: Constructor Injection, RestClient, ProblemDetail
 - **MongoDB Best Practices**: Embedding vs Referencing, Indexes, TTL
-- **Testes**: JUnit 5 (Jupiter), Instancio, Mockito, Testcontainers (80%+ cobertura)
+- **Testes**: JUnit 6, Instancio, Mockito, Testcontainers (80%+ cobertura)
 - **Segurança**: @PreAuthorize, BCrypt, JWT, validação de dados sensíveis
 - **REST API**: Status HTTP corretos, Bean Validation, Paginação
 

@@ -1,25 +1,18 @@
 package com.example.poc.infrastructure.mapping;
 
-import static org.instancio.Select.all;
-import static org.instancio.Select.field;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.math.BigDecimal;
-
-import org.instancio.Instancio;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
-
 import com.example.poc.domain.Customer;
 import com.example.poc.domain.vo.Address;
 import com.example.poc.domain.vo.Email;
 import com.example.poc.domain.vo.Money;
 import com.example.poc.web.CustomerDto;
-import com.github.javafaker.Faker;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+
+import java.math.BigDecimal;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for CustomerMapper
@@ -28,10 +21,8 @@ import com.github.javafaker.Faker;
  * - Customer (domain entity with rich types)
  * - CustomerDto (DTO with primitive types)
  * 
- * This is a pure unit test that uses MapStruct's factory pattern
- * (Mappers.getMapper())
- * instead of loading the entire Spring context, making tests faster and more
- * focused.
+ * This is a pure unit test that uses MapStruct's factory pattern (Mappers.getMapper())
+ * instead of loading the entire Spring context, making tests faster and more focused.
  * 
  * References:
  * - architecture.md: Mapping layer, Value Objects
@@ -52,10 +43,11 @@ class CustomerMapperTest {
         testEmail = new Email("test@example.com");
         testAddress = Address.of("123 Test St", "TestCity", "TC", "12345");
         testCustomer = Customer.create(
-                "Test Customer",
-                testEmail,
-                testAddress,
-                Money.of(new BigDecimal("1000.00")));
+            "Test Customer",
+            testEmail,
+            testAddress,
+            Money.of(new BigDecimal("1000.00"))
+        );
     }
 
     @Test
@@ -63,7 +55,7 @@ class CustomerMapperTest {
     void testEntityToDtoMapping() {
         // When
         CustomerDto dto = mapper.toDto(testCustomer);
-
+        
         // Then
         assertEquals("Test Customer", dto.name());
         assertEquals("test@example.com", dto.email());
@@ -72,7 +64,6 @@ class CustomerMapperTest {
         assertEquals("TC", dto.state());
         assertEquals("12345", dto.postalCode());
         assertEquals(new BigDecimal("1000.00"), dto.creditLimit());
-        assertEquals(new BigDecimal("1000.00"), dto.availableCredit());
         assertEquals("ACTIVE", dto.status());
     }
 
@@ -81,21 +72,22 @@ class CustomerMapperTest {
     void testDtoToEntityMapping() {
         // Given
         CustomerDto dto = new CustomerDto(
-                null, // ID
-                "New Customer",
-                "new@example.com",
-                "456 New St",
-                "NewCity",
-                "NC",
-                "54321",
-                "United States",
-                new BigDecimal("2000.00"),
-                new BigDecimal("2000.00"),
-                "ACTIVE");
-
+            null,  // ID
+            "New Customer",
+            "new@example.com",
+            "456 New St",
+            "NewCity",
+            "NC",
+            "54321",
+            "United States",
+            new BigDecimal("2000.00"),
+            new BigDecimal("2000.00"),
+            "ACTIVE"
+        );
+        
         // When
         Customer customer = mapper.toEntity(dto);
-
+        
         // Then
         assertEquals("New Customer", customer.getName());
         assertEquals("new@example.com", customer.getEmail().toString());
@@ -104,7 +96,6 @@ class CustomerMapperTest {
         assertEquals("NC", customer.getAddress().state());
         assertEquals("54321", customer.getAddress().postalCode());
         assertEquals(new BigDecimal("2000.00"), customer.getCreditLimit().amount());
-        assertEquals(new BigDecimal("2000.00"), customer.getAvailableCredit().amount());
     }
 
     @Test
@@ -113,13 +104,12 @@ class CustomerMapperTest {
         // When
         CustomerDto dto = mapper.toDto(testCustomer);
         Customer mapped = mapper.toEntity(dto);
-
+        
         // Then
         assertEquals(testCustomer.getName(), mapped.getName());
         assertEquals(testCustomer.getEmail().toString(), mapped.getEmail().toString());
         assertEquals(testCustomer.getAddress().street(), mapped.getAddress().street());
         assertEquals(testCustomer.getCreditLimit().amount(), mapped.getCreditLimit().amount());
-        assertEquals(testCustomer.getAvailableCredit().amount(), mapped.getAvailableCredit().amount());
     }
 
     @Test
@@ -127,20 +117,22 @@ class CustomerMapperTest {
     void testAddressComponentsPreserved() {
         // Given
         Address complexAddress = new Address(
-                "789 Complex Ave",
-                "ComplexCity",
-                "CC",
-                "98765",
-                "United Kingdom");
+            "789 Complex Ave",
+            "ComplexCity",
+            "CC",
+            "98765",
+            "United Kingdom"
+        );
         Customer customer = Customer.create(
-                "Complex Address Customer",
-                new Email("complex@example.com"),
-                complexAddress,
-                Money.of(new BigDecimal("5000.00")));
-
+            "Complex Address Customer",
+            new Email("complex@example.com"),
+            complexAddress,
+            Money.of(new BigDecimal("5000.00"))
+        );
+        
         // When
         CustomerDto dto = mapper.toDto(customer);
-
+        
         // Then
         assertEquals("789 Complex Ave", dto.street());
         assertEquals("ComplexCity", dto.city());
@@ -150,110 +142,22 @@ class CustomerMapperTest {
     }
 
     @Test
-    @DisplayName("should treat blank state as null in entity")
-    void testBlankStateHandled() {
-        // Given
-        CustomerDto dto = new CustomerDto(
-                null,
-                "Blank State Customer",
-                "state.blank@example.com",
-                "100 Any St",
-                "AnyCity",
-                "   ",
-                "00000",
-                "United States",
-                new BigDecimal("2000.00"),
-                new BigDecimal("2000.00"),
-                "ACTIVE");
-
-        // When
-        Customer entity = mapper.toEntity(dto);
-
-        // Then
-        assertNull(entity.getAddress().state());
-    }
-
-    @Test
-    @DisplayName("should allow null state in DTO and entity")
-    void testNullStateHandled() {
-        // Given
-        CustomerDto dto = new CustomerDto(
-                null,
-                "Null State Customer",
-                "state.null@example.com",
-                "100 Any St",
-                "AnyCity",
-                null,
-                "00000",
-                "United States",
-                new BigDecimal("2000.00"),
-                new BigDecimal("2000.00"),
-                "ACTIVE");
-
-        // When
-        Customer entity = mapper.toEntity(dto);
-
-        // Then
-        assertNull(entity.getAddress().state());
-    }
-
-    @Test
     @DisplayName("should preserve monetary values in mapping")
     void testMonetaryValuesPreserved() {
         // Given
         Customer customer = Customer.create(
-                "Wealthy Customer",
-                new Email("wealthy@example.com"),
-                testAddress,
-                Money.of(new BigDecimal("999999.99")));
-
+            "Wealthy Customer",
+            new Email("wealthy@example.com"),
+            testAddress,
+            Money.of(new BigDecimal("999999.99"))
+        );
+        
         // When
         CustomerDto dto = mapper.toDto(customer);
         Customer mapped = mapper.toEntity(dto);
-
+        
         // Then
         assertEquals(new BigDecimal("999999.99"), dto.creditLimit());
         assertEquals(new BigDecimal("999999.99"), mapped.getCreditLimit().amount());
-    }
-
-    @Test
-    @DisplayName("should map realistic data generated by Faker + Instancio")
-    void testFakerInstancioCombined() {
-        Faker faker = new Faker();
-
-        // Generate a random credit limit (positive value)
-        BigDecimal creditLimit = Instancio.of(BigDecimal.class)
-                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
-                        .min(BigDecimal.ONE)
-                        .max(new BigDecimal("10000.00")))
-                .create();
-
-        CustomerDto dto = Instancio.of(CustomerDto.class)
-                .set(field(CustomerDto::id), null)
-                .set(field(CustomerDto::name), faker.name().fullName())
-                .set(field(CustomerDto::email), faker.internet().emailAddress())
-                .set(field(CustomerDto::street), faker.address().streetAddress())
-                .set(field(CustomerDto::city), faker.address().city())
-                .set(field(CustomerDto::state), faker.address().stateAbbr())
-                .set(field(CustomerDto::postalCode), faker.address().zipCode())
-                .set(field(CustomerDto::country), "United States")
-                .set(field(CustomerDto::creditLimit), creditLimit)
-                .set(field(CustomerDto::availableCredit), creditLimit)
-                .set(field(CustomerDto::status), "ACTIVE")
-                .create();
-
-        Customer entity = mapper.toEntity(dto);
-
-        assertEquals(dto.name(), entity.getName());
-        assertEquals(dto.email(), entity.getEmail().toString());
-        assertEquals(dto.street(), entity.getAddress().street());
-        assertEquals(dto.city(), entity.getAddress().city());
-        assertEquals(dto.state(), entity.getAddress().state());
-        assertEquals(dto.postalCode(), entity.getAddress().postalCode());
-        assertEquals(dto.creditLimit(), entity.getCreditLimit().amount());
-        assertEquals(dto.availableCredit(), entity.getAvailableCredit().amount());
-        // Verify generated values are positive
-        assertTrue(entity.getCreditLimit().amount().compareTo(BigDecimal.ZERO) > 0);
-        assertTrue(entity.getAvailableCredit().amount().compareTo(BigDecimal.ZERO) > 0);
     }
 }

@@ -42,7 +42,7 @@ Alternativamente, no GitHub:
 - [ ] Código não usa Lombok (preferir Records nativos do Java 25)
 
 ### 🧪 Testes
-- [ ] Testes unitários com **JUnit 5 (Jupiter)** e `@DisplayName` descritivo
+- [ ] Testes unitários com **JUnit 6 (Jupiter)** e `@DisplayName` descritivo
 - [ ] Testes usam **Instancio** para criar fixtures (`Instancio.create()`)
 - [ ] Mocks com **Mockito** (`@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`)
 - [ ] Testes de integração com **Testcontainers** e `@EnabledIfEnvironmentVariable`
