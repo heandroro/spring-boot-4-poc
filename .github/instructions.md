@@ -38,6 +38,73 @@ Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD
 - **@DisplayName**: Descrições legíveis dos testes
 - **Mockito**: `@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`
 
+### Geração de Testes Unitários
+Ao gerar testes unitários, siga rigorosamente:
+
+**Fixtures com Instancio + JavaFaker:**
+```java
+// ✅ Use method references (type-safe)
+CustomerDto dto = Instancio.of(CustomerDto.class)
+    .set(field(CustomerDto::name), faker.name().fullName())
+    .set(field(CustomerDto::email), faker.internet().emailAddress())
+    .create();
+
+// ❌ NUNCA use strings literais
+.set(Select.field("name"), "John Doe")  // EVITAR
+```
+
+**Valores Numéricos com Constraints:**
+```java
+// ✅ Gere valores aleatórios com constraints
+BigDecimal amount = Instancio.of(BigDecimal.class)
+    .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
+        .min(BigDecimal.ONE)
+        .max(new BigDecimal("10000.00")))
+    .create();
+
+// ❌ NUNCA use valores fixos repetidos
+new BigDecimal("5000.00")  // EVITAR
+```
+
+**Imports Obrigatórios:**
+```java
+import org.instancio.Instancio;
+import static org.instancio.Select.field;
+import static org.instancio.Select.all;
+import com.github.javafaker.Faker;
+import static org.junit.jupiter.api.Assertions.*;
+```
+
+**Estrutura de Teste:**
+```java
+@DisplayName("{ClassName} Tests")
+class {ClassName}Test {
+    private Faker faker;
+    
+    @BeforeEach
+    void setUp() {
+        faker = new Faker();
+    }
+    
+    @Test
+    @DisplayName("should {expectedBehavior} when {condition}")
+    void should{Behavior}When{Condition}() {
+        // Given (Instancio + Faker)
+        // When (execute method)
+        // Then (assertions)
+    }
+}
+```
+
+**Cobertura por Camada:**
+- **Domain**: Construção, validações, regras de negócio, exceções, invariantes
+- **Infrastructure (Mapper)**: Entity→DTO, DTO→Entity, roundtrip, nulls/blanks, dados realistas
+- **Infrastructure (Repository)**: CRUD, custom queries, Testcontainers
+- **Web**: Exception handlers, validação, status HTTP, ProblemDetail
+
+**Referência Completa:** [docs/test-generation-agent.md](../docs/test-generation-agent.md)  
+**Boas Práticas Instancio:** [docs/instancio-best-practices.md](../docs/instancio-best-practices.md)
+
 ## Segurança
 - **RBAC**: `@PreAuthorize("hasRole('ADMIN')")` nos endpoints
 - **BCrypt**: Sempre hashear senhas com `passwordEncoder.encode()`
