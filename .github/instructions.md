@@ -48,6 +48,7 @@ Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD
 - **Status HTTP**: 201 Created, 200 OK, 204 No Content, 404 Not Found
 - **Paginação**: `Page<ProductDto> findAll(Pageable pageable)`
 - **Bean Validation**: `@NotBlank`, `@NotNull`, `@Email` nos DTOs
+- **Validação fora do construtor**: Prefira Bean Validation com anotações; não coloque validação manual em construtores (classes ou records)
 - **Naming**: `GET /api/products`, `POST /api/products`, `DELETE /api/products/{id}`
 
 ## Clean Code
