@@ -20,7 +20,7 @@ Este agente é ativado quando:
 
 ## Stack de Testes
 
-- **Framework**: JUnit 5 (Jupiter)
+- **Framework**: JUnit 6 (Jupiter)
 - **Mocking**: Mockito
 - **Fixtures**: Instancio 4.0.0 + JavaFaker
 - **Containers**: Testcontainers (MongoDB)
@@ -29,7 +29,7 @@ Este agente é ativado quando:
 ## Imports Padrão
 
 ```java
-// JUnit
+// JUnit 6
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -307,7 +307,7 @@ private Customer createValidCustomer() {
 
 Antes de finalizar testes gerados, verifique:
 
-- [ ] Imports corretos (JUnit 5, Instancio, Faker)
+- [ ] Imports corretos (JUnit 6, Instancio, Faker)
 - [ ] JavaDoc da classe de teste
 - [ ] `@DisplayName` descritivo
 - [ ] `@BeforeEach` para setup do Faker
