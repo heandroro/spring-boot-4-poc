@@ -1,5 +1,8 @@
 package com.example.poc.domain;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+
 import java.math.BigDecimal;
 import java.util.Currency;
 import java.util.Objects;
@@ -8,12 +11,18 @@ import java.util.Objects;
  * Value object representing a monetary amount with currency.
  * Immutable and provides comparison operations.
  */
-public record Money(BigDecimal amount, Currency currency) {
+public record Money(
+    @NotNull(message = "Amount cannot be null")
+    @DecimalMin(value = "0.0", message = "Amount cannot be negative")
+    BigDecimal amount,
+    
+    @NotNull(message = "Currency cannot be null")
+    Currency currency
+) {
     
     public Money {
-        Objects.requireNonNull(amount, "Amount cannot be null");
-        Objects.requireNonNull(currency, "Currency cannot be null");
-        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+        // Compact constructor for immediate validation when Bean Validation is not triggered
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Amount cannot be negative");
         }
     }
