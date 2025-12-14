@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * - Customer (domain entity with rich types)
  * - CustomerDto (DTO with primitive types)
  * 
+ * This is a pure unit test that uses MapStruct's factory pattern (Mappers.getMapper())
+ * instead of loading the entire Spring context, making tests faster and more focused.
+ * 
  * References:
  * - architecture.md: Mapping layer, Value Objects
  * - api.md: REST API contract
