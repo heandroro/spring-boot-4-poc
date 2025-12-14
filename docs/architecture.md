@@ -297,4 +297,5 @@ Infrastructure Layer (MongoDB, Security, HTTP)
 
 - [Security](security.md) - JWT, authorization, CORS
 - [Testing](testing.md) - Unit tests, integration tests, fixtures
+- [Java Records Best Practices](java-records-best-practices.md) - Records, Jackson, and validation patterns
 - [plan/code-examples.md](../plan/code-examples.md) - Comprehensive code examples and patterns
