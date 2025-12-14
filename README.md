@@ -1,6 +1,6 @@
 # Spring Boot 4 PoC
 
-Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 and MongoDB.
+Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 5 (Jupiter) and MongoDB.
 
 ## 🎯 Key Points
 
@@ -20,7 +20,7 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 📖 **Details:** [.github/agents/README.md](.github/agents/README.md) | [GitHub Strategy](docs/github-approval-strategy.md)
 
 ### Testing Stack
-- **JUnit 6 (Jupiter)**: Modern testing framework with `@DisplayName`
+- **JUnit 5 (Jupiter)**: Modern testing framework with `@DisplayName`
 - **Instancio**: Automatic test data generation
 - **Mockito**: Mocking framework for unit tests
 - **Testcontainers**: Real MongoDB for integration tests

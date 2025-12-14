@@ -4,7 +4,7 @@
 
 This project uses a comprehensive testing approach covering unit, integration, and component tests.
 
-- **Framework**: JUnit 6 (Jupiter)
+- **Framework**: JUnit 5 (Jupiter)
 - **Mocking**: Mockito
 - **Fixtures**: Instancio (random test data generation)
 - **Integration Tests**: Testcontainers (MongoDB, Docker)

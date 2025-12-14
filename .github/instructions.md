@@ -33,7 +33,7 @@ Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD
 - **Indexes**: `@Indexed` em campos pesquisados (sku, category)
 
 ## Testes
-- **JUnit 6 + Instancio**: `Instancio.create(Product.class)` para fixtures
+- **JUnit 5 (Jupiter) + Instancio**: `Instancio.create(Product.class)` para fixtures
 - **Testcontainers**: MongoDB real em testes de integração
 - **@DisplayName**: Descrições legíveis dos testes
 - **Mockito**: `@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`

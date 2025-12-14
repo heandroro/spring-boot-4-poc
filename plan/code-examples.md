@@ -17,7 +17,7 @@ Colecao enxuta de exemplos aplicando os padroes definidos no projeto.
 
 5. [Controller REST com @PreAuthorize e Status Corretos](#controller-rest-com-preauthorize-e-status-corretos)
 6. [Tratamento de Erros com ProblemDetail](#tratamento-de-erros-com-problemdetail)
-7. [Teste Unitario com JUnit 6, Mockito e Instancio](#teste-unitario-com-junit-6-mockito-e-instancio)
+7. [Teste Unitario com JUnit 5, Mockito e Instancio](#teste-unitario-com-junit-5-mockito-e-instancio)
 8. [Teste de Repository com Testcontainers](#teste-de-repository-com-testcontainers)
 
 ### PARTE III: Padrões Arquiteturais e Injeção de Dependências
@@ -327,7 +327,7 @@ public class GlobalExceptionHandlerBad {
 
 
 
-## Teste Unitario com JUnit 6, Mockito e Instancio
+## Teste Unitario com JUnit 5, Mockito e Instancio
 ```java
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CreateProductUseCase - Criar produto")

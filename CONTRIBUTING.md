@@ -225,7 +225,7 @@ public class GlobalExceptionHandler {
 ## 🧪 Testes
 
 ### Stack de Testes
-- **JUnit 6 (Jupiter 5.11+)** - Framework
+- **JUnit 5 (Jupiter 5.11+)** - Framework
 - **Mockito** - Mocks e Stubs
 - **Instancio** - Geração de dados de teste
 - **Testcontainers** - MongoDB real em testes de integração
