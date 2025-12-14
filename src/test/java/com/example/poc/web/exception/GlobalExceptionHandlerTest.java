@@ -65,9 +65,10 @@ class GlobalExceptionHandlerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isBadRequest())
-            .andExpect(jsonPath("$.title").value("Validation Error"))
-            .andExpect(jsonPath("$.detail").value("Validation failed"))
-            .andExpect(jsonPath("$.errors.name").value(containsString("must not be blank")))
+            .andExpect(jsonPath("$.title").value("Validation failed"))
+            .andExpect(jsonPath("$.detail").value("Request body contains invalid fields"))
+            .andExpect(jsonPath("$.errors[0].field").value("name"))
+            .andExpect(jsonPath("$.errors[0].message").value(containsString("must not be blank")))
             .andExpect(jsonPath("$.timestamp").exists());
     }
 

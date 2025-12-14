@@ -16,8 +16,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Validation failed");
-        problemDetail.setTitle("Validation Error");
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Request body contains invalid fields");
+        problemDetail.setTitle("Validation failed");
         problemDetail.setProperty("timestamp", Instant.now());
         problemDetail.setProperty("errors", fieldErrors(ex));
         return problemDetail;
@@ -44,8 +44,12 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
-    private Map<String, String> fieldErrors(MethodArgumentNotValidException ex) {
+    private Object fieldErrors(MethodArgumentNotValidException ex) {
         return ex.getBindingResult().getFieldErrors().stream()
-            .collect(Collectors.toMap(FieldError::getField, FieldError::getDefaultMessage, (first, ignored) -> first));
+            .map(err -> Map.of(
+                "field", err.getField(),
+                "message", err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value"
+            ))
+            .toList();
     }
 }
