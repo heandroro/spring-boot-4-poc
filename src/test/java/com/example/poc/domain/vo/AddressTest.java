@@ -9,10 +9,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for Address Value Object
  * 
  * Tests focus on:
- * - Address validation (required fields)
+ * - Address normalization (trimming, default values)
  * - Immutability
  * - Formatting for display
  * - Country operations
+ * 
+ * Note: Validation is handled by Bean Validation annotations (@NotBlank)
+ * at API boundaries, not in the constructor.
  * 
  * References: testing.md, architecture.md - Value Objects section
  */
@@ -47,66 +50,6 @@ class AddressTest {
         
         // Then
         assertEquals("United States", address.country());
-    }
-
-    @Test
-    @DisplayName("should reject null street")
-    void testRejectNullStreet() {
-        // Expect
-        assertThrows(
-            NullPointerException.class,
-            () -> new Address(null, "Springfield", "IL", "62701", "USA")
-        );
-    }
-
-    @Test
-    @DisplayName("should reject blank street")
-    void testRejectBlankStreet() {
-        // Expect
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new Address("   ", "Springfield", "IL", "62701", "USA")
-        );
-    }
-
-    @Test
-    @DisplayName("should reject null city")
-    void testRejectNullCity() {
-        // Expect
-        assertThrows(
-            NullPointerException.class,
-            () -> new Address("123 Main St", null, "IL", "62701", "USA")
-        );
-    }
-
-    @Test
-    @DisplayName("should reject blank city")
-    void testRejectBlankCity() {
-        // Expect
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new Address("123 Main St", "   ", "IL", "62701", "USA")
-        );
-    }
-
-    @Test
-    @DisplayName("should reject null postal code")
-    void testRejectNullPostalCode() {
-        // Expect
-        assertThrows(
-            NullPointerException.class,
-            () -> new Address("123 Main St", "Springfield", "IL", null, "USA")
-        );
-    }
-
-    @Test
-    @DisplayName("should reject blank postal code")
-    void testRejectBlankPostalCode() {
-        // Expect
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new Address("123 Main St", "Springfield", "IL", "   ", "USA")
-        );
     }
 
     @Test

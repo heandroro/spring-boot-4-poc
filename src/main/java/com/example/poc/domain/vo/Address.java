@@ -1,6 +1,5 @@
 package com.example.poc.domain.vo;
 
-import java.util.Objects;
 import jakarta.validation.constraints.NotBlank;
 import org.apache.commons.lang3.StringUtils;
 
@@ -39,33 +38,17 @@ public record Address(
     public static final String DEFAULT_COUNTRY = "United States";
 
     /**
-     * Constructor with validation and normalization
-     * Bean Validation annotations provide declarative rules,
-     * constructor ensures fail-fast behavior for direct instantiation
+     * Constructor with normalization
+     * Bean Validation annotations (@NotBlank) handle validation at API boundaries.
+     * Constructor normalizes data (trim whitespace, apply defaults).
      */
     public Address {
-        // Validate required fields (null checks using Objects for consistency)
-        Objects.requireNonNull(street, "Street must not be null");
-        Objects.requireNonNull(city, "City must not be null");
-        Objects.requireNonNull(postalCode, "Postal code must not be null");
-        
-        // Trim whitespace
-        street = street.trim();
-        city = city.trim();
+        // Normalize: trim whitespace and apply defaults
+        street = street != null ? street.trim() : null;
+        city = city != null ? city.trim() : null;
         state = StringUtils.isBlank(state) ? null : state.trim();
-        postalCode = postalCode.trim();
+        postalCode = postalCode != null ? postalCode.trim() : null;
         country = StringUtils.isBlank(country) ? DEFAULT_COUNTRY : country.trim();
-        
-        // Validate not blank (simplified with Bean Validation annotations)
-        if (street.isBlank()) {
-            throw new IllegalArgumentException("Street must not be blank");
-        }
-        if (city.isBlank()) {
-            throw new IllegalArgumentException("City must not be blank");
-        }
-        if (postalCode.isBlank()) {
-            throw new IllegalArgumentException("Postal code must not be blank");
-        }
     }
 
     /**
