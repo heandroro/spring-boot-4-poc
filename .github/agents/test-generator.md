@@ -228,11 +228,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.instancio.Instancio;
 import com.github.javafaker.Faker;
+
+import com.example.poc.web.exception.GlobalExceptionHandler;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -250,8 +253,12 @@ import static org.hamcrest.Matchers.*;
  * 
  * Uses MockMvc to test REST endpoints without starting full server.
  * Service layer is mocked to isolate controller logic.
+ * 
+ * @Import(GlobalExceptionHandler.class) includes the @ControllerAdvice
+ * to test error handling with RFC 7807 ProblemDetail responses.
  */
 @WebMvcTest({Controller}.class)
+@Import(GlobalExceptionHandler.class)
 @DisplayName("{Controller} Tests")
 class {Controller}Test {
 
@@ -447,6 +454,34 @@ class {Controller}Test {
                 .max(new BigDecimal("10000.00")))
             .create();
     }
+}
+```
+
+**⚠️ Importante: @ControllerAdvice nos Testes**
+
+`@WebMvcTest` **não carrega automaticamente** classes anotadas com `@ControllerAdvice`. Para testar o tratamento de exceções com `GlobalExceptionHandler`:
+
+```java
+@WebMvcTest(CustomerController.class)
+@Import(GlobalExceptionHandler.class)  // ✅ Inclui o exception handler
+class CustomerControllerTest {
+    // Agora os testes validam respostas RFC 7807 ProblemDetail
+}
+```
+
+**Quando usar @Import:**
+- ✅ Quando testar erro 400 (validação, business rules)
+- ✅ Quando testar erro 404 (not found)
+- ✅ Quando validar estrutura de ProblemDetail
+- ❌ Não necessário se testar apenas 200/201 (happy path)
+
+**Alternativa sem @Import:**
+```java
+// Se não importar @ControllerAdvice, exceções não tratadas retornam 500
+// Use apenas se quiser testar o controller isoladamente
+@WebMvcTest(CustomerController.class)
+class CustomerControllerTest {
+    // Testa apenas lógica do controller, não error handling
 }
 ```
 
