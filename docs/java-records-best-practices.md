@@ -1,0 +1,535 @@
+# Java Records Best Practices
+
+## Overview
+
+This document provides best practices for using Java Records in the Spring Boot 4 POC project, with special focus on Jackson JSON serialization/deserialization patterns.
+
+## Table of Contents
+- [When to Use Records](#when-to-use-records)
+- [Jackson Integration](#jackson-integration)
+- [Bean Validation](#bean-validation)
+- [Common Pitfalls](#common-pitfalls)
+- [Examples](#examples)
+
+## When to Use Records
+
+### ✅ Use Records For:
+
+1. **DTOs (Data Transfer Objects)** - Immutable data carriers between layers
+2. **Value Objects** - Domain concepts without identity (Address, Money, etc.)
+3. **API Request/Response Models** - Clean contracts with validation
+4. **Configuration Objects** - Immutable settings
+5. **Database Documents** - When using immutable entities
+
+### ❌ Don't Use Records For:
+
+1. **Aggregates with Mutable State** - Use classes when state changes frequently
+2. **Entities with Complex Behavior** - Classes provide better encapsulation
+3. **Builder Patterns** - Records don't support traditional builders well
+4. **JPA Entities** - JPA requires no-arg constructors and setters
+
+## Jackson Integration
+
+### @JsonProperty Annotations: When Are They Needed?
+
+Jackson **automatically maps** record component names to JSON properties. The `@JsonProperty` annotation is **redundant** in most cases.
+
+#### ✅ Clean Code - No Annotations Needed
+
+```java
+// Jackson automatically maps these fields
+public record CustomerDto(
+    String id,
+    String name,
+    String email,
+    String street,
+    String city,
+    String postalCode,
+    BigDecimal creditLimit
+) {}
+```
+
+**JSON mapping:**
+```json
+{
+  "id": "123",
+  "name": "John Doe",
+  "email": "john@example.com",
+  "street": "123 Main St",
+  "city": "New York",
+  "postalCode": "10001",
+  "creditLimit": 5000.00
+}
+```
+
+#### ✅ When @JsonProperty IS Needed
+
+Use `@JsonProperty` **only** when:
+
+1. **JSON property name differs from Java field name**
+2. **Handling legacy APIs with non-standard naming**
+3. **Explicit ordering requirements**
+
+```java
+// Example 1: Different JSON property names
+public record CustomerDto(
+    String id,
+    String name,
+    
+    @JsonProperty("e-mail")  // ✅ JSON uses "e-mail", Java uses "email"
+    String email,
+    
+    @JsonProperty("postal_code")  // ✅ JSON uses snake_case
+    String postalCode
+) {}
+```
+
+```java
+// Example 2: Legacy API compatibility
+public record LegacyCustomerDto(
+    @JsonProperty("customer_id")
+    String id,
+    
+    @JsonProperty("full_name")
+    String name,
+    
+    @JsonProperty("email_address")
+    String email
+) {}
+```
+
+#### ❌ Redundant Annotations (Remove These)
+
+```java
+// ❌ BEFORE: Redundant annotations
+public record CustomerDto(
+    @JsonProperty("id")        // ❌ Redundant - names match
+    String id,
+    
+    @JsonProperty("name")      // ❌ Redundant - names match
+    String name,
+    
+    @JsonProperty("email")     // ❌ Redundant - names match
+    String email
+) {}
+
+// ✅ AFTER: Clean and simple
+public record CustomerDto(
+    String id,
+    String name,
+    String email
+) {}
+```
+
+### Jackson Configuration
+
+#### Default Behavior
+Jackson with Spring Boot 4 uses:
+- **Property access**: FIELD (direct field access)
+- **Naming strategy**: Default (field names as-is)
+- **Null handling**: Includes null values by default
+
+#### Custom Naming Strategies
+
+If you need project-wide naming conventions:
+
+```java
+@Configuration
+public class JacksonConfig {
+    
+    @Bean
+    public Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
+        return builder -> builder
+            .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)  // camelCase → snake_case
+            .serializationInclusion(JsonInclude.Include.NON_NULL);       // Omit nulls
+    }
+}
+```
+
+With snake_case strategy, annotations become unnecessary:
+
+```java
+// With SNAKE_CASE naming strategy configured globally
+public record CustomerDto(
+    String customerId,     // → "customer_id" in JSON
+    String fullName,       // → "full_name" in JSON
+    String emailAddress    // → "email_address" in JSON
+) {}
+```
+
+## Bean Validation
+
+### Validation on Record Components
+
+Bean Validation annotations work seamlessly with records:
+
+```java
+public record CreateCustomerRequest(
+    @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 100)
+    String name,
+    
+    @NotBlank(message = "Email is required")
+    @Email(message = "Must be a valid email")
+    String email,
+    
+    @NotBlank
+    String street,
+    
+    @NotBlank
+    String city,
+    
+    @Pattern(regexp = "\\d{5}(-\\d{4})?", message = "Invalid US postal code")
+    String postalCode,
+    
+    @NotNull
+    @Positive
+    BigDecimal creditLimit
+) {}
+```
+
+### Mixing Validation and Jackson
+
+```java
+public record CustomerDto(
+    String id,  // No validation - generated by backend
+    
+    @NotBlank(message = "Name is required")
+    String name,
+    
+    @NotBlank @Email
+    String email,
+    
+    // Validation only, no @JsonProperty needed
+    @NotNull @Positive
+    BigDecimal creditLimit
+) {}
+```
+
+### Custom Validation
+
+```java
+// Custom constraint annotation
+@Constraint(validatedBy = PhoneNumberValidator.class)
+@Target({ElementType.RECORD_COMPONENT, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface ValidPhoneNumber {
+    String message() default "Invalid phone number";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+// Usage
+public record CustomerDto(
+    String id,
+    String name,
+    
+    @ValidPhoneNumber
+    String phoneNumber
+) {}
+```
+
+## Common Pitfalls
+
+### 1. Over-Annotating with @JsonProperty
+
+**Problem:**
+```java
+// ❌ Cluttered with unnecessary annotations
+public record CustomerDto(
+    @JsonProperty("id") String id,
+    @JsonProperty("name") String name,
+    @JsonProperty("email") String email,
+    @JsonProperty("status") String status
+) {}
+```
+
+**Solution:**
+```java
+// ✅ Clean and readable
+public record CustomerDto(
+    String id,
+    String name,
+    String email,
+    String status
+) {}
+```
+
+### 2. Mixing Naming Conventions
+
+**Problem:**
+```java
+// ❌ Inconsistent - some camelCase, some snake_case
+public record CustomerDto(
+    String customerId,           // camelCase
+    
+    @JsonProperty("full_name")   // snake_case
+    String fullName,
+    
+    String email                 // camelCase
+) {}
+```
+
+**Solution:**
+```java
+// ✅ Option 1: Use global naming strategy (recommended)
+// Configure PropertyNamingStrategies.SNAKE_CASE globally
+public record CustomerDto(
+    String customerId,    // → customer_id
+    String fullName,      // → full_name
+    String email          // → email
+) {}
+
+// ✅ Option 2: Be consistent with annotations
+public record CustomerDto(
+    @JsonProperty("customer_id") String customerId,
+    @JsonProperty("full_name") String fullName,
+    @JsonProperty("email") String email
+) {}
+```
+
+### 3. Forgetting Validation on Input DTOs
+
+**Problem:**
+```java
+// ❌ No validation - accepts invalid data
+public record CreateCustomerRequest(
+    String name,
+    String email,
+    BigDecimal creditLimit
+) {}
+```
+
+**Solution:**
+```java
+// ✅ Proper input validation
+public record CreateCustomerRequest(
+    @NotBlank @Size(min = 2, max = 100)
+    String name,
+    
+    @NotBlank @Email
+    String email,
+    
+    @NotNull @Positive
+    BigDecimal creditLimit
+) {}
+```
+
+### 4. Using Records for Mutable Aggregates
+
+**Problem:**
+```java
+// ❌ Record can't handle state changes well
+public record Order(
+    String id,
+    List<OrderItem> items,  // Mutable list - risky!
+    OrderStatus status
+) {
+    public void addItem(OrderItem item) {
+        items.add(item);  // Modifying internal state
+    }
+}
+```
+
+**Solution:**
+```java
+// ✅ Use a class for mutable aggregates
+@Document(collection = "orders")
+public class Order {
+    @Id
+    private String id;
+    private List<OrderItem> items = new ArrayList<>();
+    private OrderStatus status;
+    
+    public void addItem(OrderItem item) {
+        // Proper encapsulation with business rules
+        if (status == OrderStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot add items to completed order");
+        }
+        items.add(item);
+    }
+    
+    // Getters, proper encapsulation
+}
+```
+
+## Examples
+
+### Example 1: Simple DTO (No Annotations)
+
+```java
+// Clean DTO for customer retrieval
+public record CustomerDto(
+    String id,
+    String name,
+    String email,
+    String status,
+    BigDecimal creditLimit,
+    BigDecimal availableCredit
+) {}
+```
+
+### Example 2: Request DTO with Validation
+
+```java
+// Input validation without JSON annotations
+public record CreateCustomerRequest(
+    @NotBlank(message = "Name is required")
+    @Size(min = 2, max = 100)
+    String name,
+    
+    @NotBlank(message = "Email is required")
+    @Email
+    String email,
+    
+    @NotBlank
+    String street,
+    
+    @NotBlank
+    String city,
+    
+    String state,  // Optional
+    
+    @NotBlank
+    @Pattern(regexp = "\\d{5}(-\\d{4})?")
+    String postalCode,
+    
+    String country,  // Optional, defaults to "US"
+    
+    @NotNull
+    @Positive
+    @DecimalMin(value = "100.00")
+    BigDecimal creditLimit
+) {}
+```
+
+### Example 3: Legacy API Integration
+
+```java
+// When dealing with non-standard JSON from external APIs
+public record LegacyOrderDto(
+    @JsonProperty("order_id")
+    String id,
+    
+    @JsonProperty("customer_ref")
+    String customerId,
+    
+    @JsonProperty("order_items")
+    List<LegacyOrderItemDto> items,
+    
+    @JsonProperty("total_amount")
+    BigDecimal totalAmount,
+    
+    @JsonProperty("order_date")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    LocalDateTime orderDate
+) {}
+```
+
+### Example 4: Value Object with Validation
+
+```java
+// Address as a value object
+public record Address(
+    @NotBlank String street,
+    @NotBlank String city,
+    String state,  // Optional for international addresses
+    @NotBlank String postalCode,
+    String country  // Optional, defaults to "US"
+) {
+    // Compact constructor for normalization
+    public Address {
+        street = street != null ? street.trim() : null;
+        city = city != null ? city.trim() : null;
+        state = state != null ? state.trim().toUpperCase() : null;
+        postalCode = postalCode != null ? postalCode.trim() : null;
+        country = country != null ? country.trim().toUpperCase() : "US";
+    }
+    
+    // Helper method
+    public String format() {
+        StringBuilder formatted = new StringBuilder();
+        formatted.append(street).append("\n");
+        formatted.append(city);
+        if (state != null && !state.isBlank()) {
+            formatted.append(", ").append(state);
+        }
+        formatted.append(" ").append(postalCode).append("\n");
+        formatted.append(country);
+        return formatted.toString();
+    }
+}
+```
+
+### Example 5: Response with Computed Fields
+
+```java
+// DTO with derived/computed data
+public record OrderSummaryDto(
+    String id,
+    String customerId,
+    List<OrderItemDto> items,
+    BigDecimal subtotal,
+    BigDecimal tax,
+    BigDecimal total,
+    OrderStatus status,
+    LocalDateTime createdAt
+) {
+    // Factory method from domain entity
+    public static OrderSummaryDto from(Order order) {
+        return new OrderSummaryDto(
+            order.getId(),
+            order.getCustomerId(),
+            order.getItems().stream()
+                .map(OrderItemDto::from)
+                .toList(),
+            order.calculateSubtotal(),
+            order.calculateTax(),
+            order.calculateTotal(),
+            order.getStatus(),
+            order.getCreatedAt()
+        );
+    }
+}
+```
+
+## Summary
+
+### Key Takeaways
+
+1. **Jackson handles record components automatically** - No `@JsonProperty` needed when names match
+2. **Use `@JsonProperty` only for name mismatches** - Legacy APIs, non-standard naming
+3. **Bean Validation works seamlessly** - Annotate record components directly
+4. **Keep it simple** - Favor clean code over defensive annotations
+5. **Use global naming strategies** - Configure once, apply everywhere
+6. **Records for immutability** - Classes for complex mutable state
+
+### When to Add @JsonProperty
+
+Ask yourself:
+- Does the JSON property name **differ** from the Java field name? → Add `@JsonProperty`
+- Do the names **match exactly**? → No annotation needed
+- Is there a **global naming strategy** configured? → No annotation needed
+
+### Checklist for Code Review
+
+When reviewing record-based DTOs:
+
+- [ ] Are `@JsonProperty` annotations present with matching names? → **Remove them**
+- [ ] Does the DTO need input validation? → **Add Bean Validation annotations**
+- [ ] Are there name mismatches requiring `@JsonProperty`? → **Keep only those**
+- [ ] Is the record used for mutable state? → **Consider using a class instead**
+- [ ] Are computed/derived fields properly documented? → **Add factory methods or comments**
+
+## Related Documentation
+
+- [Architecture](architecture.md) - Overall project architecture
+- [API Documentation](api.md) - REST API contracts
+- [Testing](testing.md) - How to test records and DTOs
+- [CONTRIBUTING.md](../CONTRIBUTING.md) - General contribution guidelines
+
+## References
+
+- [Jackson Record Support](https://github.com/FasterXML/jackson-databind/wiki/Jackson-2.12-Features#support-for-java-14-records)
+- [Java Records Official Guide](https://docs.oracle.com/en/java/javase/17/language/records.html)
+- [Bean Validation Specification](https://beanvalidation.org/2.0/spec/)
