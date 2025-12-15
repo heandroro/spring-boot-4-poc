@@ -1,19 +1,24 @@
 package com.example.poc.domain;
 
-import com.example.poc.domain.vo.Address;
-import com.example.poc.domain.vo.Email;
-import com.example.poc.domain.vo.Money;
-import com.example.poc.domain.event.DomainEvent;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
+import com.example.poc.domain.event.DomainEvent;
+import com.example.poc.domain.vo.Address;
+import com.example.poc.domain.vo.Email;
+import com.example.poc.domain.vo.Money;
 
 /**
  * Unit tests for Customer Aggregate Root
@@ -25,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * - Domain events
  * - Rich domain modeling
  * 
- * References: 
+ * References:
  * - testing.md: Unit testing aggregate roots
  * - architecture.md: Aggregate Root pattern
  * - code-examples.md: Section 22 - Rich Classes, Section 13 - Aggregate Root
@@ -49,12 +54,11 @@ class CustomerTest {
     void testCreateCustomer() {
         // When
         Customer customer = Customer.create(
-            "John Doe",
-            validEmail,
-            validAddress,
-            validCreditLimit
-        );
-        
+                "John Doe",
+                validEmail,
+                validAddress,
+                validCreditLimit);
+
         // Then
         assertEquals("John Doe", customer.getName());
         assertEquals(validEmail, customer.getEmail());
@@ -69,7 +73,7 @@ class CustomerTest {
     void testRaisesCustomerCreatedEvent() {
         // When
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
-        
+
         // Then
         List<DomainEvent> events = customer.pullEvents();
         assertEquals(1, events.size());
@@ -81,9 +85,8 @@ class CustomerTest {
     void testRejectNullName() {
         // Expect
         assertThrows(
-            NullPointerException.class,
-            () -> Customer.create(null, validEmail, validAddress, validCreditLimit)
-        );
+                NullPointerException.class,
+                () -> Customer.create(null, validEmail, validAddress, validCreditLimit));
     }
 
     @Test
@@ -91,9 +94,8 @@ class CustomerTest {
     void testRejectBlankName() {
         // Expect
         assertThrows(
-            IllegalArgumentException.class,
-            () -> Customer.create("   ", validEmail, validAddress, validCreditLimit)
-        );
+                IllegalArgumentException.class,
+                () -> Customer.create("   ", validEmail, validAddress, validCreditLimit));
     }
 
     @Test
@@ -101,9 +103,8 @@ class CustomerTest {
     void testRejectNullEmail() {
         // Expect
         assertThrows(
-            NullPointerException.class,
-            () -> Customer.create("John Doe", null, validAddress, validCreditLimit)
-        );
+                NullPointerException.class,
+                () -> Customer.create("John Doe", null, validAddress, validCreditLimit));
     }
 
     @Test
@@ -111,9 +112,8 @@ class CustomerTest {
     void testRejectNullAddress() {
         // Expect
         assertThrows(
-            NullPointerException.class,
-            () -> Customer.create("John Doe", validEmail, null, validCreditLimit)
-        );
+                NullPointerException.class,
+                () -> Customer.create("John Doe", validEmail, null, validCreditLimit));
     }
 
     @Test
@@ -121,9 +121,8 @@ class CustomerTest {
     void testRejectNullCreditLimit() {
         // Expect
         assertThrows(
-            NullPointerException.class,
-            () -> Customer.create("John Doe", validEmail, validAddress, null)
-        );
+                NullPointerException.class,
+                () -> Customer.create("John Doe", validEmail, validAddress, null));
     }
 
     @Test
@@ -132,10 +131,10 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money purchaseAmount = Money.of(new BigDecimal("200.00"));
-        
+
         // When
         customer.useCredit(purchaseAmount);
-        
+
         // Then
         assertEquals(new BigDecimal("800.00"), customer.getAvailableCredit().amount());
     }
@@ -147,7 +146,7 @@ class CustomerTest {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         customer.setStatus(Customer.Status.INACTIVE);
         Money purchaseAmount = Money.of(new BigDecimal("100.00"));
-        
+
         // Expect
         assertThrows(IllegalStateException.class, () -> customer.useCredit(purchaseAmount));
     }
@@ -159,7 +158,7 @@ class CustomerTest {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         customer.setStatus(Customer.Status.SUSPENDED);
         Money purchaseAmount = Money.of(new BigDecimal("100.00"));
-        
+
         // Expect
         assertThrows(IllegalStateException.class, () -> customer.useCredit(purchaseAmount));
     }
@@ -170,7 +169,7 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money excessiveAmount = Money.of(new BigDecimal("2000.00"));
-        
+
         // Expect
         assertThrows(IllegalArgumentException.class, () -> customer.useCredit(excessiveAmount));
     }
@@ -181,10 +180,10 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         customer.useCredit(Money.of(new BigDecimal("300.00")));
-        
+
         // When
         customer.restoreCredit(Money.of(new BigDecimal("100.00")));
-        
+
         // Then
         assertEquals(new BigDecimal("800.00"), customer.getAvailableCredit().amount());
     }
@@ -194,12 +193,11 @@ class CustomerTest {
     void testRejectExcessiveRestore() {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
-        
+
         // Expect
         assertThrows(
-            IllegalArgumentException.class,
-            () -> customer.restoreCredit(Money.of(new BigDecimal("500.00")))
-        );
+                IllegalArgumentException.class,
+                () -> customer.restoreCredit(Money.of(new BigDecimal("500.00"))));
     }
 
     @Test
@@ -208,10 +206,10 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money increase = Money.of(new BigDecimal("500.00"));
-        
+
         // When
         customer.increaseCreditLimit(increase);
-        
+
         // Then
         assertEquals(new BigDecimal("1500.00"), customer.getCreditLimit().amount());
         assertEquals(new BigDecimal("1500.00"), customer.getAvailableCredit().amount());
@@ -222,12 +220,11 @@ class CustomerTest {
     void testRejectZeroIncreaseForCreditLimit() {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
-        
+
         // Expect
         assertThrows(
-            IllegalArgumentException.class,
-            () -> customer.increaseCreditLimit(Money.of(BigDecimal.ZERO))
-        );
+                IllegalArgumentException.class,
+                () -> customer.increaseCreditLimit(Money.of(BigDecimal.ZERO)));
     }
 
     @Test
@@ -236,10 +233,10 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money decrease = Money.of(new BigDecimal("300.00"));
-        
+
         // When
         customer.decreaseCreditLimit(decrease);
-        
+
         // Then
         assertEquals(new BigDecimal("700.00"), customer.getCreditLimit().amount());
     }
@@ -250,7 +247,7 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money excessiveDecrease = Money.of(new BigDecimal("2000.00"));
-        
+
         // Expect
         assertThrows(IllegalArgumentException.class, () -> customer.decreaseCreditLimit(excessiveDecrease));
     }
@@ -260,10 +257,10 @@ class CustomerTest {
     void testChangeStatus() {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
-        
+
         // When
         customer.setStatus(Customer.Status.SUSPENDED);
-        
+
         // Then
         assertEquals(Customer.Status.SUSPENDED, customer.getStatus());
     }
@@ -274,7 +271,7 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money purchaseAmount = Money.of(new BigDecimal("500.00"));
-        
+
         // Then
         assertTrue(customer.canPurchase(purchaseAmount));
     }
@@ -286,7 +283,7 @@ class CustomerTest {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         customer.setStatus(Customer.Status.INACTIVE);
         Money purchaseAmount = Money.of(new BigDecimal("500.00"));
-        
+
         // Then
         assertFalse(customer.canPurchase(purchaseAmount));
     }
@@ -297,7 +294,7 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         Money excessiveAmount = Money.of(new BigDecimal("2000.00"));
-        
+
         // Then
         assertFalse(customer.canPurchase(excessiveAmount));
     }
@@ -308,10 +305,10 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         customer.useCredit(Money.of(new BigDecimal("400.00")));
-        
+
         // When
         Money usedCredit = customer.getUsedCredit();
-        
+
         // Then
         assertEquals(new BigDecimal("400.00"), usedCredit.amount());
     }
@@ -322,26 +319,25 @@ class CustomerTest {
         // Given
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         customer.useCredit(Money.of(new BigDecimal("250.00")));
-        
+
         // When
         double utilization = customer.getCreditUtilizationPercentage();
-        
+
         // Then
         assertEquals(25.0, utilization, 0.01);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"100.00", "500.00", "1000.00"})
+    @ValueSource(strings = { "100.00", "500.00", "1000.00" })
     @DisplayName("should support various credit limits")
     void testVariousCreditLimits(String limitStr) {
         // When
         Customer customer = Customer.create(
-            "John Doe",
-            validEmail,
-            validAddress,
-            Money.of(limitStr)
-        );
-        
+                "John Doe",
+                validEmail,
+                validAddress,
+                Money.of(limitStr));
+
         // Then
         assertNotNull(customer.getCreditLimit());
         assertEquals(Customer.Status.ACTIVE, customer.getStatus());
@@ -354,8 +350,64 @@ class CustomerTest {
         Email email = new Email("unique@example.com");
         Customer customer1 = Customer.create("John Doe", email, validAddress, validCreditLimit);
         Customer customer2 = Customer.create("John Doe", email, validAddress, validCreditLimit);
-        
+
         // Then
         assertEquals(customer1, customer2); // Same email = same customer
+    }
+
+    @Test
+    @DisplayName("should clear events after pull")
+    void shouldClearEventsAfterPull() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+
+        List<DomainEvent> firstPull = customer.pullEvents();
+        List<DomainEvent> secondPull = customer.pullEvents();
+
+        assertEquals(1, firstPull.size());
+        assertTrue(secondPull.isEmpty());
+    }
+
+    @Test
+    @DisplayName("should keep status unchanged when same status is set")
+    void shouldKeepStatusWhenSame() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+        Customer.Status initial = customer.getStatus();
+        var initialUpdatedAt = customer.getUpdatedAt();
+
+        customer.setStatus(Customer.Status.ACTIVE);
+
+        assertEquals(initial, customer.getStatus());
+        assertEquals(initialUpdatedAt, customer.getUpdatedAt());
+    }
+
+    @Test
+    @DisplayName("should reject decrease credit below used amount")
+    void shouldRejectDecreaseBelowUsedAmount() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+        customer.useCredit(Money.of(new BigDecimal("400.00")));
+
+        Money excessiveDecrease = Money.of(new BigDecimal("700.00"));
+
+        assertThrows(IllegalArgumentException.class, () -> customer.decreaseCreditLimit(excessiveDecrease));
+    }
+
+    @Test
+    @DisplayName("should return zero utilization when credit limit is zero")
+    void shouldReturnZeroUtilizationWhenLimitZero() {
+        Customer zeroLimitCustomer = Customer.create(
+                "Zero Limit",
+                validEmail,
+                validAddress,
+                Money.of(BigDecimal.ZERO));
+
+        assertEquals(0.0, zeroLimitCustomer.getCreditUtilizationPercentage());
+    }
+
+    @Test
+    @DisplayName("should reject restore credit when amount is null")
+    void shouldRejectRestoreCreditWhenNull() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+
+        assertThrows(NullPointerException.class, () -> customer.restoreCredit(null));
     }
 }
