@@ -38,13 +38,28 @@ Backend e-commerce REST API: **Spring Boot 4 + Java 25 + MongoDB 7.0** com **DDD
 - **@DisplayName**: Descrições legíveis dos testes
 - **Mockito**: `@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`
 
-### Test Generator Agent
-Para geração de testes unitários, use o agente especializado:
-- **Ativação**: `@workspace gere testes para {ClassName}`
-- **Padrões**: Method references, Instancio + Faker, generators com constraints
-- **Cobertura**: Domain, Infrastructure, Web layers
-- **Referência**: [agents/test-generator.md](agents/test-generator.md)
-- **Guia Completo**: [docs/test-generation-agent.md](../docs/test-generation-agent.md)
+### Test Generator Agents
+
+Este projeto possui **2 agentes especializados** para geração de testes:
+
+#### 1. Unit Test Agent
+Para testes unitários rápidos (sem Spring context):
+- **Ativação**: `@workspace gere teste unitário para {ClassName}`
+- **Uso**: Domain entities, Value Objects, Mappers, Services (com Mockito)
+- **Características**: Rápidos (ms), mocks, sem infraestrutura
+- **Referência**: [agents/unit-test.md](agents/unit-test.md)
+
+#### 2. Integration Test Agent
+Para testes de integração com infraestrutura real:
+- **Ativação**: `@workspace gere teste de integração para {ClassName}`
+- **Uso**: Repositories (MongoDB), Controllers (MockMvc), fluxos E2E
+- **Características**: Testcontainers, Spring context, RFC 7807
+- **Referência**: [agents/integration-test.md](agents/integration-test.md)
+
+**Guias complementares**:
+- [docs/instancio-best-practices.md](../docs/instancio-best-practices.md) - Uso de Instancio + Faker
+- [docs/testing.md](../docs/testing.md) - Estratégia geral de testes
+- [docs/test-generation-agent.md](../docs/test-generation-agent.md) - Especificação detalhada
 
 ## Segurança
 - **RBAC**: `@PreAuthorize("hasRole('ADMIN')")` nos endpoints
