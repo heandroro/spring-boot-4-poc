@@ -88,7 +88,7 @@ class CustomerControllerTest {
     }
 
     @Test
-    @DisplayName("should return 404 Not Found when customer not exists")
+    @DisplayName("should return 404 Not Found when customer does not exist")
     void shouldReturn404NotFoundWhenCustomerNotExists() {
         String nonExistentId = faker.internet().uuid();
         when(service.findById(nonExistentId)).thenReturn(Optional.empty());
