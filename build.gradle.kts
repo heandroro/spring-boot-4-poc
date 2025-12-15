@@ -2,6 +2,7 @@ plugins {
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.sonarqube") version "5.1.0.4882"
+    id("checkstyle")
     java
     jacoco
 }
@@ -130,4 +131,23 @@ sonarqube {
         property("sonar.host.url", "http://localhost:9000")
         System.getenv("SONAR_TOKEN")?.let { property("sonar.token", it) }
     }
+}
+
+// Checkstyle configuration
+checkstyle {
+    toolVersion = "10.18.1"
+}
+
+tasks.withType<Checkstyle> {
+    configFile = file("config/checkstyle/checkstyle.xml")
+    isIgnoreFailures = false
+    maxWarnings = 0
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.check {
+    dependsOn("checkstyleMain", "checkstyleTest", "checkstyleIntegrationTest")
 }

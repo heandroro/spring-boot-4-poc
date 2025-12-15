@@ -199,7 +199,42 @@ public record CreateProductRequest(
 ) {}
 ```
 
-### 4. Exceções Customizadas
+### 4. Imports (sem nomes qualificados)
+
+Evite usar nomes de classe totalmente qualificados no corpo do código. Sempre adicione `import` e utilize o nome simples da classe.
+
+#### ✅ CERTO - Usando imports
+```java
+import com.example.poc.domain.Customer;
+import com.example.poc.web.dto.CustomerDto;
+
+public class CustomerService {
+    private final CustomerRepository repository;
+
+    public CustomerService(CustomerRepository repository) {
+        this.repository = repository;
+    }
+
+    public CustomerDto get(String id) {
+        Customer customer = repository.findById(id).orElseThrow();
+        return mapper.toDto(customer);
+    }
+}
+```
+
+#### ❌ ERRADO - Nome totalmente qualificado
+```java
+public class CustomerService {
+    public com.example.poc.web.dto.CustomerDto get(String id) {
+        com.example.poc.domain.Customer customer = repo.findById(id).orElseThrow();
+        return mapper.toDto(customer);
+    }
+}
+```
+
+Diretriz: Nunca use nomes totalmente qualificados em classes, métodos ou variáveis. Prefira organizar imports. Em casos raros de conflito de nomes, **evite** trazer ambas as classes para o mesmo escopo (extraia chamadas para métodos auxiliares/fachadas) de modo a manter o código sem FQNs.
+
+### 5. Exceções Customizadas
 
 ```java
 // domain/exceptions/ProductNotFoundException.java
@@ -659,6 +694,7 @@ git commit -m "chore: update dependencies"
 - [ ] Validações com Bean Validation
 - [ ] Exceções customizadas apropriadas
 - [ ] Código legível e bem nomeado
+- [ ] Não usa nomes de classe totalmente qualificados (usa imports)
 
 #### ✅ Testes
 - [ ] Cobertura mínima de 80%

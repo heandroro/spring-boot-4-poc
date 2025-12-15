@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ProblemDetail;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -75,11 +76,11 @@ class ValidationErrorResponseTest {
     static class ValidationExceptionHandler {
         @ExceptionHandler(MethodArgumentNotValidException.class)
         @ResponseStatus(HttpStatus.BAD_REQUEST)
-        org.springframework.http.ProblemDetail handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        ProblemDetail handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
             var errors = ex.getBindingResult().getFieldErrors().stream()
                     .map(err -> Map.of("field", err.getField(), "message", err.getDefaultMessage()))
                     .toList();
-            var pd = org.springframework.http.ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+            var pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
             pd.setTitle("Validation failed");
             pd.setDetail("Request body contains invalid fields");
             pd.setProperty("errors", errors);
