@@ -38,9 +38,12 @@ dependencies {
     // SpringDoc 3.x is required for Spring Boot 4 / Spring Framework 7
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
 
+    // Spring Boot test support for @WebMvcTest / MockMvc
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
+    // Include spring-test explicitly for MockMvc
+    testImplementation("org.springframework:spring-test")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
     // JavaFaker for realistic test data (names, addresses, emails)
