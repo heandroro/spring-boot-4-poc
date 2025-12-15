@@ -120,8 +120,14 @@ class CustomerControllerMvcTest {
         org.junit.jupiter.api.Assertions.assertFalse(responseBody.isEmpty(), 
                 "Response body should not be empty for validation errors");
         
-        // Parse JSON response
-        Map<String, Object> response = objectMapper.readValue(responseBody, new TypeReference<Map<String, Object>>() {});
+        // Parse JSON response (catch parsing errors to provide clear failure message)
+        Map<String, Object> response;
+        try {
+            response = objectMapper.readValue(responseBody, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            org.junit.jupiter.api.Assertions.fail("Failed to parse JSON response: " + responseBody, e);
+            return; // unreachable, but satisfies compiler
+        }
         
         // Validate RFC 7807 fields
         org.junit.jupiter.api.Assertions.assertTrue(response.containsKey("title"), 
