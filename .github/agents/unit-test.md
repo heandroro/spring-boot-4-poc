@@ -883,7 +883,7 @@ Antes de finalizar testes unitários gerados, verifique:
 - [ ] Generators para BigDecimal
 - [ ] JavaFaker para dados realistas
 - [ ] Helper methods para fixtures comuns
-- [ ] Cobertura 80%+ da classe
+- [ ] Cobertura 90%+ da classe
 - [ ] Assertions claras e completas
 - [ ] verify() para interações mockadas
 - [ ] Respeito a invariantes do domínio
