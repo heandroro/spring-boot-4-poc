@@ -144,4 +144,13 @@ SONAR_TOKEN=your_token \
 
 - Create the token in the SonarQube UI (My Account → Security). Never commit tokens.
 - Stop services when done: `docker compose down`
+- Optional pre-commit hook (runs tests + Sonar locally):
+
+```bash
+git config core.hooksPath .githooks
+export SONAR_TOKEN=your_token
+export RUN_SONAR_PRECOMMIT=1
+./gradlew test jacocoTestReport sonarqube # first run to warm cache (hook will run on next commit)
+```
+The hook checks Sonar at http://localhost:9000; start it with `docker compose up -d sonarqube`.
 - **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
