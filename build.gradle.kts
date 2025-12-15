@@ -35,7 +35,8 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.17.0")
 
     // OpenAPI/Swagger UI via SpringDoc (exposes /v3/api-docs and /swagger-ui)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
+    // SpringDoc 3.x is required for Spring Boot 4 / Spring Framework 7
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")
