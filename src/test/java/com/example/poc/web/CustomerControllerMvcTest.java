@@ -2,6 +2,11 @@ package com.example.poc.web;
 
 import static org.instancio.Select.all;
 import static org.instancio.Select.field;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -12,6 +17,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +35,7 @@ import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import com.example.poc.application.CustomerService;
 import com.example.poc.web.exception.GlobalExceptionHandler;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.javafaker.Faker;
 
@@ -49,6 +57,9 @@ class CustomerControllerMvcTest {
     void setUp() {
         faker = new Faker();
         objectMapper = new ObjectMapper();
+        // Register JavaTimeModule to handle java.time.Instant serialization
+        objectMapper.findAndRegisterModules();
+        
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
@@ -110,11 +121,68 @@ class CustomerControllerMvcTest {
                 .getResponse()
                 .getContentAsString();
 
-        org.junit.jupiter.api.Assertions.assertTrue(
-                responseBody.isEmpty()
-                        || responseBody.contains("Validation failed")
-                        || responseBody.contains("Bad Request"),
-                () -> "Unexpected validation payload: " + responseBody);
+        // Validate Problem Detail RFC 7807 structure by parsing JSON
+        assertFalse(responseBody.isEmpty(), 
+                "Response body should not be empty for validation errors");
+        
+        // Parse JSON response (catch parsing errors to provide clear failure message)
+        Map<String, Object> response;
+        try {
+            response = objectMapper.readValue(responseBody, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            fail("Failed to parse JSON response: " + responseBody, e);
+            return; // unreachable, but satisfies compiler
+        }
+        
+        // Validate RFC 7807 fields
+        assertTrue(response.containsKey("title"), 
+                "Response should contain 'title' field");
+        assertEquals("Validation failed", response.get("title"), 
+                "Title should be 'Validation failed'");
+        
+        assertTrue(response.containsKey("detail"), 
+                "Response should contain 'detail' field");
+        assertEquals("Request body contains invalid fields", response.get("detail"), 
+                "Detail should describe validation failure");
+        
+        assertTrue(response.containsKey("status"), 
+                "Response should contain 'status' field");
+        assertEquals(400, response.get("status"), 
+                "Status should be 400");
+        
+        assertTrue(response.containsKey("instance"), 
+                "Response should contain 'instance' field");
+        assertEquals("/customers", response.get("instance"), 
+                "Instance should be '/customers'");
+        
+        // Validate properties contains timestamp and errors
+        assertTrue(response.containsKey("properties"), 
+                "Response should contain 'properties' field");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> properties = (Map<String, Object>) response.get("properties");
+        
+        assertTrue(properties.containsKey("timestamp"), 
+                "Properties should contain 'timestamp'");
+        assertNotNull(properties.get("timestamp"), 
+                "Timestamp should not be null");
+        
+        assertTrue(properties.containsKey("errors"), 
+                "Properties should contain 'errors' field");
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> errors = (List<Map<String, String>>) properties.get("errors");
+        assertFalse(errors.isEmpty(), 
+                "Errors array should not be empty");
+        
+        // Validate error structure (field and message)
+        Map<String, String> firstError = errors.get(0);
+        assertTrue(firstError.containsKey("field"), 
+                "Error should contain 'field' property");
+        assertTrue(firstError.containsKey("message"), 
+                "Error should contain 'message' property");
+        assertNotNull(firstError.get("field"), 
+                "Error field should not be null");
+        assertNotNull(firstError.get("message"), 
+                "Error message should not be null");
 
         verifyNoInteractions(service);
     }
