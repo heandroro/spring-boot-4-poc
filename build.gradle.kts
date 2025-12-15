@@ -19,6 +19,10 @@ repositories {
 }
 
 dependencies {
+    // Using Tomcat (default). Undertow is supported but spring-boot-starter-undertow
+    // is not available in Spring Boot 4.0.0's dependency management yet.
+    // See: https://spring.io/projects/spring-boot (lists Undertow as supported)
+    // TODO: Migrate to Undertow when available in Spring Boot 4.x BOM
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -28,11 +32,18 @@ dependencies {
     implementation("org.mapstruct:mapstruct:1.6.3")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
 
+    implementation("org.apache.commons:commons-lang3:3.17.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
+    // JavaFaker for realistic test data (names, addresses, emails)
+    // Exclude snakeyaml to avoid version conflicts with Spring Boot's managed version
+    testImplementation("com.github.javafaker:javafaker:1.0.2") {
+        exclude(group = "org.yaml", module = "snakeyaml")
+    }
     testImplementation("org.testcontainers:mongodb:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 }

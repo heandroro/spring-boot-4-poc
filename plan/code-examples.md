@@ -156,6 +156,8 @@ public record CreateProductRequest(
 ) {}
 ```
 
+> Regra: use Bean Validation por anotações. Não implemente validações manuais em construtores (classes ou records).
+
 Evitar:
 ```java
 public record CreateProductRequest(String sku, String name, BigDecimal price, Integer stock) {}
@@ -269,6 +271,48 @@ public class GlobalExceptionHandler {
     }
 }
 ```
+
+### ProblemDetail (RFC 7807) para violações de Bean Validation
+```java
+@RestControllerAdvice
+class ValidationExceptionHandler {
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ProblemDetail handleConstraintViolation(ConstraintViolationException ex) {
+        var pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Validation failed");
+        pd.setDetail("One or more fields are invalid");
+        // Mapear violações para um payload padronizado
+        var errors = ex.getConstraintViolations().stream()
+            .map(v -> Map.of(
+                "field", v.getPropertyPath().toString(),
+                "message", v.getMessage()))
+            .toList();
+        pd.setProperty("errors", errors);
+        return pd;
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    ProblemDetail handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        var pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setTitle("Validation failed");
+        pd.setDetail("Request body contains invalid fields");
+        var errors = ex.getBindingResult().getFieldErrors().stream()
+            .map(err -> Map.of(
+                "field", err.getField(),
+                "message", err.getDefaultMessage()))
+            .toList();
+        pd.setProperty("errors", errors);
+        return pd;
+    }
+}
+```
+
+Notas:
+- Responder com `400 Bad Request` para violações de validação.
+- Usar `ProblemDetail` com propriedades adicionais (como `errors`) para detalhar campos inválidos.
+- Manter validação via anotações (`@NotBlank`, `@NotNull`, `@Email`) e evitar validação manual em construtores.
 
 Evitar:
 ```java

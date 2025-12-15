@@ -72,6 +72,7 @@ JUnit platform
 This README provides a concise overview. Detailed documentation is in [docs/](docs/):
 
 - **[Architecture](docs/architecture.md)** - DDD layers, design decisions
+- **[Java Records Best Practices](docs/java-records-best-practices.md)** - Records, Jackson, validation patterns
 - **[Security](docs/security.md)** - JWT, authorization, CORS
 - **[API Reference](docs/api.md)** - REST endpoints, contracts
 - **[MongoDB](docs/mongodb.md)** - Schema design, indexes, queries

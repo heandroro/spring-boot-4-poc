@@ -6,6 +6,7 @@ Este diretório contém documentação técnica detalhada do projeto.
 
 ### Arquitetura
 - [architecture.md](architecture.md) - Decisões arquiteturais, DDD, estrutura de camadas
+- [java-records-best-practices.md](java-records-best-practices.md) - Boas práticas com Java Records, Jackson e validação
 
 ### Segurança
 - [security.md](security.md) - Autenticação JWT, autorização, CORS, best practices

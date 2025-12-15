@@ -114,6 +114,34 @@ public class Customer {
 }
 ```
 
+#### 📝 @JsonProperty em Records
+**Jackson mapeia automaticamente** os componentes de records para JSON. Anotações `@JsonProperty` são **redundantes** quando os nomes coincidem.
+
+```java
+// ❌ ERRADO - Anotações redundantes
+public record CustomerDto(
+    @JsonProperty("id") String id,        // ❌ Redundante
+    @JsonProperty("name") String name,    // ❌ Redundante
+    @JsonProperty("email") String email   // ❌ Redundante
+) {}
+
+// ✅ CERTO - Limpo e simples
+public record CustomerDto(
+    String id,
+    String name,
+    String email
+) {}
+
+// ✅ CERTO - @JsonProperty apenas quando nomes diferem
+public record CustomerDto(
+    String id,
+    String name,
+    @JsonProperty("e-mail") String email  // ✅ JSON usa "e-mail"
+) {}
+```
+
+Ver [docs/java-records-best-practices.md](docs/java-records-best-practices.md) para detalhes.
+
 ### 2. Injeção de Dependências
 
 #### ✅ CERTO - Constructor Injection
