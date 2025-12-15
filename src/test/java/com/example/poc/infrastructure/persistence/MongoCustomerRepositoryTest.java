@@ -132,6 +132,51 @@ class MongoCustomerRepositoryTest {
     }
 
     @Test
+    @DisplayName("should delegate email and collection lookups to CustomerRepository")
+    void shouldDelegateEmailAndCollectionLookupsToCustomerRepository() {
+        // Given
+        Customer customer = createValidCustomer();
+        when(customerRepository.findByEmail(customer.getEmail().toString())).thenReturn(Optional.of(customer));
+        when(customerRepository.findAll()).thenReturn(List.of(customer));
+
+        // When
+        Optional<Customer> foundByEmail = repository.findByEmail(customer.getEmail().toString());
+        List<Customer> all = repository.findAll();
+
+        // Then
+        assertTrue(foundByEmail.isPresent());
+        assertEquals(customer, foundByEmail.orElseThrow());
+        assertEquals(1, all.size());
+        assertTrue(all.contains(customer));
+        verify(customerRepository).findByEmail(customer.getEmail().toString());
+        verify(customerRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("should delegate status queries to CustomerRepository")
+    void shouldDelegateStatusQueriesToCustomerRepository() {
+        // Given
+        Customer active1 = createValidCustomer();
+        Customer active2 = createValidCustomer();
+        when(customerRepository.findByStatus(Customer.Status.ACTIVE)).thenReturn(List.of(active1, active2));
+        when(customerRepository.countByStatus(Customer.Status.ACTIVE)).thenReturn(2L);
+        when(customerRepository.findAllActive()).thenReturn(List.of(active1, active2));
+
+        // When
+        List<Customer> byStatus = repository.findByStatus(Customer.Status.ACTIVE);
+        long count = repository.countByStatus(Customer.Status.ACTIVE);
+        List<Customer> allActive = repository.findAllActive();
+
+        // Then
+        assertEquals(2, byStatus.size());
+        assertEquals(2, count);
+        assertEquals(byStatus, allActive);
+        verify(customerRepository).findByStatus(Customer.Status.ACTIVE);
+        verify(customerRepository).countByStatus(Customer.Status.ACTIVE);
+        verify(customerRepository).findAllActive();
+    }
+
+    @Test
     @DisplayName("should delegate deleteById to CustomerRepository")
     void shouldDelegateDeleteByIdToCustomerRepository() {
         // When
