@@ -44,16 +44,16 @@ class CustomerControllerTest {
         faker = new Faker();
     }
 
-                
-                Name("should create customer and return 201 Cre
-                uldCreateCustomerAndReturn201Created() {
-                omerDto in
+    @Test
+    @DisplayName("should create customer and return 201 Created")
+    void shouldCreateCustomerAndReturn201Created() {
+        CustomerDto inputDto = createValidDto();
+        CustomerDto createdDto = Instancio.of(CustomerDto.class)
+                .set(field(CustomerDto::id), faker.internet().uuid())
+                .set(field(CustomerDto::name), inputDto.name())
+                .set(field(CustomerDto::email), inputDto.email())
+                .create();
 
-            .set(field(CustomerDto::id), faker.internet().uuid())
-            .set(field(CustomerDto::name), inputDto.name())
-            .set(field(CustomerDto::email), inputDto.email())
-            .create();
-        
         when(service.create(any(CustomerDto.class))).thenReturn(createdDto);
 
         ResponseEntity<CustomerDto> response = controller.create(inputDto);
@@ -62,28 +62,28 @@ class CustomerControllerTest {
         assertNotNull(response.getBody());
         assertEquals(createdDto.id(), response.getBody().id());
         assertTrue(response.getHeaders().getLocation().toString().contains("/customers/" + createdDto.id()));
-        
+
         verify(service).create(any(CustomerDto.class));
     }
 
-                
-                Name("should return customer by ID and return 200 OK")
-                uldReturnCustomerByIdAndReturn200Ok() {
-                ng custome
+    @Test
+    @DisplayName("should return customer by ID and return 200 OK")
+    void shouldReturnCustomerByIdAndReturn200Ok() {
+        String customerId = faker.internet().uuid();
+        CustomerDto dto = Instancio.of(CustomerDto.class)
+                .set(field(CustomerDto::id), customerId)
+                .set(field(CustomerDto::name), faker.name().fullName())
+                .set(field(CustomerDto::email), faker.internet().emailAddress())
+                .create();
 
-            .set(field(CustomerDto::id), customerId)
-            .set(field(CustomerDto::name), faker.name().fullName())
-            .set(field(CustomerDto::email), faker.internet().emailAddress())
-            .create();
-        
         when(service.findById(customerId)).thenReturn(Optional.of(dto));
 
+        ResponseEntity<CustomerDto> response = controller.getById(customerId);
 
-        
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
         assertEquals(customerId, response.getBody().id());
-        
+
         verify(service).findById(customerId);
     }
 
@@ -91,54 +91,56 @@ class CustomerControllerTest {
     @DisplayName("should return 404 Not Found when customer not exists")
     void shouldReturn404NotFoundWhenCustomerNotExists() {
         String nonExistentId = faker.internet().uuid();
-        when(service.findById(nonExiste
+        when(service.findById(nonExistentId)).thenReturn(Optional.empty());
 
         ResponseEntity<CustomerDto> response = controller.getById(nonExistentId);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
         assertNull(response.getBody());
-        
+
         verify(service).findById(nonExistentId);
     }
 
     @Test
-                Name("should map Location header correctl
-                uldMapLocationHeaderCorrectly() {
-                omerDto in
-
+    @DisplayName("should map Location header correctly")
+    void shouldMapLocationHeaderCorrectly() {
+        CustomerDto inputDto = createValidDto();
+        String generatedId = faker.internet().uuid();
         CustomerDto createdDto = Instancio.of(CustomerDto.class)
-            .set(field(CustomerDto::id), generatedId)
-            .set(field(CustomerDto::name), inputDto.name())
-            .create();
-        
+                .set(field(CustomerDto::id), generatedId)
+                .set(field(CustomerDto::name), inputDto.name())
+                .create();
+
         when(service.create(any(CustomerDto.class))).thenReturn(createdDto);
 
         ResponseEntity<CustomerDto> response = controller.create(inputDto);
 
         assertNotNull(response.getHeaders().getLocation());
-        assertTrue(response.getHeaders().getLo
-                
-                
-                CustomerDto createValidDto() {
-                ecimal creditLimit = generatePositiveMoney();
-                rn Instancio.of(CustomerDto.class)
-                .set(field(CustomerDto::name), faker.na
-                .set(field(CustomerDto::email), faker.internet().e
-                .set(field(CustomerDto::street), faker.address().stree
+        assertTrue(response.getHeaders().getLocation().toString().endsWith("/customers/" + generatedId));
+    }
+
+    // === Helpers ===
+    private CustomerDto createValidDto() {
+        BigDecimal creditLimit = generatePositiveMoney();
+        return Instancio.of(CustomerDto.class)
+                .set(field(CustomerDto::name), faker.name().fullName())
+                .set(field(CustomerDto::email), faker.internet().emailAddress())
+                .set(field(CustomerDto::street), faker.address().streetAddress())
                 .set(field(CustomerDto::city), faker.address().city())
-            .set(field(CustomerDto::state), faker.address().stateAbbr())
-            .set(field(CustomerDto::country), "BR")
-            .set(field(CustomerDto::creditLimit), creditLimit)
-            .set(field(CustomerDto::available
+                .set(field(CustomerDto::state), faker.address().stateAbbr())
+                .set(field(CustomerDto::postalCode), faker.address().zipCode())
+                .set(field(CustomerDto::country), "BR")
+                .set(field(CustomerDto::creditLimit), creditLimit)
+                .set(field(CustomerDto::availableCredit), creditLimit)
+                .set(field(CustomerDto::status), "ACTIVE")
                 .create();
-                        
-                                
-                                al generatePositiveMoney() {
-                rn Instancio.of(BigDecimal.class)
-            .generate(all(BigDecimal.class), 
-                gen -> gen.math().bigDecimal()
-                    .min(BigDecimal.ONE)
-                    .max(new BigDecimal("10000.00")))
-            .create();
+    }
+
+    private BigDecimal generatePositiveMoney() {
+        return Instancio.of(BigDecimal.class)
+                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
+                        .min(BigDecimal.ONE)
+                        .max(new BigDecimal("10000.00")))
+                .create();
     }
 }

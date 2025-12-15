@@ -64,6 +64,17 @@ tasks.jacocoTestReport {
         html.required.set(true)
         csv.required.set(false)
     }
+    // Exclude classes not relevant for coverage (bootstrap/config/etc.)
+    classDirectories.setFrom(
+        files(classDirectories.files.map { fileTree(it) {
+            exclude(
+                "**/SpringBoot4PocApplication*",
+                "**/infrastructure/config/**",
+                "**/web/exception/**",
+                "**/infrastructure/event/**"
+            )
+        } })
+    )
 }
 
 tasks.jacocoTestCoverageVerification {
