@@ -89,21 +89,21 @@ class CustomerDtoValidationTest {
         ConstraintViolation<CustomerDto> nameViolation = violations.stream()
                 .filter(v -> v.getPropertyPath().toString().equals("name"))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new AssertionError("Expected name violation not found"));
         assertEquals("Name must not be blank", nameViolation.getMessage(), 
                 "Name violation should have correct message");
         
         ConstraintViolation<CustomerDto> emailViolation = violations.stream()
                 .filter(v -> v.getPropertyPath().toString().equals("email"))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new AssertionError("Expected email violation not found"));
         assertEquals("Email should be valid", emailViolation.getMessage(), 
                 "Email violation should have correct message");
         
         ConstraintViolation<CustomerDto> creditLimitViolation = violations.stream()
                 .filter(v -> v.getPropertyPath().toString().equals("creditLimit"))
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new AssertionError("Expected creditLimit violation not found"));
         assertEquals("Credit limit must not be null", creditLimitViolation.getMessage(), 
                 "CreditLimit violation should have correct message");
     }
