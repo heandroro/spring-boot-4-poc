@@ -1,6 +1,7 @@
 plugins {
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.sonarqube") version "5.1.0.4882"
     java
     jacoco
 }
@@ -122,4 +123,11 @@ tasks.jacocoTestCoverageVerification {
 
 jacoco {
     toolVersion = "0.8.13"
+}
+
+sonarqube {
+    properties {
+        property("sonar.host.url", "http://localhost:9000")
+        System.getenv("SONAR_TOKEN")?.let { property("sonar.token", it) }
+    }
 }

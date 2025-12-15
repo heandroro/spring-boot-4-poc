@@ -131,26 +131,17 @@ This README provides a concise overview. Detailed documentation is in [docs/](do
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
 
-## 🔍 SonarQube / SonarCloud
+## 🔍 SonarQube (local)
 
 - Config file: [sonar-project.properties](sonar-project.properties)
-- CI workflow: [.github/workflows/sonarcloud.yml](.github/workflows/sonarcloud.yml)
-- Secrets required (repository settings):
-	- SONAR_TOKEN: SonarCloud token
-	- GITHUB_TOKEN: Provided by GitHub Actions
-
-Run locally (optional):
+- Start local server: `docker compose up -d sonarqube` (first run downloads the image; UI at http://localhost:9000)
+- Run analysis before committing:
 
 ```bash
-# Generate coverage
-./gradlew clean test jacocoTestReport
-
-# If you have sonar-scanner installed
-sonar-scanner \
-	-Dsonar.projectKey=spring-boot-4-poc \
-	-Dsonar.sources=src/main/java \
-	-Dsonar.tests=src/test/java \
-	-Dsonar.java.binaries=build/classes/java/main \
-	-Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+SONAR_TOKEN=your_token \
+./gradlew clean test jacocoTestReport sonarqube
 ```
+
+- Create the token in the SonarQube UI (My Account → Security). Never commit tokens.
+- Stop services when done: `docker compose down`
 - **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage

@@ -14,6 +14,24 @@ services:
       timeout: 5s
       retries: 5
 
+  sonarqube:
+    image: sonarqube:10.5.1-community
+    container_name: spring-boot-4-poc-sonarqube
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_logs:/opt/sonarqube/logs
+      - sonar_extensions:/opt/sonarqube/extensions
+
 volumes:
   mongodb_data:
+    driver: local
+  sonar_data:
+    driver: local
+  sonar_logs:
+    driver: local
+  sonar_extensions:
     driver: local
