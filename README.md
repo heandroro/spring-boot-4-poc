@@ -125,4 +125,27 @@ This README provides a concise overview. Detailed documentation is in [docs/](do
 ## 📄 License
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
+
+## 🔍 SonarQube / SonarCloud
+
+- Config file: [sonar-project.properties](sonar-project.properties)
+- CI workflow: [.github/workflows/sonarcloud.yml](.github/workflows/sonarcloud.yml)
+- Secrets required (repository settings):
+	- SONAR_TOKEN: SonarCloud token
+	- GITHUB_TOKEN: Provided by GitHub Actions
+
+Run locally (optional):
+
+```bash
+# Generate coverage
+./gradlew clean test jacocoTestReport
+
+# If you have sonar-scanner installed
+sonar-scanner \
+	-Dsonar.projectKey=spring-boot-4-poc \
+	-Dsonar.sources=src/main/java \
+	-Dsonar.tests=src/test/java \
+	-Dsonar.java.binaries=build/classes/java/main \
+	-Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
+```
 - **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
