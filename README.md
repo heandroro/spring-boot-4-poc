@@ -119,15 +119,10 @@ If Docker is not available, regular unit tests still run and the build remains g
 
 This README provides a concise overview. Detailed documentation is in [docs/](docs/):
 
-- **[Architecture](docs/architecture.md)** - DDD layers, design decisions
-- **[Agent Best Practices](docs/agent-best-practices.md)** - Copilot agent design, performance, size limits
-- **[Java Records Best Practices](docs/java-records-best-practices.md)** - Records, Jackson, validation patterns
-- **[Security](docs/security.md)** - JWT, authorization, CORS
-- **[API Reference](docs/api.md)** - REST endpoints, contracts
-- **[MongoDB](docs/mongodb.md)** - Schema design, indexes, queries
-- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
-- **[Deployment](docs/deployment.md)** - Environment setup, Docker
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues
-- **[GitHub Strategy](docs/github-approval-strategy.md)** - Copilot approval workflow
 
 > **Note:** README.md is kept concise. For detailed information, see the linked documentation files.
+
+## 📄 License
+
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.
+- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
