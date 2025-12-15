@@ -4,6 +4,7 @@ plugins {
     id("org.sonarqube") version "5.1.0.4882"
     id("checkstyle")
     id("com.github.spotbugs") version "6.0.18"
+
     java
     jacoco
 }
@@ -56,6 +57,8 @@ dependencies {
     }
     testImplementation("org.testcontainers:mongodb:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    
+
 }
 
 // Integration test source set and task
@@ -140,8 +143,11 @@ checkstyle {
 }
 
 spotbugs {
-    toolVersion = "4.8.6"
+    toolVersion = "4.9.8"
     excludeFilter.set(file("config/spotbugs/exclude.xml"))
+}
+
+spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
 }
 
 tasks.withType<Checkstyle> {
