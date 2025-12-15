@@ -56,43 +56,67 @@ class MongoIndexInitializerTest {
         List<IndexDefinition> capturedIndexes = indexCaptor.getAllValues();
         assertEquals(5, capturedIndexes.size(), "Should create exactly 5 indexes");
 
-        // Index 1: email (unique, ASC)
-        IndexDefinition emailIndex = capturedIndexes.get(0);
+        // Find indexes by their field keys (order-independent)
+        IndexDefinition emailIndex = findIndexByField(capturedIndexes, "email.value");
+        assertNotNull(emailIndex, "Should have email index");
         Document emailIndexDoc = emailIndex.getIndexKeys();
-        assertNotNull(emailIndexDoc, "Email index should have keys");
-        assertTrue(emailIndexDoc.containsKey("email.value"), "Should index email.value field");
         assertEquals(1, emailIndexDoc.get("email.value"), "Email index should be ASC (1)");
         assertTrue(emailIndex.getIndexOptions().containsKey("unique"), "Email index should be unique");
         assertEquals(true, emailIndex.getIndexOptions().get("unique"), "Email index unique flag should be true");
 
-        // Index 2: status (ASC)
-        IndexDefinition statusIndex = capturedIndexes.get(1);
+        // Find status index (single field)
+        IndexDefinition statusIndex = findIndexByField(capturedIndexes, "status");
+        assertNotNull(statusIndex, "Should have status index");
         Document statusIndexDoc = statusIndex.getIndexKeys();
-        assertNotNull(statusIndexDoc, "Status index should have keys");
-        assertTrue(statusIndexDoc.containsKey("status"), "Should index status field");
+        assertEquals(1, statusIndexDoc.size(), "Status index should have 1 field");
         assertEquals(1, statusIndexDoc.get("status"), "Status index should be ASC (1)");
 
-        // Index 3: createdAt (DESC)
-        IndexDefinition createdAtIndex = capturedIndexes.get(2);
+        // Find createdAt index (single field)
+        IndexDefinition createdAtIndex = findIndexByField(capturedIndexes, "createdAt");
+        assertNotNull(createdAtIndex, "Should have createdAt index");
         Document createdAtIndexDoc = createdAtIndex.getIndexKeys();
-        assertNotNull(createdAtIndexDoc, "CreatedAt index should have keys");
-        assertTrue(createdAtIndexDoc.containsKey("createdAt"), "Should index createdAt field");
+        assertEquals(1, createdAtIndexDoc.size(), "CreatedAt index should have 1 field");
         assertEquals(-1, createdAtIndexDoc.get("createdAt"), "CreatedAt index should be DESC (-1)");
 
-        // Index 4: compound index (status ASC + createdAt DESC)
-        IndexDefinition compoundIndex = capturedIndexes.get(3);
+        // Find compound index (status + createdAt)
+        IndexDefinition compoundIndex = findCompoundIndex(capturedIndexes, "status", "createdAt");
+        assertNotNull(compoundIndex, "Should have compound index with status and createdAt");
         Document compoundIndexDoc = compoundIndex.getIndexKeys();
-        assertNotNull(compoundIndexDoc, "Compound index should have keys");
-        assertTrue(compoundIndexDoc.containsKey("status"), "Compound index should include status");
-        assertTrue(compoundIndexDoc.containsKey("createdAt"), "Compound index should include createdAt");
+        assertEquals(2, compoundIndexDoc.size(), "Compound index should have 2 fields");
         assertEquals(1, compoundIndexDoc.get("status"), "Compound index status should be ASC (1)");
         assertEquals(-1, compoundIndexDoc.get("createdAt"), "Compound index createdAt should be DESC (-1)");
 
-        // Index 5: creditLimit.amount (DESC)
-        IndexDefinition creditLimitIndex = capturedIndexes.get(4);
+        // Find creditLimit.amount index
+        IndexDefinition creditLimitIndex = findIndexByField(capturedIndexes, "creditLimit.amount");
+        assertNotNull(creditLimitIndex, "Should have creditLimit.amount index");
         Document creditLimitIndexDoc = creditLimitIndex.getIndexKeys();
-        assertNotNull(creditLimitIndexDoc, "CreditLimit index should have keys");
-        assertTrue(creditLimitIndexDoc.containsKey("creditLimit.amount"), "Should index creditLimit.amount field");
+        assertEquals(1, creditLimitIndexDoc.size(), "CreditLimit index should have 1 field");
         assertEquals(-1, creditLimitIndexDoc.get("creditLimit.amount"), "CreditLimit index should be DESC (-1)");
+    }
+
+    /**
+     * Helper method to find a single-field index by field name (order-independent)
+     */
+    private IndexDefinition findIndexByField(List<IndexDefinition> indexes, String fieldName) {
+        return indexes.stream()
+                .filter(idx -> {
+                    Document keys = idx.getIndexKeys();
+                    return keys.containsKey(fieldName) && keys.size() == 1;
+                })
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * Helper method to find a compound index by two field names (order-independent)
+     */
+    private IndexDefinition findCompoundIndex(List<IndexDefinition> indexes, String field1, String field2) {
+        return indexes.stream()
+                .filter(idx -> {
+                    Document keys = idx.getIndexKeys();
+                    return keys.containsKey(field1) && keys.containsKey(field2) && keys.size() == 2;
+                })
+                .findFirst()
+                .orElse(null);
     }
 }
