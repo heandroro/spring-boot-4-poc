@@ -1,5 +1,10 @@
 # Spring Boot 4 PoC
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=coverage)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+
 Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 and MongoDB.
 
 ## 🎯 Key Points
