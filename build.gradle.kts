@@ -3,6 +3,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("org.sonarqube") version "5.1.0.4882"
     id("checkstyle")
+    id("com.github.spotbugs") version "6.0.18"
     java
     jacoco
 }
@@ -138,6 +139,11 @@ checkstyle {
     toolVersion = "10.18.1"
 }
 
+spotbugs {
+    toolVersion = "4.8.6"
+    excludeFilter.set(file("config/spotbugs/exclude.xml"))
+}
+
 tasks.withType<Checkstyle> {
     configFile = file("config/checkstyle/checkstyle.xml")
     isIgnoreFailures = false
@@ -148,6 +154,10 @@ tasks.withType<Checkstyle> {
     }
 }
 
+tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
+    ignoreFailures = true // Temporarily ignore failures due to Java 25 compatibility
+}
+
 tasks.check {
-    dependsOn("checkstyleMain", "checkstyleTest", "checkstyleIntegrationTest")
+    dependsOn("checkstyleMain", "checkstyleTest", "checkstyleIntegrationTest", "spotbugsMain", "spotbugsTest")
 }
