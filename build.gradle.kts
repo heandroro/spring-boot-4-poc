@@ -12,7 +12,7 @@ plugins {
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
-java {
+dependencies {
     toolchain {
         languageVersion.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(25))
     }
@@ -47,6 +47,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
     // Include spring-test explicitly for MockMvc
+
+    // FindSecBugs plugin for SpotBugs
+    spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testImplementation("org.springframework:spring-test")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
@@ -146,8 +149,6 @@ spotbugs {
     toolVersion = "4.9.8"
     excludeFilter.set(file("config/spotbugs/exclude.xml"))
 }
-
-spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
 }
 
 tasks.withType<Checkstyle> {
