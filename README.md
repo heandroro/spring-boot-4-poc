@@ -1,5 +1,10 @@
 # Spring Boot 4 PoC
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=coverage)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+
 Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 and MongoDB.
 
 ## 🎯 Key Points
@@ -119,15 +124,33 @@ If Docker is not available, regular unit tests still run and the build remains g
 
 This README provides a concise overview. Detailed documentation is in [docs/](docs/):
 
-- **[Architecture](docs/architecture.md)** - DDD layers, design decisions
-- **[Agent Best Practices](docs/agent-best-practices.md)** - Copilot agent design, performance, size limits
-- **[Java Records Best Practices](docs/java-records-best-practices.md)** - Records, Jackson, validation patterns
-- **[Security](docs/security.md)** - JWT, authorization, CORS
-- **[API Reference](docs/api.md)** - REST endpoints, contracts
-- **[MongoDB](docs/mongodb.md)** - Schema design, indexes, queries
-- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
-- **[Deployment](docs/deployment.md)** - Environment setup, Docker
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues
-- **[GitHub Strategy](docs/github-approval-strategy.md)** - Copilot approval workflow
 
 > **Note:** README.md is kept concise. For detailed information, see the linked documentation files.
+
+## 📄 License
+
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.
+
+## 🔍 SonarQube (local)
+
+- Config file: [sonar-project.properties](sonar-project.properties)
+- Start local server: `docker compose up -d sonarqube` (first run downloads the image; UI at http://localhost:9000)
+- Run analysis before committing:
+
+```bash
+SONAR_TOKEN=your_token \
+./gradlew clean test jacocoTestReport sonarqube
+```
+
+- Create the token in the SonarQube UI (My Account → Security). Never commit tokens.
+- Stop services when done: `docker compose down`
+- Optional pre-commit hook (runs tests + Sonar locally):
+
+```bash
+git config core.hooksPath .githooks
+export SONAR_TOKEN=your_token
+export RUN_SONAR_PRECOMMIT=1
+./gradlew test jacocoTestReport sonarqube # first run to warm cache (hook will run on next commit)
+```
+The hook checks Sonar at http://localhost:9000; start it with `docker compose up -d sonarqube`.
+- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage

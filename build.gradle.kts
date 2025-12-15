@@ -1,6 +1,7 @@
 plugins {
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.sonarqube") version "5.1.0.4882"
     java
     jacoco
 }
@@ -38,9 +39,12 @@ dependencies {
     // SpringDoc 3.x is required for Spring Boot 4 / Spring Framework 7
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
 
+    // Spring Boot test support for @WebMvcTest / MockMvc
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
+    // Include spring-test explicitly for MockMvc
+    testImplementation("org.springframework:spring-test")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
     // JavaFaker for realistic test data (names, addresses, emails)
@@ -50,6 +54,36 @@ dependencies {
     }
     testImplementation("org.testcontainers:mongodb:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+}
+
+// Integration test source set and task
+sourceSets {
+    val integrationTest by creating {
+        java.srcDir("src/integrationTest/java")
+        resources.srcDir("src/integrationTest/resources")
+        compileClasspath += sourceSets.main.get().output + configurations.testCompileClasspath.get()
+        runtimeClasspath += output + compileClasspath + configurations.testRuntimeClasspath.get()
+    }
+}
+
+configurations.named("integrationTestImplementation") {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+configurations.named("integrationTestRuntimeOnly") {
+    extendsFrom(configurations.testRuntimeOnly.get())
+}
+
+val integrationTest by tasks.registering(Test::class) {
+    description = "Runs integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    shouldRunAfter(tasks.test)
+}
+
+tasks.check {
+    dependsOn(integrationTest)
 }
 
 tasks.withType<Test> {
@@ -64,6 +98,17 @@ tasks.jacocoTestReport {
         html.required.set(true)
         csv.required.set(false)
     }
+    // Exclude classes not relevant for coverage (bootstrap/config/etc.)
+    classDirectories.setFrom(
+        files(classDirectories.files.map { fileTree(it) {
+            exclude(
+                "**/SpringBoot4PocApplication*",
+                "**/infrastructure/config/**",
+                "**/web/exception/**",
+                "**/infrastructure/event/**"
+            )
+        } })
+    )
 }
 
 tasks.jacocoTestCoverageVerification {
@@ -78,4 +123,11 @@ tasks.jacocoTestCoverageVerification {
 
 jacoco {
     toolVersion = "0.8.13"
+}
+
+sonarqube {
+    properties {
+        property("sonar.host.url", "http://localhost:9000")
+        System.getenv("SONAR_TOKEN")?.let { property("sonar.token", it) }
+    }
 }

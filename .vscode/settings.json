@@ -59,5 +59,6 @@
     "search.exclude": {
         "**/build": true,
         "**/.gradle": true
-    }
+    },
+    "java.debug.settings.onBuildFailureProceed": true
 }

@@ -82,6 +82,7 @@ public class MongoIndexInitializer {
     /**
      * Create indexes for Customer collection
      */
+    @SuppressWarnings("removal")
     private void createCustomerIndexes() {
         String collectionName = "customers";
 
