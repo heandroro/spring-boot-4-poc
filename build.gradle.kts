@@ -12,9 +12,10 @@ plugins {
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
-dependencies {
+
+java {
     toolchain {
-        languageVersion.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -148,7 +149,6 @@ checkstyle {
 spotbugs {
     toolVersion = "4.9.8"
     excludeFilter.set(file("config/spotbugs/exclude.xml"))
-}
 }
 
 tasks.withType<Checkstyle> {
