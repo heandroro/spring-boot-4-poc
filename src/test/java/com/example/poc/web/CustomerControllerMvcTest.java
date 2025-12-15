@@ -33,6 +33,7 @@ import com.github.javafaker.Faker;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CustomerController MVC Tests")
+@SuppressWarnings("removal")
 class CustomerControllerMvcTest {
 
     @Mock

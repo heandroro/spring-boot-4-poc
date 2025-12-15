@@ -33,6 +33,7 @@ class MongoIndexInitializerTest {
 
     @Test
     @DisplayName("should create expected indexes for Customer collection")
+    @SuppressWarnings("removal")
     void shouldCreateExpectedIndexesForCustomerCollection() {
         // Given: indexOps mocked for Customer class
         when(mongoTemplate.indexOps(Customer.class)).thenReturn(indexOps);
