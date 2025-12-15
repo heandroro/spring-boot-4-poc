@@ -13,7 +13,7 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 ### Phase 6: Infrastructure & OpenAPI
 **Latest updates** (Fase 6 Infrastructure PR #7):
 - ✅ **SpringDoc 3.0.0**: Full Spring Boot 4 / Spring Framework 7 support
-- ✅ **Swagger UI & OpenAPI**: Fully functional at `/swagger-ui.html` and `/v3/api-docs`
+- ✅ **Swagger UI & OpenAPI**: Fully functional at `/swagger-ui/index.html` and `/v3/api-docs`
 - ✅ **Agent Architecture**: Specialized Copilot agents for unit & integration tests
 - ✅ **Improved Docs**: Agent best-practices, performance guidance, security patterns
 
@@ -35,7 +35,7 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 ### OpenAPI / Swagger UI
 After starting the app, access the API documentation in the browser:
 
-- **Swagger UI**: http://localhost:8080/swagger-ui.html
+- **Swagger UI**: http://localhost:8080/swagger-ui/index.html
 - **OpenAPI JSON**: http://localhost:8080/v3/api-docs
 - **OpenAPI YAML**: http://localhost:8080/v3/api-docs.yaml
 
@@ -75,7 +75,7 @@ docker-compose up -d
 JWT_SECRET=dev-secret ./gradlew bootRun
 
 # 5. Access the app
-# API Docs: http://localhost:8080/swagger-ui.html
+# API Docs: http://localhost:8080/swagger-ui/index.html
 # OpenAPI JSON: http://localhost:8080/v3/api-docs
 # Health: http://localhost:8080/actuator/health
 ```
