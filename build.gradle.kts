@@ -55,6 +55,36 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
 }
 
+// Integration test source set and task
+sourceSets {
+    val integrationTest by creating {
+        java.srcDir("src/integrationTest/java")
+        resources.srcDir("src/integrationTest/resources")
+        compileClasspath += sourceSets.main.get().output + configurations.testCompileClasspath.get()
+        runtimeClasspath += output + compileClasspath + configurations.testRuntimeClasspath.get()
+    }
+}
+
+configurations.named("integrationTestImplementation") {
+    extendsFrom(configurations.testImplementation.get())
+}
+
+configurations.named("integrationTestRuntimeOnly") {
+    extendsFrom(configurations.testRuntimeOnly.get())
+}
+
+val integrationTest by tasks.registering(Test::class) {
+    description = "Runs integration tests."
+    group = "verification"
+    testClassesDirs = sourceSets["integrationTest"].output.classesDirs
+    classpath = sourceSets["integrationTest"].runtimeClasspath
+    shouldRunAfter(tasks.test)
+}
+
+tasks.check {
+    dependsOn(integrationTest)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     finalizedBy(tasks.jacocoTestReport)
