@@ -25,6 +25,14 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 - **Mockito**: Mocking framework for unit tests
 - **Testcontainers**: Real MongoDB for integration tests
 
+### OpenAPI / Swagger UI
+After starting the app, access the API documentation in the browser:
+
+- Swagger UI: http://localhost:8080/swagger-ui
+- OpenAPI JSON: http://localhost:8080/v3/api-docs
+
+If authentication becomes required in the future, ensure `/v3/api-docs/**` and `/swagger-ui/**` remain permitted in security configuration for local access.
+
 ### Why Gradle (vs Maven)?
 This project uses **Gradle** with **Kotlin DSL** (`build.gradle.kts`) for:
 - ✅ **Performance**: 2-10x faster builds with incremental compilation, build cache, and parallel execution

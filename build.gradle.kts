@@ -34,6 +34,9 @@ dependencies {
 
     implementation("org.apache.commons:commons-lang3:3.17.0")
 
+    // OpenAPI/Swagger UI via SpringDoc (exposes /v3/api-docs and /swagger-ui)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
