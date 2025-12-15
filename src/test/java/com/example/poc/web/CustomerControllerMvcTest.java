@@ -2,6 +2,11 @@ package com.example.poc.web;
 
 import static org.instancio.Select.all;
 import static org.instancio.Select.field;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -117,7 +122,7 @@ class CustomerControllerMvcTest {
                 .getContentAsString();
 
         // Validate Problem Detail RFC 7807 structure by parsing JSON
-        org.junit.jupiter.api.Assertions.assertFalse(responseBody.isEmpty(), 
+        assertFalse(responseBody.isEmpty(), 
                 "Response body should not be empty for validation errors");
         
         // Parse JSON response (catch parsing errors to provide clear failure message)
@@ -125,58 +130,58 @@ class CustomerControllerMvcTest {
         try {
             response = objectMapper.readValue(responseBody, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
-            org.junit.jupiter.api.Assertions.fail("Failed to parse JSON response: " + responseBody, e);
+            fail("Failed to parse JSON response: " + responseBody, e);
             return; // unreachable, but satisfies compiler
         }
         
         // Validate RFC 7807 fields
-        org.junit.jupiter.api.Assertions.assertTrue(response.containsKey("title"), 
+        assertTrue(response.containsKey("title"), 
                 "Response should contain 'title' field");
-        org.junit.jupiter.api.Assertions.assertEquals("Validation failed", response.get("title"), 
+        assertEquals("Validation failed", response.get("title"), 
                 "Title should be 'Validation failed'");
         
-        org.junit.jupiter.api.Assertions.assertTrue(response.containsKey("detail"), 
+        assertTrue(response.containsKey("detail"), 
                 "Response should contain 'detail' field");
-        org.junit.jupiter.api.Assertions.assertEquals("Request body contains invalid fields", response.get("detail"), 
+        assertEquals("Request body contains invalid fields", response.get("detail"), 
                 "Detail should describe validation failure");
         
-        org.junit.jupiter.api.Assertions.assertTrue(response.containsKey("status"), 
+        assertTrue(response.containsKey("status"), 
                 "Response should contain 'status' field");
-        org.junit.jupiter.api.Assertions.assertEquals(400, response.get("status"), 
+        assertEquals(400, response.get("status"), 
                 "Status should be 400");
         
-        org.junit.jupiter.api.Assertions.assertTrue(response.containsKey("instance"), 
+        assertTrue(response.containsKey("instance"), 
                 "Response should contain 'instance' field");
-        org.junit.jupiter.api.Assertions.assertEquals("/customers", response.get("instance"), 
+        assertEquals("/customers", response.get("instance"), 
                 "Instance should be '/customers'");
         
         // Validate properties contains timestamp and errors
-        org.junit.jupiter.api.Assertions.assertTrue(response.containsKey("properties"), 
+        assertTrue(response.containsKey("properties"), 
                 "Response should contain 'properties' field");
         @SuppressWarnings("unchecked")
         Map<String, Object> properties = (Map<String, Object>) response.get("properties");
         
-        org.junit.jupiter.api.Assertions.assertTrue(properties.containsKey("timestamp"), 
+        assertTrue(properties.containsKey("timestamp"), 
                 "Properties should contain 'timestamp'");
-        org.junit.jupiter.api.Assertions.assertNotNull(properties.get("timestamp"), 
+        assertNotNull(properties.get("timestamp"), 
                 "Timestamp should not be null");
         
-        org.junit.jupiter.api.Assertions.assertTrue(properties.containsKey("errors"), 
+        assertTrue(properties.containsKey("errors"), 
                 "Properties should contain 'errors' field");
         @SuppressWarnings("unchecked")
         List<Map<String, String>> errors = (List<Map<String, String>>) properties.get("errors");
-        org.junit.jupiter.api.Assertions.assertFalse(errors.isEmpty(), 
+        assertFalse(errors.isEmpty(), 
                 "Errors array should not be empty");
         
         // Validate error structure (field and message)
         Map<String, String> firstError = errors.get(0);
-        org.junit.jupiter.api.Assertions.assertTrue(firstError.containsKey("field"), 
+        assertTrue(firstError.containsKey("field"), 
                 "Error should contain 'field' property");
-        org.junit.jupiter.api.Assertions.assertTrue(firstError.containsKey("message"), 
+        assertTrue(firstError.containsKey("message"), 
                 "Error should contain 'message' property");
-        org.junit.jupiter.api.Assertions.assertNotNull(firstError.get("field"), 
+        assertNotNull(firstError.get("field"), 
                 "Error field should not be null");
-        org.junit.jupiter.api.Assertions.assertNotNull(firstError.get("message"), 
+        assertNotNull(firstError.get("message"), 
                 "Error message should not be null");
 
         verifyNoInteractions(service);
