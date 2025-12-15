@@ -1,13 +1,20 @@
 package com.example.poc.infrastructure.persistence;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
+
+import org.bson.Document;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,20 +47,52 @@ class MongoIndexInitializerTest {
 
         // When
         initializer = new MongoIndexInitializer(mongoTemplate);
-        // invoke internal method by calling public init (will call
-        // createCustomerIndexes)
-        // We avoid @PostConstruct by calling method directly via reflection of behavior
-        // Call private method via public initIndexes
-        // Since initIndexes also logs, we just run it
         initializer.initIndexes();
 
-        // Then: verify number of ensureIndex calls (5 indexes created)
-        verify(indexOps, times(5)).ensureIndex(any(IndexDefinition.class));
-    }
+        // Then: Capture all IndexDefinition objects
+        ArgumentCaptor<IndexDefinition> indexCaptor = ArgumentCaptor.forClass(IndexDefinition.class);
+        verify(indexOps, times(5)).ensureIndex(indexCaptor.capture());
+        
+        List<IndexDefinition> capturedIndexes = indexCaptor.getAllValues();
+        assertEquals(5, capturedIndexes.size(), "Should create exactly 5 indexes");
 
-    // Helper to inspect IndexDefinition keys via toString()
-    private boolean hasKey(IndexDefinition index, String field, Sort.Direction direction) {
-        String s = index.toString();
-        return s.contains(field) && s.contains(direction.name());
+        // Index 1: email (unique, ASC)
+        IndexDefinition emailIndex = capturedIndexes.get(0);
+        Document emailIndexDoc = emailIndex.getIndexKeys();
+        assertNotNull(emailIndexDoc, "Email index should have keys");
+        assertTrue(emailIndexDoc.containsKey("email.value"), "Should index email.value field");
+        assertEquals(1, emailIndexDoc.get("email.value"), "Email index should be ASC (1)");
+        assertTrue(emailIndex.getIndexOptions().containsKey("unique"), "Email index should be unique");
+        assertEquals(true, emailIndex.getIndexOptions().get("unique"), "Email index unique flag should be true");
+
+        // Index 2: status (ASC)
+        IndexDefinition statusIndex = capturedIndexes.get(1);
+        Document statusIndexDoc = statusIndex.getIndexKeys();
+        assertNotNull(statusIndexDoc, "Status index should have keys");
+        assertTrue(statusIndexDoc.containsKey("status"), "Should index status field");
+        assertEquals(1, statusIndexDoc.get("status"), "Status index should be ASC (1)");
+
+        // Index 3: createdAt (DESC)
+        IndexDefinition createdAtIndex = capturedIndexes.get(2);
+        Document createdAtIndexDoc = createdAtIndex.getIndexKeys();
+        assertNotNull(createdAtIndexDoc, "CreatedAt index should have keys");
+        assertTrue(createdAtIndexDoc.containsKey("createdAt"), "Should index createdAt field");
+        assertEquals(-1, createdAtIndexDoc.get("createdAt"), "CreatedAt index should be DESC (-1)");
+
+        // Index 4: compound index (status ASC + createdAt DESC)
+        IndexDefinition compoundIndex = capturedIndexes.get(3);
+        Document compoundIndexDoc = compoundIndex.getIndexKeys();
+        assertNotNull(compoundIndexDoc, "Compound index should have keys");
+        assertTrue(compoundIndexDoc.containsKey("status"), "Compound index should include status");
+        assertTrue(compoundIndexDoc.containsKey("createdAt"), "Compound index should include createdAt");
+        assertEquals(1, compoundIndexDoc.get("status"), "Compound index status should be ASC (1)");
+        assertEquals(-1, compoundIndexDoc.get("createdAt"), "Compound index createdAt should be DESC (-1)");
+
+        // Index 5: creditLimit.amount (DESC)
+        IndexDefinition creditLimitIndex = capturedIndexes.get(4);
+        Document creditLimitIndexDoc = creditLimitIndex.getIndexKeys();
+        assertNotNull(creditLimitIndexDoc, "CreditLimit index should have keys");
+        assertTrue(creditLimitIndexDoc.containsKey("creditLimit.amount"), "Should index creditLimit.amount field");
+        assertEquals(-1, creditLimitIndexDoc.get("creditLimit.amount"), "CreditLimit index should be DESC (-1)");
     }
 }

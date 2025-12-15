@@ -68,10 +68,44 @@ class CustomerDtoValidationTest {
 
         Set<ConstraintViolation<CustomerDto>> violations = validator.validate(invalid);
 
-        assertFalse(violations.isEmpty());
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("name")));
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("email")));
-        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("creditLimit")));
+        // Assert exact number of violations (6 fields invalid)
+        assertEquals(6, violations.size(), "Should have exactly 6 validation violations");
+        
+        // Verify specific field violations exist
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("name")), 
+                "Should have violation for name field");
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("email")), 
+                "Should have violation for email field");
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("street")), 
+                "Should have violation for street field");
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("city")), 
+                "Should have violation for city field");
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("postalCode")), 
+                "Should have violation for postalCode field");
+        assertTrue(violations.stream().anyMatch(v -> v.getPropertyPath().toString().equals("creditLimit")), 
+                "Should have violation for creditLimit field");
+        
+        // Verify specific error messages
+        ConstraintViolation<CustomerDto> nameViolation = violations.stream()
+                .filter(v -> v.getPropertyPath().toString().equals("name"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("Name must not be blank", nameViolation.getMessage(), 
+                "Name violation should have correct message");
+        
+        ConstraintViolation<CustomerDto> emailViolation = violations.stream()
+                .filter(v -> v.getPropertyPath().toString().equals("email"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("Email should be valid", emailViolation.getMessage(), 
+                "Email violation should have correct message");
+        
+        ConstraintViolation<CustomerDto> creditLimitViolation = violations.stream()
+                .filter(v -> v.getPropertyPath().toString().equals("creditLimit"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("Credit limit must not be null", creditLimitViolation.getMessage(), 
+                "CreditLimit violation should have correct message");
     }
 
     @Test

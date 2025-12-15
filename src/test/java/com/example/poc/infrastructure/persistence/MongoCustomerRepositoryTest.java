@@ -104,11 +104,25 @@ class MongoCustomerRepositoryTest {
         // When
         List<Customer> result = repository.findHighCreditUtilization(threshold);
 
-        // Then
+        // Then: verify results
         assertEquals(1, result.size());
         assertTrue(result.contains(high));
         assertFalse(result.contains(low));
-        verify(mongoTemplate).find(any(Query.class), eq(Customer.class));
+        
+        // Capture and verify the Query that was constructed
+        ArgumentCaptor<Query> queryCaptor = ArgumentCaptor.forClass(Query.class);
+        verify(mongoTemplate).find(queryCaptor.capture(), eq(Customer.class));
+        
+        Query capturedQuery = queryCaptor.getValue();
+        assertNotNull(capturedQuery, "Query should not be null");
+        
+        // Verify query contains criteria for ACTIVE status
+        String queryString = capturedQuery.toString();
+        assertTrue(queryString.contains("status"), 
+                "Query should filter by status field");
+        assertTrue(queryString.contains("ACTIVE"), 
+                "Query should filter for ACTIVE customers");
+        
         verifyNoInteractions(customerRepository);
     }
 
