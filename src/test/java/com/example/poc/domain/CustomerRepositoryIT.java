@@ -23,7 +23,7 @@ import com.example.poc.domain.vo.Money;
 @Testcontainers
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "ENABLE_DOCKER_TESTS", matches = "true")
-class CustomerRepositoryTest {
+class CustomerRepositoryIT {
 
     @Container
     static final MongoDBContainer mongo = new MongoDBContainer("mongo:6.0.8");
