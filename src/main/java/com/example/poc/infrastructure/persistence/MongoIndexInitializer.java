@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 
 import com.example.poc.domain.Customer;
 
-import jakarta.annotation.PostConstruct;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import jakarta.annotation.PostConstruct;
 
 @Component
 public class MongoIndexInitializer {

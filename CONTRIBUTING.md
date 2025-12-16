@@ -698,7 +698,7 @@ git commit -m "chore: update dependencies"
 - [ ] SpotBugs: supressões (`@SuppressFBWarnings`) só devem ser usadas localmente com justificativa clara na anotação e documentadas em `docs/spotbugs.md`; evite supressões globais ou exclusões amplas.
 
 #### ✅ Testes
-- [ ] Cobertura mínima de 80%
+- [ ] Cobertura mínima de 90% (ideal 95%)
 - [ ] Testa cenários de sucesso e falha
 - [ ] Usa Instancio para fixtures
 - [ ] Mocks apropriados

@@ -46,7 +46,7 @@ Alternativamente, no GitHub:
 - [ ] Testes usam **Instancio** para criar fixtures (`Instancio.create()`)
 - [ ] Mocks com **Mockito** (`@Mock`, `@InjectMocks`, `@ExtendWith(MockitoExtension.class)`)
 - [ ] Testes de integração com **Testcontainers** e `@EnabledIfEnvironmentVariable`
-- [ ] Cobertura mínima de 80% nas classes de negócio
+- [ ] Cobertura mínima de 90% (ideal 95%) nas classes de negócio
 - [ ] Testes validam cenários de sucesso E falha
 - [ ] Testes de repositório verificam queries MongoDB reais
 

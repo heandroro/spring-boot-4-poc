@@ -121,7 +121,7 @@ com.example.ecommerce/
 
 ## 📈 Métricas de Sucesso
 
-- [ ] Cobertura de testes > 80%
+- [ ] Cobertura de testes > 90% (ideal 95%)
 - [ ] Performance < 500ms (p95)
 - [ ] Disponibilidade 99.9%
 - [ ] Zero vulnerabilidades críticas

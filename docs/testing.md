@@ -8,7 +8,7 @@ This project uses a comprehensive testing approach covering unit, integration, a
 - **Mocking**: Mockito
 - **Fixtures**: Instancio (random test data generation)
 - **Integration Tests**: Testcontainers (MongoDB, Docker)
-- **Coverage**: Aim for 80%+ on domain/application layers
+- **Coverage**: Aim for minimum 90% (ideal 95%) on domain/application layers
 
 ## Unit Tests
 
@@ -397,7 +397,7 @@ Target coverage by layer:
 - **Domain**: 90%+ (critical business logic)
 - **Application**: 85%+ (use cases)
 - **Infrastructure**: 70%+ (technical implementation)
-- **Web**: 80%+ (controllers)
+- **Web**: minimum 90% (ideal 95%) (controllers)
 
 ## Best Practices
 

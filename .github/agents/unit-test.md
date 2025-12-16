@@ -17,7 +17,7 @@ Este agente é ativado quando:
 2. ✅ Usar Instancio + JavaFaker para fixtures realistas
 3. ✅ Aplicar method references (type-safe)
 4. ✅ Mockar dependências com Mockito
-5. ✅ Garantir cobertura de 80%+ por classe
+5. ✅ Garantir cobertura mínima de 90% por classe (ideal 95%)
 
 ## Stack de Testes Unitários
 

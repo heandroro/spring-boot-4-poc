@@ -7,12 +7,13 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.example.poc.domain.Customer;
 import com.example.poc.domain.CustomerRepository;
 import com.example.poc.domain.event.DomainEvent;
 import com.example.poc.infrastructure.event.DomainEventPublisher;
+
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Repository
 public class MongoCustomerRepository {

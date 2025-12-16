@@ -16,7 +16,7 @@ Este documento define as regras e padrões para geração automática de testes 
 - **Mocking:** Mockito
 - **Fixtures:** Instancio + JavaFaker
 - **Assertions:** JUnit Assertions + AssertJ (quando necessário)
-- **Cobertura:** Jacoco (mínimo 80%)
+- **Cobertura:** Jacoco (mínimo 90%, ideal 95%)
 
 ### 2. Arquitetura DDD
 Testes organizados por camada:
@@ -680,7 +680,7 @@ Ao gerar testes para uma classe, verifique:
 - [ ] Uso de JavaFaker para dados realistas
 - [ ] Uso de generators para constraints
 - [ ] Assertions claras e completas
-- [ ] Coverage de branches principais (> 80%)
+- [ ] Coverage de branches principais (>= 90%, ideal 95%)
 
 ---
 

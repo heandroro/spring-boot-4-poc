@@ -59,7 +59,7 @@ O agente valida automaticamente:
 - ✅ Java 25 features (Records, Pattern Matching)
 - ✅ Spring Boot 4 (Constructor Injection, RestClient)
 - ✅ MongoDB best practices (índices, embedding/referencing)
-- ✅ Testes (JUnit 6, Instancio, 80%+ cobertura)
+- ✅ Testes (JUnit 6, Instancio, mínimo 90% cobertura, ideal 95%)
 - ✅ Segurança (@PreAuthorize, BCrypt, validação)
 - ✅ REST API (status HTTP, Bean Validation, paginação)
 
