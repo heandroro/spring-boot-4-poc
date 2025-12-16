@@ -34,12 +34,6 @@ import com.example.poc.infrastructure.mapping.CustomerMapper;
 import com.example.poc.web.CustomerDto;
 import com.github.javafaker.Faker;
 
-/**
- * Unit tests for {@link CustomerService}.
- * 
- * Tests cover CRUD operations, business logic, and mapper interactions using
- * Mockito for repository/mapper mocks and Instancio for realistic test data.
- */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CustomerService Unit Tests")
 class CustomerServiceTest {

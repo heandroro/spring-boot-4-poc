@@ -9,20 +9,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit tests for Address Value Object
- * 
- * Tests focus on:
- * - Address normalization (trimming, default values)
- * - Immutability
- * - Formatting for display
- * - Country operations
- * 
- * Note: Validation is handled by Bean Validation annotations (@NotBlank)
- * at API boundaries, not in the constructor.
- * 
- * References: testing.md, architecture.md - Value Objects section
- */
 @DisplayName("Address Value Object Tests")
 class AddressTest {
 

@@ -11,17 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * Unit tests for Email Value Object
- * 
- * Tests focus on:
- * - Email format validation
- * - Immutability
- * - Case normalization (lowercase)
- * - Domain extraction
- * 
- * References: testing.md, security.md - Input Validation
- */
 @DisplayName("Email Value Object Tests")
 class EmailTest {
 

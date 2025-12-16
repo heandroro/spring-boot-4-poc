@@ -13,17 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * Unit tests for Money Value Object
- * 
- * Tests focus on:
- * - Immutability
- * - Arithmetic operations with validation
- * - Business rules enforcement
- * - Edge cases (zero, negative values)
- * 
- * References: testing.md, architecture.md - Value Objects section
- */
 @DisplayName("Money Value Object Tests")
 class MoneyTest {
 

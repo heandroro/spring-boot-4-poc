@@ -7,9 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.util.List;
-import java.lang.reflect.Field;
 import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -23,21 +23,6 @@ import com.example.poc.domain.vo.Address;
 import com.example.poc.domain.vo.Email;
 import com.example.poc.domain.vo.Money;
 
-/**
- * Unit tests for Customer Aggregate Root
- * 
- * Tests focus on:
- * - Aggregate invariants
- * - Business logic (credit operations)
- * - State transitions
- * - Domain events
- * - Rich domain modeling
- * 
- * References:
- * - testing.md: Unit testing aggregate roots
- * - architecture.md: Aggregate Root pattern
- * - code-examples.md: Section 22 - Rich Classes, Section 13 - Aggregate Root
- */
 @DisplayName("Customer Aggregate Root Tests")
 class CustomerTest {
 
