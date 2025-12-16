@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.lang.reflect.Field;
+import java.util.Objects;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -373,7 +375,7 @@ class CustomerTest {
         Customer c1 = Customer.create("John Doe", email, validAddress, validCreditLimit);
         Customer c2 = Customer.create("John Doe", email, validAddress, validCreditLimit);
 
-        java.lang.reflect.Field idField = Customer.class.getDeclaredField("id");
+        Field idField = Customer.class.getDeclaredField("id");
         idField.setAccessible(true);
         idField.set(c1, "id1");
         idField.set(c2, "id2");
@@ -462,13 +464,13 @@ class CustomerTest {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         int before = customer.hashCode();
 
-        java.lang.reflect.Field idField = Customer.class.getDeclaredField("id");
+        Field idField = Customer.class.getDeclaredField("id");
         idField.setAccessible(true);
         idField.set(customer, "id-123");
 
         int after = customer.hashCode();
         assertNotEquals(before, after);
-        assertEquals(java.util.Objects.hash("id-123", customer.getEmail()), after);
+        assertEquals(Objects.hash("id-123", customer.getEmail()), after);
     }
 
     @Test

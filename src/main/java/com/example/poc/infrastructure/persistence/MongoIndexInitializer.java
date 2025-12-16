@@ -14,39 +14,6 @@ import com.example.poc.domain.Customer;
 
 import jakarta.annotation.PostConstruct;
 
-/**
- * MongoDB Index Initializer
- * 
- * Creates database indexes on application startup for optimal query
- * performance.
- * 
- * Indexes Created:
- * 1. email (unique) - Fast lookups, uniqueness constraint
- * 2. status - Filter by customer status
- * 3. createdAt (descending) - Pagination, recent customers
- * 4. creditLimit - Range queries on credit
- * 
- * Index Strategy:
- * - Single field indexes for common queries
- * - Compound indexes for multi-field queries
- * - Unique indexes for business constraints
- * - TTL indexes for automatic document expiration (if needed)
- * 
- * Production Note:
- * In production, indexes should be created via:
- * - Database migration scripts
- * - MongoDB Ops Manager
- * - Manual DBA commands
- * 
- * This class is useful for:
- * - Development environment
- * - Testing with Testcontainers
- * - Documentation of required indexes
- * 
- * References:
- * - mongodb.md: Index strategy and performance tuning
- * - docs/deployment.md: Production index management
- */
 @Component
 public class MongoIndexInitializer {
 
@@ -58,12 +25,6 @@ public class MongoIndexInitializer {
         this.mongoTemplate = mongoTemplate;
     }
 
-    /**
-     * Create indexes on application startup
-     * 
-     * This runs once when the application starts.
-     * Existing indexes are not recreated.
-     */
     @PostConstruct
     public void initIndexes() {
         log.info("Initializing MongoDB indexes...");
@@ -79,9 +40,6 @@ public class MongoIndexInitializer {
         }
     }
 
-    /**
-     * Create indexes for Customer collection
-     */
     @SuppressWarnings("removal")
     private void createCustomerIndexes() {
         String collectionName = "customers";
@@ -130,9 +88,6 @@ public class MongoIndexInitializer {
         log.debug("Created index on creditLimit");
     }
 
-    /**
-     * Log existing indexes for debugging
-     */
     private void logExistingIndexes() {
         List<IndexInfo> indexes = mongoTemplate.indexOps(Customer.class).getIndexInfo();
         log.info("Customer collection has {} indexes:", indexes.size());

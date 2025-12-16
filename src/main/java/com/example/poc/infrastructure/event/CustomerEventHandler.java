@@ -7,38 +7,11 @@ import org.springframework.stereotype.Component;
 
 import com.example.poc.domain.event.CustomerCreatedEvent;
 
-/**
- * Customer Event Handler
- * 
- * Listens to customer-related domain events and performs
- * side effects like:
- * - Sending welcome emails
- * - Creating audit logs
- * - Triggering workflows
- * - Updating read models
- * 
- * This is an example handler. In production, you might have:
- * - EmailNotificationHandler
- * - AuditLogHandler
- * - AnalyticsHandler
- * 
- * References:
- * - architecture.md: Event-Driven Architecture
- * - code-examples.md: Section 17 - Domain Events
- */
 @Component
 public class CustomerEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(CustomerEventHandler.class);
 
-    /**
-     * Handle CustomerCreatedEvent
-     * 
-     * This is called automatically by Spring when CustomerCreatedEvent
-     * is published by DomainEventPublisher.
-     * 
-     * @param event the customer created event
-     */
     @EventListener
     public void handleCustomerCreated(CustomerCreatedEvent event) {
         log.info("Customer created event received: {}", event);
