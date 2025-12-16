@@ -48,8 +48,7 @@ public class MongoIndexInitializer {
         // Ensures no duplicate emails in system
         // Used by: findByEmail(), registration validation
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("email.value", Sort.Direction.ASC)
+                .createIndex(new Index()
                         .unique()
                         .named("idx_customer_email_unique"));
         log.debug("Created unique index on email");
@@ -57,24 +56,21 @@ public class MongoIndexInitializer {
         // 2. Index on status
         // Used by: findByStatus(), findAllActive(), dashboard queries
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("status", Sort.Direction.ASC)
+                .createIndex(new Index()
                         .named("idx_customer_status"));
         log.debug("Created index on status");
 
         // 3. Index on createdAt (descending)
         // Used by: recent customers query, pagination, analytics
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("createdAt", Sort.Direction.DESC)
+                .createIndex(new Index()
                         .named("idx_customer_created_at"));
         log.debug("Created index on createdAt");
 
         // 4. Compound index for active customers sorted by creation
         // Used by: active customer list with pagination
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("status", Sort.Direction.ASC)
+                .createIndex(new Index()
                         .on("createdAt", Sort.Direction.DESC)
                         .named("idx_customer_status_created"));
         log.debug("Created compound index on status + createdAt");
@@ -82,7 +78,7 @@ public class MongoIndexInitializer {
         // 5. Index on creditLimit for range queries
         // Used by: high-value customer queries, credit analysis
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
+                .createIndex(new Index()
                         .on("creditLimit.amount", Sort.Direction.DESC)
                         .named("idx_customer_credit_limit"));
         log.debug("Created index on creditLimit");

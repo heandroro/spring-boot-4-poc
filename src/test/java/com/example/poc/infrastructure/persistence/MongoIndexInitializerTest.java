@@ -53,8 +53,8 @@ class MongoIndexInitializerTest {
         // Since initIndexes also logs, we just run it
         initializer.initIndexes();
 
-        // Then: verify number of ensureIndex calls (5 indexes created)
-        verify(indexOps, times(5)).ensureIndex(any(IndexDefinition.class));
+        // Then: verify number of createIndex calls (5 indexes created)
+        verify(indexOps, times(5)).createIndex(any(IndexDefinition.class));
     }
 
     // Helper to inspect IndexDefinition keys via toString()
@@ -82,7 +82,7 @@ class MongoIndexInitializerTest {
         initializer.initIndexes();
 
         verify(indexOps, times(1)).getIndexInfo();
-        verify(indexOps, times(5)).ensureIndex(any(IndexDefinition.class));
+        verify(indexOps, times(5)).createIndex(any(IndexDefinition.class));
     }
 
     @Test
@@ -90,12 +90,12 @@ class MongoIndexInitializerTest {
     void shouldSwallowExceptionsDuringIndexCreation() {
         when(mongoTemplate.indexOps(Customer.class)).thenReturn(indexOps);
 
-        doThrow(new RuntimeException("boom")).when(indexOps).ensureIndex(any(IndexDefinition.class));
+        doThrow(new RuntimeException("boom")).when(indexOps).createIndex(any(IndexDefinition.class));
 
         initializer = new MongoIndexInitializer(mongoTemplate);
         initializer.initIndexes();
 
-        verify(indexOps, times(1)).ensureIndex(any(IndexDefinition.class));
+        verify(indexOps, times(1)).createIndex(any(IndexDefinition.class));
         verify(indexOps, never()).getIndexInfo();
     }
 }
