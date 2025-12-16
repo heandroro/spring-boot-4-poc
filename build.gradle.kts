@@ -181,3 +181,44 @@ tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
 tasks.check {
     dependsOn("checkstyleMain", "checkstyleTest", "checkstyleIntegrationTest", "spotbugsMain", "spotbugsTest")
 }
+
+// Verify that integration tests follow the naming convention: classes annotated with
+// integration-related annotations must end with 'IT'. This helps discoverability and
+// aligns with Gradle source set integrationTest separation.
+tasks.register("checkIntegrationTestNames") {
+    group = "verification"
+    description = "Fail if integration tests are annotated but their class name doesn't end with IT"
+    doLast {
+        val integrationAnnotations = listOf("@SpringBootTest", "@Testcontainers", "@DataMongoTest", "@Container", "@EnabledIfEnvironmentVariable")
+        val srcDir = file("src/test/java")
+        val violations = mutableListOf<String>()
+
+        if (srcDir.exists()) {
+            fileTree(srcDir).matching { include("**/*.java") }.forEach { f ->
+                val text = f.readText()
+                val hasIntegrationAnnotation = integrationAnnotations.any { text.contains(it) }
+                if (hasIntegrationAnnotation) {
+                    val classRegex = Regex("class\\s+([A-Za-z_][A-Za-z0-9_]*)")
+                    val m = classRegex.find(text)
+                    if (m != null) {
+                        val className = m.groupValues[1]
+                        if (!className.endsWith("IT")) {
+                            violations.add("${f.relativeTo(projectDir)}: class '$className' appears to be an integration test but does not end with 'IT'")
+                        }
+                    }
+                }
+            }
+        }
+
+        if (violations.isNotEmpty()) {
+            println("Integration test naming violations found:")
+            violations.forEach { println("  - $it") }
+            throw GradleException("Integration test naming convention violations detected (see output above)")
+        }
+    }
+}
+
+// Ensure it runs as part of check lifecycle
+tasks.named("check").configure {
+    dependsOn("checkIntegrationTestNames")
+}

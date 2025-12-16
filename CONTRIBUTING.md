@@ -701,6 +701,7 @@ git commit -m "chore: update dependencies"
 - [ ] Cobertura mínima de 90% (ideal 95%)
 - [ ] Testa cenários de sucesso e falha
 - [ ] Usa Instancio para fixtures
+- [ ] **Naming:** Integration tests must use the `IT` suffix (example: `CustomerRepositoryIT`). Tests annotated with `@SpringBootTest`, `@Testcontainers`, `@DataMongoTest`, or `@EnabledIfEnvironmentVariable` are considered integration tests and should follow this convention.
 - [ ] Mocks apropriados
 - [ ] Testes de integração com Testcontainers
 

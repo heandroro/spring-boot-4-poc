@@ -113,6 +113,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataMongoTest
 @Testcontainers
 @DisplayName("{Repository} Integration Tests")
+
+> Naming rule: Integration tests should use the `IT` suffix (e.g., `CustomerRepositoryIT`). The review agent will flag classes annotated with integration annotations that do not follow this convention.
 class {Repository}Test {
 
     @Container
