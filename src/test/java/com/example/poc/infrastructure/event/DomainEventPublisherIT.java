@@ -23,7 +23,7 @@ import com.github.javafaker.Faker;
 
 @SpringBootTest
 @DisplayName("Domain Event Publisher Integration Tests")
-class DomainEventPublisherTest {
+class DomainEventPublisherIT {
 
     @Autowired
     private DomainEventPublisher eventPublisher;
