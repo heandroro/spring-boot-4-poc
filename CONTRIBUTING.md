@@ -695,6 +695,7 @@ git commit -m "chore: update dependencies"
 - [ ] Exceções customizadas apropriadas
 - [ ] Código legível e bem nomeado
 - [ ] Não usa nomes de classe totalmente qualificados (usa imports)
+- [ ] SpotBugs: supressões (`@SuppressFBWarnings`) só devem ser usadas localmente com justificativa clara na anotação e documentadas em `docs/spotbugs.md`; evite supressões globais ou exclusões amplas.
 
 #### ✅ Testes
 - [ ] Cobertura mínima de 80%
@@ -728,6 +729,7 @@ git commit -m "chore: update dependencies"
 - [Resumo Executivo](plan/executive-summary.md)
 - [Diagramas de Arquitetura](plan/architecture-diagrams.md)
 - [Especificação de Entidades](plan/1-entities.md)
+- [SpotBugs: documentação e política](docs/spotbugs.md)
 
 ## 📚 Comandos Úteis
 
