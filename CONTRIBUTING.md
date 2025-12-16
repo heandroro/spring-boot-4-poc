@@ -232,7 +232,7 @@ public class CustomerService {
 }
 ```
 
-Diretriz: Nunca use nomes totalmente qualificados em classes, métodos ou variáveis. Prefira organizar imports. Em casos raros de conflito de nomes, **evite** trazer ambas as classes para o mesmo escopo (extraia chamadas para métodos auxiliares/fachadas) de modo a manter o código sem FQNs.
+Diretriz: Nunca use nomes totalmente qualificados em classes, métodos ou variáveis. Prefira organizar imports. Esta regra é aplicada automaticamente por Checkstyle (`config/checkstyle/checkstyle.xml`) e pela verificação automática do PR (`./gradlew check`) — PRs que introduzirem FQNs serão bloqueados até serem corrigidos. Em casos raros de conflito de nomes, **evite** trazer ambas as classes para o mesmo escopo (extraia chamadas para métodos auxiliares/fachadas) de modo a manter o código sem FQNs.
 
 ### 5. Exceções Customizadas
 
