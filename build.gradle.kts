@@ -123,11 +123,24 @@ tasks.jacocoTestReport {
 tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
+            // Enforce minimum covered ratio for lines and branches
             limit {
-                minimum = "0.80".toBigDecimal()
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.90".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.90".toBigDecimal()
             }
         }
     }
+}
+
+// Make sure coverage verification runs as part of the check lifecycle
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 jacoco {
