@@ -2,6 +2,7 @@ package com.example.poc.domain;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -356,6 +357,43 @@ class CustomerTest {
     }
 
     @Test
+    @DisplayName("equals returns true for same instance and false for null and different types")
+    void testEqualsEdgeCases() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+
+        assertTrue(customer.equals(customer)); // same reference
+        assertFalse(customer.equals(null)); // null
+        assertFalse(customer.equals("not a customer")); // different class
+    }
+
+    @Test
+    @DisplayName("equals is sensitive to id when present")
+    void testEqualsRespectsIdWhenPresent() throws Exception {
+        Email email = new Email("unique2@example.com");
+        Customer c1 = Customer.create("John Doe", email, validAddress, validCreditLimit);
+        Customer c2 = Customer.create("John Doe", email, validAddress, validCreditLimit);
+
+        java.lang.reflect.Field idField = Customer.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(c1, "id1");
+        idField.set(c2, "id2");
+
+        assertFalse(c1.equals(c2));
+
+        idField.set(c2, "id1");
+        assertTrue(c1.equals(c2));
+    }
+
+    @Test
+    @DisplayName("equals returns false for different emails")
+    void testEqualsDifferentEmail() {
+        Customer c1 = Customer.create("John Doe", new Email("a@example.com"), validAddress, validCreditLimit);
+        Customer c2 = Customer.create("John Doe", new Email("b@example.com"), validAddress, validCreditLimit);
+
+        assertFalse(c1.equals(c2));
+    }
+
+    @Test
     @DisplayName("should clear events after pull")
     void shouldClearEventsAfterPull() {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
@@ -409,5 +447,38 @@ class CustomerTest {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
 
         assertThrows(NullPointerException.class, () -> customer.restoreCredit(null));
+    }
+
+    @Test
+    @DisplayName("getCreatedAt should be set on creation")
+    void testGetCreatedAtIsSet() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+        assertNotNull(customer.getCreatedAt());
+    }
+
+    @Test
+    @DisplayName("hashCode should change when id is set")
+    void testHashCodeReflectsIdAndEmail() throws Exception {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+        int before = customer.hashCode();
+
+        java.lang.reflect.Field idField = Customer.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(customer, "id-123");
+
+        int after = customer.hashCode();
+        assertNotEquals(before, after);
+        assertEquals(java.util.Objects.hash("id-123", customer.getEmail()), after);
+    }
+
+    @Test
+    @DisplayName("toString contains key fields")
+    void testToStringContainsFields() {
+        Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
+        String s = customer.toString();
+
+        assertTrue(s.contains("John Doe"));
+        assertTrue(s.contains(validEmail.toString()));
+        assertTrue(s.contains(validCreditLimit.format()));
     }
 }

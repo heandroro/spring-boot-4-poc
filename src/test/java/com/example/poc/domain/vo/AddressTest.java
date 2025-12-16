@@ -1,9 +1,13 @@
 package com.example.poc.domain.vo;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for Address Value Object
@@ -27,13 +31,12 @@ class AddressTest {
     void testCreateAddressComplete() {
         // When
         Address address = new Address(
-            "123 Main St",
-            "Springfield",
-            "IL",
-            "62701",
-            "United States"
-        );
-        
+                "123 Main St",
+                "Springfield",
+                "IL",
+                "62701",
+                "United States");
+
         // Then
         assertEquals("123 Main St", address.street());
         assertEquals("Springfield", address.city());
@@ -47,7 +50,7 @@ class AddressTest {
     void testCreateAddressDefaultCountry() {
         // When
         Address address = Address.of("123 Main St", "Springfield", "IL", "62701");
-        
+
         // Then
         assertEquals("United States", address.country());
     }
@@ -57,13 +60,12 @@ class AddressTest {
     void testTrimWhitespace() {
         // When
         Address address = new Address(
-            "  123 Main St  ",
-            "  Springfield  ",
-            "  IL  ",
-            "  62701  ",
-            "  United States  "
-        );
-        
+                "  123 Main St  ",
+                "  Springfield  ",
+                "  IL  ",
+                "  62701  ",
+                "  United States  ");
+
         // Then
         assertEquals("123 Main St", address.street());
         assertEquals("Springfield", address.city());
@@ -77,16 +79,15 @@ class AddressTest {
     void testFormatWithState() {
         // Given
         Address address = new Address(
-            "123 Main St",
-            "Springfield",
-            "IL",
-            "62701",
-            "United States"
-        );
-        
+                "123 Main St",
+                "Springfield",
+                "IL",
+                "62701",
+                "United States");
+
         // When
         String formatted = address.format();
-        
+
         // Then
         assertTrue(formatted.contains("123 Main St"));
         assertTrue(formatted.contains("Springfield"));
@@ -100,16 +101,15 @@ class AddressTest {
     void testFormatWithoutState() {
         // Given
         Address address = new Address(
-            "123 Main St",
-            "London",
-            null,
-            "EC1A 1BB",
-            "United Kingdom"
-        );
-        
+                "123 Main St",
+                "London",
+                null,
+                "EC1A 1BB",
+                "United Kingdom");
+
         // When
         String formatted = address.format();
-        
+
         // Then
         assertTrue(formatted.contains("123 Main St"));
         assertTrue(formatted.contains("London"));
@@ -124,7 +124,7 @@ class AddressTest {
     void testIsInCountry() {
         // Given
         Address address = Address.of("123 Main St", "Springfield", "IL", "62701");
-        
+
         // Then
         assertTrue(address.isInCountry("United States"));
         assertTrue(address.isInCountry("united states")); // Case insensitive
@@ -135,18 +135,35 @@ class AddressTest {
     @DisplayName("should allow null state")
     void testAllowNullState() {
         // Expect no exception
-        assertDoesNotThrow(() -> 
-            new Address("123 Main St", "London", null, "EC1A 1BB", "UK")
-        );
+        assertDoesNotThrow(() -> new Address("123 Main St", "London", null, "EC1A 1BB", "UK"));
     }
 
     @Test
-    @DisplayName("should allow blank state")
-    void testAllowBlankState() {
-        // Expect no exception
-        assertDoesNotThrow(() -> 
-            new Address("123 Main St", "London", "   ", "EC1A 1BB", "UK")
-        );
+    @DisplayName("blank state is normalized to null")
+    void blankStateNormalizedToNull() {
+        Address a = new Address("123 Main St", "London", "   ", "EC1A 1BB", "UK");
+        assertNull(a.state());
+    }
+
+    @Test
+    @DisplayName("blank or null country becomes default")
+    void blankOrNullCountryDefaults() {
+        Address a1 = new Address("123 Main St", "City", "ST", "123", "   ");
+        Address a2 = new Address("123 Main St", "City", "ST", "123", null);
+
+        assertEquals(Address.DEFAULT_COUNTRY, a1.country());
+        assertEquals(Address.DEFAULT_COUNTRY, a2.country());
+    }
+
+    @Test
+    @DisplayName("null optional fields are allowed and handled")
+    void nullOptionalFields() {
+        Address a = new Address(null, null, null, null, null);
+        assertNull(a.street());
+        assertNull(a.city());
+        assertNull(a.state());
+        assertNull(a.postalCode());
+        assertEquals(Address.DEFAULT_COUNTRY, a.country());
     }
 
     @Test
@@ -154,10 +171,10 @@ class AddressTest {
     void testImmutability() {
         // Given
         Address address = Address.of("123 Main St", "Springfield", "IL", "62701");
-        
+
         // When - verify cannot modify
         String originalStreet = address.street();
-        
+
         // Then - address content remains unchanged
         assertEquals("123 Main St", address.street());
         assertEquals(originalStreet, address.street());

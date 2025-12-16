@@ -1,11 +1,15 @@
 package com.example.poc.domain.vo;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for Email Value Object
@@ -26,7 +30,7 @@ class EmailTest {
     void testCreateValidEmail() {
         // When
         Email email = new Email("user@example.com");
-        
+
         // Then
         assertEquals("user@example.com", email.value());
     }
@@ -36,7 +40,7 @@ class EmailTest {
     void testEmailNormalizedToLowercase() {
         // When
         Email email = new Email("User@Example.COM");
-        
+
         // Then
         assertEquals("user@example.com", email.value());
     }
@@ -46,7 +50,7 @@ class EmailTest {
     void testEmailTrimmed() {
         // When
         Email email = new Email("  user@example.com  ");
-        
+
         // Then
         assertEquals("user@example.com", email.value());
     }
@@ -67,13 +71,13 @@ class EmailTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "invalid",
-        "invalid@",
-        "@example.com",
-        "user@.com",
-        "user@example",
-        "user name@example.com",
-        "user@exam ple.com"
+            "invalid",
+            "invalid@",
+            "@example.com",
+            "user@.com",
+            "user@example",
+            "user name@example.com",
+            "user@exam ple.com"
     })
     @DisplayName("should reject invalid email formats")
     void testRejectInvalidFormats(String invalidEmail) {
@@ -83,11 +87,11 @@ class EmailTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-        "user@example.com",
-        "user.name@example.co.uk",
-        "user+tag@example.org",
-        "123@example.com",
-        "user_name@example.com"
+            "user@example.com",
+            "user.name@example.co.uk",
+            "user+tag@example.org",
+            "123@example.com",
+            "user_name@example.com"
     })
     @DisplayName("should accept valid email formats")
     void testAcceptValidFormats(String validEmail) {
@@ -100,10 +104,10 @@ class EmailTest {
     void testGetDomain() {
         // Given
         Email email = new Email("user@example.com");
-        
+
         // When
         String domain = email.getDomain();
-        
+
         // Then
         assertEquals("example.com", domain);
     }
@@ -113,10 +117,10 @@ class EmailTest {
     void testGetLocalPart() {
         // Given
         Email email = new Email("user.name@example.com");
-        
+
         // When
         String localPart = email.getLocalPart();
-        
+
         // Then
         assertEquals("user.name", localPart);
     }
@@ -126,7 +130,7 @@ class EmailTest {
     void testBelongsToDomain() {
         // Given
         Email email = new Email("user@example.com");
-        
+
         // Then
         assertTrue(email.belongsToDomain("example.com"));
         assertTrue(email.belongsToDomain("EXAMPLE.COM")); // Case insensitive
@@ -134,14 +138,21 @@ class EmailTest {
     }
 
     @Test
+    @DisplayName("of factory creates Email and normalizes")
+    void testOfFactory() {
+        Email email = Email.of("User@Example.COM");
+        assertEquals("user@example.com", email.value());
+    }
+
+    @Test
     @DisplayName("should return email value as string")
     void testToString() {
         // Given
         Email email = new Email("user@example.com");
-        
+
         // When
         String emailStr = email.toString();
-        
+
         // Then
         assertEquals("user@example.com", emailStr);
     }
@@ -151,10 +162,10 @@ class EmailTest {
     void testImmutability() {
         // Given
         Email email = new Email("user@example.com");
-        
+
         // When - try to get value (should be final/immutable)
         String value = email.value();
-        
+
         // Then - verify email content hasn't changed
         assertEquals("user@example.com", value);
         assertEquals("user@example.com", email.toString());

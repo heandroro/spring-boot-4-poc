@@ -225,8 +225,8 @@ public class CustomerService {
 #### ❌ ERRADO - Nome totalmente qualificado
 ```java
 public class CustomerService {
-    public com.example.poc.web.dto.CustomerDto get(String id) {
-        com.example.poc.domain.Customer customer = repo.findById(id).orElseThrow();
+    public CustomerDto get(String id) {
+        Customer customer = repo.findById(id).orElseThrow();
         return mapper.toDto(customer);
     }
 }

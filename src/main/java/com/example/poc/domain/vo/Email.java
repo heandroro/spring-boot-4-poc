@@ -20,25 +20,24 @@ import java.util.regex.Pattern;
 public record Email(String value) {
 
     // Simplified email regex (not full RFC 5321 but covers 99% of cases)
-    private static final Pattern EMAIL_PATTERN = 
-        Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     /**
      * Constructor with validation
      */
     public Email {
         Objects.requireNonNull(value, "Email must not be null");
-        
+
         String trimmed = value.trim();
-        
+
         if (trimmed.isBlank()) {
             throw new IllegalArgumentException("Email must not be blank");
         }
-        
+
         if (!isValidFormat(trimmed)) {
             throw new IllegalArgumentException("Invalid email format: " + trimmed);
         }
-        
+
         value = trimmed.toLowerCase();
     }
 
@@ -62,9 +61,6 @@ public record Email(String value) {
      */
     public String getDomain() {
         int atIndex = value.indexOf('@');
-        if (atIndex == -1) {
-            throw new IllegalStateException("Invalid email state: no @ symbol");
-        }
         return value.substring(atIndex + 1);
     }
 
@@ -74,9 +70,6 @@ public record Email(String value) {
      */
     public String getLocalPart() {
         int atIndex = value.indexOf('@');
-        if (atIndex == -1) {
-            throw new IllegalStateException("Invalid email state: no @ symbol");
-        }
         return value.substring(0, atIndex);
     }
 

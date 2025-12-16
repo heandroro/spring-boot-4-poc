@@ -1,13 +1,17 @@
 package com.example.poc.domain.vo;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.math.BigDecimal;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import java.math.BigDecimal;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for Money Value Object
@@ -29,10 +33,10 @@ class MoneyTest {
         // Given
         BigDecimal amount = new BigDecimal("100.00");
         String currency = "USD";
-        
+
         // When
         Money money = new Money(amount, currency);
-        
+
         // Then
         assertEquals(amount, money.amount());
         assertEquals(currency, money.currency());
@@ -43,7 +47,7 @@ class MoneyTest {
     void testCreateMoneyDefaultCurrency() {
         // When
         Money money = Money.of(new BigDecimal("50.00"));
-        
+
         // Then
         assertEquals("USD", money.currency());
     }
@@ -53,7 +57,7 @@ class MoneyTest {
     void testCreateMoneyFromString() {
         // When
         Money money = Money.of("123.45");
-        
+
         // Then
         assertEquals(new BigDecimal("123.45"), money.amount());
         assertEquals("USD", money.currency());
@@ -78,9 +82,8 @@ class MoneyTest {
     void testRejectNegativeAmount() {
         // Expect
         IllegalArgumentException exception = assertThrows(
-            IllegalArgumentException.class,
-            () -> new Money(new BigDecimal("-10.00"), "USD")
-        );
+                IllegalArgumentException.class,
+                () -> new Money(new BigDecimal("-10.00"), "USD"));
         assertTrue(exception.getMessage().contains("non-negative"));
     }
 
@@ -89,9 +92,8 @@ class MoneyTest {
     void testRejectBlankCurrency() {
         // Expect
         assertThrows(
-            IllegalArgumentException.class,
-            () -> new Money(BigDecimal.TEN, "   ")
-        );
+                IllegalArgumentException.class,
+                () -> new Money(BigDecimal.TEN, "   "));
     }
 
     @Test
@@ -100,10 +102,10 @@ class MoneyTest {
         // Given
         Money money1 = new Money(new BigDecimal("100.00"), "USD");
         Money money2 = new Money(new BigDecimal("50.00"), "USD");
-        
+
         // When
         Money result = money1.add(money2);
-        
+
         // Then
         assertEquals(new BigDecimal("150.00"), result.amount());
         assertEquals("USD", result.currency());
@@ -115,7 +117,7 @@ class MoneyTest {
         // Given
         Money usd = new Money(new BigDecimal("100.00"), "USD");
         Money eur = new Money(new BigDecimal("100.00"), "EUR");
-        
+
         // Expect
         assertThrows(IllegalArgumentException.class, () -> usd.add(eur));
     }
@@ -126,10 +128,10 @@ class MoneyTest {
         // Given
         Money money1 = new Money(new BigDecimal("100.00"), "USD");
         Money money2 = new Money(new BigDecimal("30.00"), "USD");
-        
+
         // When
         Money result = money1.subtract(money2);
-        
+
         // Then
         assertEquals(new BigDecimal("70.00"), result.amount());
     }
@@ -140,7 +142,7 @@ class MoneyTest {
         // Given
         Money money1 = new Money(new BigDecimal("30.00"), "USD");
         Money money2 = new Money(new BigDecimal("50.00"), "USD");
-        
+
         // Expect
         assertThrows(IllegalArgumentException.class, () -> money1.subtract(money2));
     }
@@ -150,10 +152,10 @@ class MoneyTest {
     void testMultiplyMoney() {
         // Given
         Money money = new Money(new BigDecimal("10.00"), "USD");
-        
+
         // When
         Money result = money.multiply(5);
-        
+
         // Then
         assertEquals(new BigDecimal("50.00"), result.amount());
     }
@@ -163,10 +165,10 @@ class MoneyTest {
     void testMultiplyMoneyByZero() {
         // Given
         Money money = new Money(new BigDecimal("10.00"), "USD");
-        
+
         // When
         Money result = money.multiply(0);
-        
+
         // Then
         assertTrue(result.isZero());
     }
@@ -176,7 +178,7 @@ class MoneyTest {
     void testMultiplyMoneyByNegativeQuantity() {
         // Given
         Money money = new Money(new BigDecimal("10.00"), "USD");
-        
+
         // Expect
         assertThrows(IllegalArgumentException.class, () -> money.multiply(-5));
     }
@@ -187,7 +189,7 @@ class MoneyTest {
         // Given
         Money zero = new Money(BigDecimal.ZERO, "USD");
         Money nonZero = new Money(new BigDecimal("0.01"), "USD");
-        
+
         // Then
         assertTrue(zero.isZero());
         assertFalse(nonZero.isZero());
@@ -199,7 +201,7 @@ class MoneyTest {
         // Given
         Money greater = new Money(new BigDecimal("100.00"), "USD");
         Money lesser = new Money(new BigDecimal("50.00"), "USD");
-        
+
         // Then
         assertTrue(greater.isGreaterThan(lesser));
         assertFalse(lesser.isGreaterThan(greater));
@@ -211,7 +213,7 @@ class MoneyTest {
         // Given
         Money usd = new Money(new BigDecimal("100.00"), "USD");
         Money eur = new Money(new BigDecimal("50.00"), "EUR");
-        
+
         // Expect
         assertThrows(IllegalArgumentException.class, () -> usd.isGreaterThan(eur));
     }
@@ -221,17 +223,44 @@ class MoneyTest {
     void testFormat() {
         // Given
         Money money = new Money(new BigDecimal("100.50"), "EUR");
-        
+
         // When
         String formatted = money.format();
-        
+
         // Then
         assertTrue(formatted.startsWith("EUR"));
         assertTrue(formatted.contains("100.5"));
     }
 
+    @Test
+    @DisplayName("should reject subtraction with different currencies")
+    void testSubtractDifferentCurrencies() {
+        // Given
+        Money usd = new Money(new BigDecimal("100.00"), "USD");
+        Money eur = new Money(new BigDecimal("50.00"), "EUR");
+
+        // Expect
+        assertThrows(IllegalArgumentException.class, () -> usd.subtract(eur));
+    }
+
+    @Test
+    @DisplayName("should evaluate isGreaterThanOrEqual correctly and reject different currencies")
+    void testIsGreaterThanOrEqual() {
+        // Given
+        Money a = new Money(new BigDecimal("100.00"), "USD");
+        Money b = new Money(new BigDecimal("100.00"), "USD");
+        Money c = new Money(new BigDecimal("50.00"), "USD");
+
+        // Then
+        assertTrue(a.isGreaterThanOrEqual(b));
+        assertTrue(a.isGreaterThanOrEqual(c));
+
+        Money eur = new Money(new BigDecimal("100.00"), "EUR");
+        assertThrows(IllegalArgumentException.class, () -> a.isGreaterThanOrEqual(eur));
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {"0.00", "0.01", "1000000.00", "0.001"})
+    @ValueSource(strings = { "0.00", "0.01", "1000000.00", "0.001" })
     @DisplayName("should accept various valid amounts")
     void testAcceptValidAmounts(String amountStr) {
         // Expect no exception
