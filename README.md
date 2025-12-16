@@ -100,7 +100,7 @@ chmod +x gradlew
 
 Docker-based tests (Testcontainers)
 
-- Repository integration test (`CustomerRepositoryTest`) uses Testcontainers (MongoDB). It is disabled by default and only runs when the environment variable `ENABLE_DOCKER_TESTS=true` is set.
+- Repository integration test (`CustomerRepositoryIT`) uses Testcontainers (MongoDB). It is disabled by default and only runs when the environment variable `ENABLE_DOCKER_TESTS=true` is set.
 - To run it, ensure Docker is running and execute:
 
 ```bash

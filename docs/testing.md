@@ -153,7 +153,7 @@ Test interactions with MongoDB using Testcontainers.
 @DisplayName("CustomerRepository Integration Tests")
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "ENABLE_DOCKER_TESTS", matches = "true")
-class CustomerRepositoryTest {
+class CustomerRepositoryIT {
     
     @Autowired
     private CustomerRepository repository;
@@ -229,7 +229,7 @@ class CustomerRepositoryTest {
 @DisplayName("CreateCustomerUseCase Integration Tests")
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "ENABLE_DOCKER_TESTS", matches = "true")
-class CreateCustomerUseCaseIntegrationTest {
+class CreateCustomerUseCaseIT {
     
     @Autowired
     private CreateCustomerUseCase useCase;
