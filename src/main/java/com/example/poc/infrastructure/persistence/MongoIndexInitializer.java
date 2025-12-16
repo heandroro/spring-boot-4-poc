@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import com.example.poc.domain.Customer;
 
 import jakarta.annotation.PostConstruct;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 @Component
 public class MongoIndexInitializer {
@@ -21,6 +22,7 @@ public class MongoIndexInitializer {
 
     private final MongoTemplate mongoTemplate;
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "MongoTemplate is injected and thread-safe; storing the reference is intentional and safe")
     public MongoIndexInitializer(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }

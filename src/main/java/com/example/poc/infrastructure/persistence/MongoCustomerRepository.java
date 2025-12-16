@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import com.example.poc.domain.Customer;
 import com.example.poc.domain.CustomerRepository;
@@ -20,6 +21,7 @@ public class MongoCustomerRepository {
     private final DomainEventPublisher eventPublisher;
     private final MongoTemplate mongoTemplate;
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "MongoTemplate is injected and thread-safe; storing the reference is intentional and safe")
     public MongoCustomerRepository(
             CustomerRepository customerRepository,
             DomainEventPublisher eventPublisher,
