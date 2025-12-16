@@ -10,3 +10,13 @@ description_language: pt-BR
 
 # Use repository context for better descriptions
 use_repository_context: true
+
+# Guidance for generated PR descriptions and code snippets
+pr_description_guidance:
+  include_policy_summary: true
+  policy_highlights:
+    - "Do not add or preserve in-class comments or Javadocs in generated code; put long explanations in docs/ or CONTRIBUTING.md."
+    - "Never use fully-qualified class names (FQNs) inside code; prefer imports and simple type names. Checkstyle enforces this."
+    - "Ensure suggested code complies with repository conventions: Java Records, constructor injection, Bean Validation on DTOs, and DDD layering."
+    - "If a type name is ambiguous and you choose a non-obvious import, add a short note in the PR description explaining the choice."
+  include_checklist: true
