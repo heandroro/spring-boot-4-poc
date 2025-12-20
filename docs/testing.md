@@ -426,21 +426,47 @@ Target coverage by layer:
 ## Running Tests
 
 ```bash
-# All tests
+# Unit tests only (fast)
 ./gradlew test
 
-# With Docker tests
-ENABLE_DOCKER_TESTS=true ./gradlew test
+# Integration tests (requires Docker)
+ENABLE_DOCKER_TESTS=true ./gradlew integrationTest
+
+# All tests (unit + integration)
+ENABLE_DOCKER_TESTS=true ./gradlew test integrationTest
 
 # Specific test class
 ./gradlew test --tests CustomerRepositoryTest
 
 # With coverage
-./gradlew test --coverage
+./gradlew test jacocoTestReport
 
 # Watch mode (continuous)
 ./gradlew test --continuous
 ```
+
+## Integration Tests
+
+Integration tests use Testcontainers to run against real MongoDB instances in Docker:
+
+- **Location**: `src/integrationTest/java/`
+- **Requirement**: Docker must be installed and running
+- **Activation**: Set `ENABLE_DOCKER_TESTS=true` environment variable
+- **Execution**: `ENABLE_DOCKER_TESTS=true ./gradlew integrationTest`
+
+### Example: MongoDB Repository Integration Tests
+
+`MongoCustomerRepositoryIntegrationTest` provides comprehensive integration testing for:
+
+1. **Value Object Persistence**: Verifies Money, Email, and Address are correctly serialized/deserialized
+2. **Custom Queries**: Tests `findHighCreditUtilization` with real MongoDB queries
+3. **Domain Events**: Ensures events are published after persistence operations
+4. **Credit Operations**: Validates state changes persist correctly
+5. **Status Queries**: Tests MongoDB indexes and filtering by customer status
+
+These tests complement the unit tests in `MongoCustomerRepositoryTest` (which test delegation and mocking).
+
+**Note**: Integration tests are disabled by default and only run when `ENABLE_DOCKER_TESTS=true` is set. This prevents failures in environments without Docker access.
 
 ## See Also
 
@@ -449,3 +475,4 @@ ENABLE_DOCKER_TESTS=true ./gradlew test
 - [JUnit 5 Documentation](https://junit.org/junit5/)
 - [Mockito Documentation](https://javadoc.io/doc/org.mockito/mockito-core/latest/org/mockito/Mockito.html)
 - [Instancio Documentation](https://www.instancio.org/)
+- [Testcontainers Documentation](https://testcontainers.com/)
