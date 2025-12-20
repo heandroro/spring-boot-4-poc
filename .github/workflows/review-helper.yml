@@ -62,5 +62,5 @@ jobs:
               repo: context.repo.repo,
               body: `## ❌ Quality Checks Failed
 
-Please run `./gradlew check` locally and fix the reported issues before pushing again. Common causes: Checkstyle violations (including use of fully-qualified class names). See CONTRIBUTING.md > "Imports (sem nomes qualificados)" and `.github/instructions/no-fqn.instructions.md` for guidance.`
+Please run './gradlew check' locally and fix the reported issues before pushing again. Common causes: Checkstyle violations (including use of fully-qualified class names). See CONTRIBUTING.md > "Imports (sem nomes qualificados)" and '.github/instructions/no-fqn.instructions.md' for guidance.`
             })
