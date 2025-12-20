@@ -97,9 +97,13 @@ val integrationTest by tasks.registering(Test::class) {
     }
 }
 
-tasks.check {
-    dependsOn(integrationTest)
-}
+// Integration tests are intentionally not part of the default `check` lifecycle
+// to avoid running Docker/Testcontainers during quick checks or on PR jobs.
+// Run them explicitly using `./gradlew integrationTest` or enable via
+// the ENABLE_DOCKER_TESTS environment variable when needed.
+// tasks.check {
+//     dependsOn(integrationTest)
+// }
 
 tasks.withType<Test> {
     useJUnitPlatform()
