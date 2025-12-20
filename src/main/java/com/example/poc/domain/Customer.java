@@ -33,7 +33,7 @@ public class Customer {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    private transient List<DomainEvent> events = new ArrayList<>();
+    private List<DomainEvent> events = new ArrayList<>();
 
     private Customer() {
 

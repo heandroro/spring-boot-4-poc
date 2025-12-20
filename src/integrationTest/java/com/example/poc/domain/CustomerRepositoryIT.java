@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
@@ -35,6 +36,11 @@ class CustomerRepositoryIT {
 
     @Autowired
     CustomerRepository repository;
+
+    @BeforeEach
+    void cleanDatabase() {
+        repository.deleteAll();
+    }
 
     @Test
     @DisplayName("should save and retrieve customer from MongoDB")

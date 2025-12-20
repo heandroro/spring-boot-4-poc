@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
+import org.bson.types.Decimal128;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -79,7 +80,17 @@ public class MongoConfig {
     static class DocumentToMoneyConverter implements Converter<Document, Money> {
         @Override
         public Money convert(Document source) {
-            BigDecimal amount = source.get("amount", BigDecimal.class);
+            Object amountObj = source.get("amount");
+            BigDecimal amount;
+            if (amountObj instanceof BigDecimal bd) {
+                amount = bd;
+            } else if (amountObj instanceof Decimal128 d128) {
+                amount = d128.bigDecimalValue();
+            } else if (amountObj != null) {
+                amount = new BigDecimal(amountObj.toString());
+            } else {
+                amount = BigDecimal.ZERO;
+            }
             String currency = source.getString("currency");
             return new Money(amount, currency);
         }

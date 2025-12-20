@@ -13,12 +13,13 @@ public interface CustomerRepository extends MongoRepository<Customer, String> {
      * 
      * Emails must be unique across the system
      */
+    @Query("{ 'email.value': ?0 }")
     Optional<Customer> findByEmail(String email);
 
     List<Customer> findByStatus(Customer.Status status);
 
     long countByStatus(Customer.Status status);
 
-    @Query("{ 'status': 'ACTIVE', 'creditLimit': { $gt: 0 } }")
+    @Query("{ 'status': 'ACTIVE', 'creditLimit.amount': { $gt: 0 } }")
     List<Customer> findAllActive();
 }
