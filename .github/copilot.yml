@@ -24,27 +24,9 @@ pr_description_guidance:
   template: |
     # Pull Request
 
-    > 📌 **Por favor:** Peça ao GitHub Copilot para gerar a descrição em **Português (pt-BR)**. Ex.: escreva no campo de descrição: "Por favor, gerar descrição em Português (pt-BR)" antes de aceitar a sugestão automática.
-
-
-    <!-- 
-    💡 DICA: Use o GitHub Copilot para gerar a descrição automaticamente!
-
-    Para gerar uma descrição completa do PR com Copilot:
-    1. Abra o VS Code
-    2. Pressione Cmd+I (Mac) ou Ctrl+I (Windows/Linux) para abrir o Copilot Chat
-    3. Digite: "@workspace gere uma descrição detalhada deste PR incluindo: resumo das mudanças, arquivos modificados, motivação, impacto e exemplos de código se relevante"
-    4. Ou use o comando: "Copilot: Generate Pull Request Description" na paleta de comandos
-    5. Cole a descrição gerada abaixo
-
-    Alternativamente, no GitHub:
-    1. Clique em "Copilot" no canto superior direito da caixa de descrição
-    2. Selecione "Generate description"
-    3. Revise e ajuste conforme necessário
-    -->
 
     ## Descrição
-    <!-- Descreva as mudanças implementadas (ou use Copilot para gerar automaticamente) -->
+    - Por favor, gerar descrição em Português (pt-BR)
 
     ## Tipo de Mudança
     - [ ] 🐛 Bug fix (correção de problema)
