@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Optional guard: only run when explicitly enabled
-if [[ -z "${RUN_SONAR_PRECOMMIT:-}" ]]; then
-  echo "[pre-commit] RUN_SONAR_PRECOMMIT not set; skipping SonarQube analysis."
-  exit 0
+# Run integration test naming check always to prevent misnamed integration tests
+# This fails the commit if any tests annotated as integration tests don't end with 'IT'.
+
+echo "[pre-commit] Running integration test naming check..."
+./gradlew -q checkIntegrationTestNames
+rc=$?
+if [ $rc -ne 0 ]; then
+  echo "[pre-commit] Integration test naming check failed. Run ./gradlew checkIntegrationTestNames to see details." >&2
+  exit $rc
 fi
 
-if [[ -z "${SONAR_TOKEN:-}" ]]; then
-  echo "[pre-commit] SONAR_TOKEN is required to run SonarQube analysis." >&2
-  exit 1
-fi
-
-SONAR_URL="${SONAR_URL:-http://localhost:9000}"
-status=$(curl -sf "${SONAR_URL}/api/system/status" 2>/dev/null || true)
-if [[ "${status}" != *"UP"* ]]; then
-  echo "[pre-commit] SonarQube is not UP at ${SONAR_URL}. Start it with 'docker compose up -d sonarqube'." >&2
-  exit 1
-fi
-
-# Run tests, coverage, and SonarQube analysis
-./gradlew test jacocoTestReport sonarqube
+# Success - no further long-running scans are performed in the pre-commit hook
+exit 0

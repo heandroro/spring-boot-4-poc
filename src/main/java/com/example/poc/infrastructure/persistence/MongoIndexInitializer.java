@@ -44,21 +44,23 @@ public class MongoIndexInitializer {
 
     @SuppressWarnings("removal")
     private void createCustomerIndexes() {
-        String collectionName = "customers";
 
         // 1. Unique index on email
         // Ensures no duplicate emails in system
-        // Used by: findByEmail(), registration validation
+        // Email is stored as a nested document (value) when no converter is present,
+        // so index on the nested `email.value` field to ensure uniqueness.
         mongoTemplate.indexOps(Customer.class)
                 .createIndex(new Index()
+                        .on("email.value", Sort.Direction.ASC)
                         .unique()
                         .named("idx_customer_email_unique"));
-        log.debug("Created unique index on email");
+        log.debug("Created unique index on email.value");
 
         // 2. Index on status
         // Used by: findByStatus(), findAllActive(), dashboard queries
         mongoTemplate.indexOps(Customer.class)
                 .createIndex(new Index()
+                        .on("status", Sort.Direction.ASC)
                         .named("idx_customer_status"));
         log.debug("Created index on status");
 
@@ -66,6 +68,7 @@ public class MongoIndexInitializer {
         // Used by: recent customers query, pagination, analytics
         mongoTemplate.indexOps(Customer.class)
                 .createIndex(new Index()
+                        .on("createdAt", Sort.Direction.DESC)
                         .named("idx_customer_created_at"));
         log.debug("Created index on createdAt");
 
@@ -73,6 +76,7 @@ public class MongoIndexInitializer {
         // Used by: active customer list with pagination
         mongoTemplate.indexOps(Customer.class)
                 .createIndex(new Index()
+                        .on("status", Sort.Direction.ASC)
                         .on("createdAt", Sort.Direction.DESC)
                         .named("idx_customer_status_created"));
         log.debug("Created compound index on status + createdAt");

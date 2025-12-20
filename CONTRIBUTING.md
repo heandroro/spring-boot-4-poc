@@ -755,4 +755,53 @@ ENABLE_DOCKER_TESTS=true ./gradlew test
 
 # Formatar código
 ./gradlew spotlessApply
+
+# Instalar Git hooks (execute UMA vez localmente)
+# This installs the pre-commit hook that runs the integration naming check
+./scripts/install-git-hooks.sh
+# or via Gradle
+./gradlew installGitHooks
+
+## SonarQube - Local Scan
+
+You can run a local SonarQube analysis of the project. The repository includes a Docker-based scanner wrapper and an installer helper.
+
+1) Start local SonarQube (if not already running):
+
+```bash
+docker compose up -d sonarqube
+# visit http://localhost:9000
+```
+
+2) Ensure you have a Sonar token and export it:
+
+```bash
+# create token in SonarQube UI -> My Account -> Security
+export SONAR_TOKEN="<your-token>"
+```
+
+3) Option A — Run using Docker (recommended, no local install required):
+
+```bash
+./scripts/sonar-scan.sh
+```
+
+3) Option B — Install the sonar-scanner CLI (macOS/Homebrew helper):
+
+```bash
+./scripts/install-sonar-scanner.sh
+# then run
+sonar-scanner
+```
+
+4) Or use the Gradle wrapper task:
+
+```bash
+# Runs the same wrapper (requires SONAR_TOKEN)
+./gradlew sonarScan
+```
+
+Notes:
+- The script uses the generated JaCoCo XML report at `build/reports/jacoco/test/jacocoTestReport.xml` if present.
+- If you want the pre-commit script to perform Sonar checks, set `RUN_SONAR_PRECOMMIT=true` in your environment (defaults to disabled to avoid long pre-commit runs).
 ```

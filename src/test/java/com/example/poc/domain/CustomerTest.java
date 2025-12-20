@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Objects;
@@ -467,5 +468,12 @@ class CustomerTest {
         assertTrue(s.contains("John Doe"));
         assertTrue(s.contains(validEmail.toString()));
         assertTrue(s.contains(validCreditLimit.format()));
+    }
+
+    @Test
+    @DisplayName("events field is not transient")
+    void shouldNotMarkEventsFieldAsTransient() throws Exception {
+        Field eventsField = Customer.class.getDeclaredField("events");
+        assertFalse(Modifier.isTransient(eventsField.getModifiers()));
     }
 }

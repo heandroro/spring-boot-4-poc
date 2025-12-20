@@ -162,6 +162,17 @@ class CustomerRepositoryIT {
     static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:7.0"));
     
     @DynamicPropertySource
+```
+
+Note: the Gradle `integrationTest` task defaults to `ENABLE_DOCKER_TESTS=true` when you run it locally unless you explicitly set the environment variable. This lets you run integration tests with `./gradlew integrationTest` without manually exporting the environment variable. If you need to override, set the variable explicitly:
+
+```bash
+# Run integration tests (Docker required)
+./gradlew integrationTest
+
+# Explicit override
+ENABLE_DOCKER_TESTS=false ./gradlew integrationTest
+```
     static void mongoDbProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
     }

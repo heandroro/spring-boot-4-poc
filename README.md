@@ -132,26 +132,6 @@ This README provides a concise overview. Detailed documentation is in [docs/](do
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
 
-## 🔍 SonarQube (local)
-
-- Config file: [sonar-project.properties](sonar-project.properties)
-- Start local server: `docker compose up -d sonarqube` (first run downloads the image; UI at http://localhost:9000)
-- Run analysis before committing:
-
-```bash
-SONAR_TOKEN=your_token \
-./gradlew clean test jacocoTestReport sonarqube
-```
-
-- Create the token in the SonarQube UI (My Account → Security). Never commit tokens.
-- Stop services when done: `docker compose down`
-- Optional pre-commit hook (runs tests + Sonar locally):
-
-```bash
-git config core.hooksPath .githooks
-export SONAR_TOKEN=your_token
-export RUN_SONAR_PRECOMMIT=1
-./gradlew test jacocoTestReport sonarqube # first run to warm cache (hook will run on next commit)
-```
-The hook checks Sonar at http://localhost:9000; start it with `docker compose up -d sonarqube`.
 - **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
+
+> Note: local Sonar scanner scripts were removed from the repository. If you need analysis, run Sonar in CI or use your preferred scanner with your own configuration.

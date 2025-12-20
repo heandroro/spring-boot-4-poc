@@ -1,10 +1,9 @@
 plugins {
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.sonarqube") version "5.1.0.4882"
+    id("org.sonarqube") version "7.2.1.6560"
     id("checkstyle")
     id("com.github.spotbugs") version "6.0.18"
-
     java
     jacoco
 }
@@ -89,6 +88,13 @@ val integrationTest by tasks.registering(Test::class) {
     testClassesDirs = sourceSets["integrationTest"].output.classesDirs
     classpath = sourceSets["integrationTest"].runtimeClasspath
     shouldRunAfter(tasks.test)
+
+    // Default to running integration tests with Docker enabled when the environment
+    // variable is not explicitly set by the user. If user sets ENABLE_DOCKER_TESTS in
+    // their environment, that value is respected.
+    if (System.getenv("ENABLE_DOCKER_TESTS") == null) {
+        environment("ENABLE_DOCKER_TESTS", "true")
+    }
 }
 
 tasks.check {
@@ -121,6 +127,19 @@ tasks.jacocoTestReport {
 }
 
 tasks.jacocoTestCoverageVerification {
+    // Use the same class directories filtering as jacocoTestReport so that
+    // exclusions (config, event handlers, etc.) are applied consistently
+    classDirectories.setFrom(
+        files(classDirectories.files.map { fileTree(it) {
+            exclude(
+                "**/SpringBoot4PocApplication*",
+                "**/infrastructure/config/**",
+                "**/web/exception/**",
+                "**/infrastructure/event/**"
+            )
+        } })
+    )
+
     violationRules {
         rule {
             // Enforce minimum covered ratio for lines and branches
@@ -147,10 +166,13 @@ jacoco {
     toolVersion = "0.8.13"
 }
 
+
+
+
 sonarqube {
     properties {
         property("sonar.host.url", "http://localhost:9000")
-        System.getenv("SONAR_TOKEN")?.let { property("sonar.token", it) }
+        property("sonar.token", "sqa_949d5b009b059821d1a6dc3d8a46ccaf44faf1ca")
     }
 }
 
@@ -221,4 +243,18 @@ tasks.register("checkIntegrationTestNames") {
 // Ensure it runs as part of check lifecycle
 tasks.named("check").configure {
     dependsOn("checkIntegrationTestNames")
+}
+
+// Task to install repository git hooks locally (sets core.hooksPath to .githooks)
+
+tasks.register<org.gradle.api.tasks.Exec>("installGitHooks") {
+    group = "development"
+    description = "Install git hooks (sets core.hooksPath to .githooks and makes pre-commit executable)"
+    // configure the external command on the Exec task itself
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+    doLast {
+        // ensure the pre-commit script is executable
+        file(".githooks/pre-commit").setExecutable(true)
+        println("Installed git hooks (core.hooksPath set to .githooks)")
+    }
 }
