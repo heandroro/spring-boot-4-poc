@@ -85,7 +85,7 @@ Para testes de integração com infraestrutura real:
 ✅ Java 25: Records, pattern matching, sequenced collections
 ✅ Spring: Constructor injection, RestClient, ProblemDetail
 ✅ MongoDB: Indexes, embedding/referencing correto, snapshots
-✅ Testes: 80%+ cobertura, Instancio, Testcontainers
+✅ Testes: mínimo 90% cobertura (ideal 95%), Instancio, Testcontainers
 ✅ Segurança: @PreAuthorize, BCrypt, sem dados sensíveis em DTOs
 ✅ API: Status HTTP corretos, paginação, Bean Validation
 

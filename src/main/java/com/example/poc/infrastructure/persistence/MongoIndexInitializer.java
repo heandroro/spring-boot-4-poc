@@ -12,41 +12,9 @@ import org.springframework.stereotype.Component;
 
 import com.example.poc.domain.Customer;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jakarta.annotation.PostConstruct;
 
-/**
- * MongoDB Index Initializer
- * 
- * Creates database indexes on application startup for optimal query
- * performance.
- * 
- * Indexes Created:
- * 1. email (unique) - Fast lookups, uniqueness constraint
- * 2. status - Filter by customer status
- * 3. createdAt (descending) - Pagination, recent customers
- * 4. creditLimit - Range queries on credit
- * 
- * Index Strategy:
- * - Single field indexes for common queries
- * - Compound indexes for multi-field queries
- * - Unique indexes for business constraints
- * - TTL indexes for automatic document expiration (if needed)
- * 
- * Production Note:
- * In production, indexes should be created via:
- * - Database migration scripts
- * - MongoDB Ops Manager
- * - Manual DBA commands
- * 
- * This class is useful for:
- * - Development environment
- * - Testing with Testcontainers
- * - Documentation of required indexes
- * 
- * References:
- * - mongodb.md: Index strategy and performance tuning
- * - docs/deployment.md: Production index management
- */
 @Component
 public class MongoIndexInitializer {
 
@@ -54,16 +22,11 @@ public class MongoIndexInitializer {
 
     private final MongoTemplate mongoTemplate;
 
+    @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "MongoTemplate is injected and thread-safe; storing the reference is intentional and safe")
     public MongoIndexInitializer(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 
-    /**
-     * Create indexes on application startup
-     * 
-     * This runs once when the application starts.
-     * Existing indexes are not recreated.
-     */
     @PostConstruct
     public void initIndexes() {
         log.info("Initializing MongoDB indexes...");
@@ -79,9 +42,6 @@ public class MongoIndexInitializer {
         }
     }
 
-    /**
-     * Create indexes for Customer collection
-     */
     @SuppressWarnings("removal")
     private void createCustomerIndexes() {
         String collectionName = "customers";
@@ -90,8 +50,7 @@ public class MongoIndexInitializer {
         // Ensures no duplicate emails in system
         // Used by: findByEmail(), registration validation
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("email.value", Sort.Direction.ASC)
+                .createIndex(new Index()
                         .unique()
                         .named("idx_customer_email_unique"));
         log.debug("Created unique index on email");
@@ -99,24 +58,21 @@ public class MongoIndexInitializer {
         // 2. Index on status
         // Used by: findByStatus(), findAllActive(), dashboard queries
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("status", Sort.Direction.ASC)
+                .createIndex(new Index()
                         .named("idx_customer_status"));
         log.debug("Created index on status");
 
         // 3. Index on createdAt (descending)
         // Used by: recent customers query, pagination, analytics
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("createdAt", Sort.Direction.DESC)
+                .createIndex(new Index()
                         .named("idx_customer_created_at"));
         log.debug("Created index on createdAt");
 
         // 4. Compound index for active customers sorted by creation
         // Used by: active customer list with pagination
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
-                        .on("status", Sort.Direction.ASC)
+                .createIndex(new Index()
                         .on("createdAt", Sort.Direction.DESC)
                         .named("idx_customer_status_created"));
         log.debug("Created compound index on status + createdAt");
@@ -124,15 +80,12 @@ public class MongoIndexInitializer {
         // 5. Index on creditLimit for range queries
         // Used by: high-value customer queries, credit analysis
         mongoTemplate.indexOps(Customer.class)
-                .ensureIndex(new Index()
+                .createIndex(new Index()
                         .on("creditLimit.amount", Sort.Direction.DESC)
                         .named("idx_customer_credit_limit"));
         log.debug("Created index on creditLimit");
     }
 
-    /**
-     * Log existing indexes for debugging
-     */
     private void logExistingIndexes() {
         List<IndexInfo> indexes = mongoTemplate.indexOps(Customer.class).getIndexInfo();
         log.info("Customer collection has {} indexes:", indexes.size());

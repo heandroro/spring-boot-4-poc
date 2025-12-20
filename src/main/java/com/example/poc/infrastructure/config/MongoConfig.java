@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bson.Document;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.convert.converter.Converter;
@@ -61,10 +62,10 @@ public class MongoConfig {
      * Stores Money as nested document: { amount: BigDecimal, currency: String }
      */
     @WritingConverter
-    static class MoneyToDocumentConverter implements Converter<Money, org.bson.Document> {
+    static class MoneyToDocumentConverter implements Converter<Money, Document> {
         @Override
-        public org.bson.Document convert(Money source) {
-            org.bson.Document doc = new org.bson.Document();
+        public Document convert(Money source) {
+            Document doc = new Document();
             doc.put("amount", source.amount());
             doc.put("currency", source.currency());
             return doc;
@@ -75,9 +76,9 @@ public class MongoConfig {
      * Convert MongoDB document to Money (Value Object)
      */
     @ReadingConverter
-    static class DocumentToMoneyConverter implements Converter<org.bson.Document, Money> {
+    static class DocumentToMoneyConverter implements Converter<Document, Money> {
         @Override
-        public Money convert(org.bson.Document source) {
+        public Money convert(Document source) {
             BigDecimal amount = source.get("amount", BigDecimal.class);
             String currency = source.getString("currency");
             return new Money(amount, currency);

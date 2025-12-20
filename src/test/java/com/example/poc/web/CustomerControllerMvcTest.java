@@ -12,8 +12,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.instancio.Instancio;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -110,7 +112,7 @@ class CustomerControllerMvcTest {
                 .getResponse()
                 .getContentAsString();
 
-        org.junit.jupiter.api.Assertions.assertTrue(
+        Assertions.assertTrue(
                 responseBody.isEmpty()
                         || responseBody.contains("Validation failed")
                         || responseBody.contains("Bad Request"),
@@ -123,7 +125,7 @@ class CustomerControllerMvcTest {
     @DisplayName("should return 404 when customer does not exist")
     void shouldReturn404WhenCustomerDoesNotExist() throws Exception {
         String missingId = faker.internet().uuid();
-        when(service.findById(missingId)).thenReturn(java.util.Optional.empty());
+        when(service.findById(missingId)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/customers/" + missingId))
                 .andExpect(status().isNotFound());

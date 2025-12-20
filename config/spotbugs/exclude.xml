@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Exclude generated classes -->
+    <Match>
+        <Class name="~.*generated.*"/>
+    </Match>
+
+    <!-- Exclude test classes -->
+    <Match>
+        <Class name="~.*Test.*"/>
+    </Match>
+
+    <!-- Exclude Spring Boot application class -->
+    <Match>
+        <Class name="com.example.poc.SpringBoot4PocApplication"/>
+    </Match>
+
+    <!-- Exclude infrastructure config classes -->
+    <Match>
+        <Package name="com.example.poc.infrastructure.config"/>
+    </Match>
+</FindBugsFilter>

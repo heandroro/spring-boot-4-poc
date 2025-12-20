@@ -22,11 +22,8 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
       
-      - name: Run tests
-        run: ./gradlew test
-      
-      - name: Check coverage
-        run: ./gradlew jacocoTestReport
+      - name: Run checks (includes Checkstyle)
+        run: ./gradlew check jacocoTestReport
       
       - name: Analyze with Copilot
         # Copilot faz review automaticamente
@@ -46,9 +43,24 @@ jobs:
               
               - ✅ Build successful
               - ✅ All tests passing
+              - ✅ Checkstyle and static checks passed
               - ✅ Copilot review completed
               
               **Ready for human review!** 👀
               
               Se tudo estiver OK no review do Copilot, você pode aprovar rapidamente.`
+            })
+      
+      - name: Comment check failures
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Quality Checks Failed
+
+Please run `./gradlew check` locally and fix the reported issues before pushing again. Common causes: Checkstyle violations (including use of fully-qualified class names). See CONTRIBUTING.md > "Imports (sem nomes qualificados)" and `.github/instructions/no-fqn.instructions.md` for guidance.`
             })

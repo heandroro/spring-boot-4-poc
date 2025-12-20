@@ -51,3 +51,8 @@ out/
 MANIFEST.MF
 *.orig
 *.rej
+
+# Sonar
+.sonar-lock
+report-task.txt
+.scannerwork

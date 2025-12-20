@@ -2,6 +2,7 @@
 
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=coverage)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
+[![Coverage Target](https://img.shields.io/badge/coverage-%3E%3D90%25%20(min)%20%7C%2095%25%20(ideal)-brightgreen)](docs/testing.md)
 [![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=spring-boot-4-poc&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=spring-boot-4-poc)
 
@@ -99,7 +100,7 @@ chmod +x gradlew
 
 Docker-based tests (Testcontainers)
 
-- Repository integration test (`CustomerRepositoryTest`) uses Testcontainers (MongoDB). It is disabled by default and only runs when the environment variable `ENABLE_DOCKER_TESTS=true` is set.
+- Repository integration test (`CustomerRepositoryIT`) uses Testcontainers (MongoDB). It is disabled by default and only runs when the environment variable `ENABLE_DOCKER_TESTS=true` is set.
 - To run it, ensure Docker is running and execute:
 
 ```bash

@@ -2,6 +2,9 @@ plugins {
     id("org.springframework.boot") version "4.0.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.sonarqube") version "5.1.0.4882"
+    id("checkstyle")
+    id("com.github.spotbugs") version "6.0.18"
+
     java
     jacoco
 }
@@ -9,9 +12,10 @@ plugins {
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
+
 java {
     toolchain {
-        languageVersion.set(org.gradle.jvm.toolchain.JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(25))
     }
 }
 
@@ -44,6 +48,9 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-test")
     testImplementation("org.springframework.boot:spring-boot-test-autoconfigure")
     // Include spring-test explicitly for MockMvc
+
+    // FindSecBugs plugin for SpotBugs
+    spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.14.0")
     testImplementation("org.springframework:spring-test")
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("org.instancio:instancio-junit:5.5.1")
@@ -54,6 +61,8 @@ dependencies {
     }
     testImplementation("org.testcontainers:mongodb:1.20.4")
     testImplementation("org.testcontainers:junit-jupiter:1.20.4")
+    
+
 }
 
 // Integration test source set and task
@@ -114,11 +123,24 @@ tasks.jacocoTestReport {
 tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
+            // Enforce minimum covered ratio for lines and branches
             limit {
-                minimum = "0.80".toBigDecimal()
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = "0.90".toBigDecimal()
+            }
+            limit {
+                counter = "BRANCH"
+                value = "COVEREDRATIO"
+                minimum = "0.90".toBigDecimal()
             }
         }
     }
+}
+
+// Make sure coverage verification runs as part of the check lifecycle
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 jacoco {
@@ -130,4 +152,73 @@ sonarqube {
         property("sonar.host.url", "http://localhost:9000")
         System.getenv("SONAR_TOKEN")?.let { property("sonar.token", it) }
     }
+}
+
+// Checkstyle configuration
+checkstyle {
+    toolVersion = "10.18.1"
+}
+
+spotbugs {
+    toolVersion = "4.9.8"
+    excludeFilter.set(file("config/spotbugs/exclude.xml"))
+}
+
+tasks.withType<Checkstyle> {
+    configFile = file("config/checkstyle/checkstyle.xml")
+    isIgnoreFailures = false
+    maxWarnings = 0
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
+tasks.withType<com.github.spotbugs.snom.SpotBugsTask> {
+    ignoreFailures = true // Temporarily ignore failures due to Java 25 compatibility
+}
+
+tasks.check {
+    dependsOn("checkstyleMain", "checkstyleTest", "checkstyleIntegrationTest", "spotbugsMain", "spotbugsTest")
+}
+
+// Verify that integration tests follow the naming convention: classes annotated with
+// integration-related annotations must end with 'IT'. This helps discoverability and
+// aligns with Gradle source set integrationTest separation.
+tasks.register("checkIntegrationTestNames") {
+    group = "verification"
+    description = "Fail if integration tests are annotated but their class name doesn't end with IT"
+    doLast {
+        val integrationAnnotations = listOf("@SpringBootTest", "@Testcontainers", "@DataMongoTest", "@Container", "@EnabledIfEnvironmentVariable")
+        val srcDir = file("src/test/java")
+        val violations = mutableListOf<String>()
+
+        if (srcDir.exists()) {
+            fileTree(srcDir).matching { include("**/*.java") }.forEach { f ->
+                val text = f.readText()
+                val hasIntegrationAnnotation = integrationAnnotations.any { text.contains(it) }
+                if (hasIntegrationAnnotation) {
+                    val classRegex = Regex("class\\s+([A-Za-z_][A-Za-z0-9_]*)")
+                    val m = classRegex.find(text)
+                    if (m != null) {
+                        val className = m.groupValues[1]
+                        if (!className.endsWith("IT")) {
+                            violations.add("${f.relativeTo(projectDir)}: class '$className' appears to be an integration test but does not end with 'IT'")
+                        }
+                    }
+                }
+            }
+        }
+
+        if (violations.isNotEmpty()) {
+            println("Integration test naming violations found:")
+            violations.forEach { println("  - $it") }
+            throw GradleException("Integration test naming convention violations detected (see output above)")
+        }
+    }
+}
+
+// Ensure it runs as part of check lifecycle
+tasks.named("check").configure {
+    dependsOn("checkIntegrationTestNames")
 }

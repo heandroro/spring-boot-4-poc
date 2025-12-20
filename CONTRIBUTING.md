@@ -199,7 +199,42 @@ public record CreateProductRequest(
 ) {}
 ```
 
-### 4. Exceções Customizadas
+### 4. Imports (sem nomes qualificados)
+
+Evite usar nomes de classe totalmente qualificados no corpo do código. Sempre adicione `import` e utilize o nome simples da classe.
+
+#### ✅ CERTO - Usando imports
+```java
+import com.example.poc.domain.Customer;
+import com.example.poc.web.dto.CustomerDto;
+
+public class CustomerService {
+    private final CustomerRepository repository;
+
+    public CustomerService(CustomerRepository repository) {
+        this.repository = repository;
+    }
+
+    public CustomerDto get(String id) {
+        Customer customer = repository.findById(id).orElseThrow();
+        return mapper.toDto(customer);
+    }
+}
+```
+
+#### ❌ ERRADO - Nome totalmente qualificado
+```java
+public class CustomerService {
+    public CustomerDto get(String id) {
+        Customer customer = repo.findById(id).orElseThrow();
+        return mapper.toDto(customer);
+    }
+}
+```
+
+Diretriz: Nunca use nomes totalmente qualificados em classes, métodos ou variáveis. Prefira organizar imports. Esta regra é aplicada automaticamente por Checkstyle (`config/checkstyle/checkstyle.xml`) e pela verificação automática do PR (`./gradlew check`) — PRs que introduzirem FQNs serão bloqueados até serem corrigidos. Em casos raros de conflito de nomes, **evite** trazer ambas as classes para o mesmo escopo (extraia chamadas para métodos auxiliares/fachadas) de modo a manter o código sem FQNs.
+
+### 5. Exceções Customizadas
 
 ```java
 // domain/exceptions/ProductNotFoundException.java
@@ -659,11 +694,14 @@ git commit -m "chore: update dependencies"
 - [ ] Validações com Bean Validation
 - [ ] Exceções customizadas apropriadas
 - [ ] Código legível e bem nomeado
+- [ ] Não usa nomes de classe totalmente qualificados (usa imports)
+- [ ] SpotBugs: supressões (`@SuppressFBWarnings`) só devem ser usadas localmente com justificativa clara na anotação e documentadas em `docs/spotbugs.md`; evite supressões globais ou exclusões amplas.
 
 #### ✅ Testes
-- [ ] Cobertura mínima de 80%
+- [ ] Cobertura mínima de 90% (ideal 95%)
 - [ ] Testa cenários de sucesso e falha
 - [ ] Usa Instancio para fixtures
+- [ ] **Naming:** Integration tests must use the `IT` suffix (example: `CustomerRepositoryIT`). Tests annotated with `@SpringBootTest`, `@Testcontainers`, `@DataMongoTest`, or `@EnabledIfEnvironmentVariable` are considered integration tests and should follow this convention.
 - [ ] Mocks apropriados
 - [ ] Testes de integração com Testcontainers
 
@@ -692,6 +730,7 @@ git commit -m "chore: update dependencies"
 - [Resumo Executivo](plan/executive-summary.md)
 - [Diagramas de Arquitetura](plan/architecture-diagrams.md)
 - [Especificação de Entidades](plan/1-entities.md)
+- [SpotBugs: documentação e política](docs/spotbugs.md)
 
 ## 📚 Comandos Úteis
 

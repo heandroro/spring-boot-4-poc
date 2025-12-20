@@ -21,29 +21,15 @@ import com.example.poc.domain.vo.Email;
 import com.example.poc.domain.vo.Money;
 import com.github.javafaker.Faker;
 
-/**
- * Integration tests for Domain Event Publishing
- * 
- * Tests that events can be published without errors.
- * Event listeners are tested separately in CustomerEventHandlerTest.
- * 
- * Uses JavaFaker with Instancio for realistic test data generation:
- * - JavaFaker generates realistic names, addresses, emails
- * - Instancio handles object creation and field constraints
- * 
- * References:
- * - architecture.md: Event-Driven Architecture
- * - code-examples.md: Section 17 - Domain Events
- */
 @SpringBootTest
 @DisplayName("Domain Event Publisher Integration Tests")
-class DomainEventPublisherTest {
+class DomainEventPublisherIT {
 
     @Autowired
     private DomainEventPublisher eventPublisher;
-    
+
     private Faker faker;
-    
+
     @BeforeEach
     void setUp() {
         faker = new Faker();
@@ -59,17 +45,17 @@ class DomainEventPublisherTest {
                 faker.address().streetAddress(),
                 faker.address().city(),
                 faker.address().stateAbbr(),
-                faker.address().zipCode()
-        );
+                faker.address().zipCode());
         Money creditLimit = Money.of(Instancio.of(BigDecimal.class)
-                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
+                .generate(all(BigDecimal.class),
+                        gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
                 .create());
-        
+
         Customer customer = Customer.create(name, email, address, creditLimit);
-        
+
         List<DomainEvent> events = customer.pullEvents();
         DomainEvent event = events.get(0);
-        
+
         // When/Then - should not throw exception
         assertDoesNotThrow(() -> eventPublisher.publish(event));
     }
@@ -85,13 +71,12 @@ class DomainEventPublisherTest {
                         faker.address().streetAddress(),
                         faker.address().city(),
                         faker.address().stateAbbr(),
-                        faker.address().zipCode()
-                ),
+                        faker.address().zipCode()),
                 Money.of(Instancio.of(BigDecimal.class)
-                        .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
-                        .create())
-        );
-        
+                        .generate(all(BigDecimal.class),
+                                gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
+                        .create()));
+
         Customer customer2 = Customer.create(
                 faker.name().fullName(),
                 new Email(faker.internet().emailAddress()),
@@ -99,17 +84,16 @@ class DomainEventPublisherTest {
                         faker.address().streetAddress(),
                         faker.address().city(),
                         faker.address().stateAbbr(),
-                        faker.address().zipCode()
-                ),
+                        faker.address().zipCode()),
                 Money.of(Instancio.of(BigDecimal.class)
-                        .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
-                        .create())
-        );
-        
+                        .generate(all(BigDecimal.class),
+                                gen -> gen.math().bigDecimal().min(BigDecimal.ZERO).max(new BigDecimal("10000.00")))
+                        .create()));
+
         List<DomainEvent> events = new ArrayList<>();
         events.addAll(customer1.pullEvents());
         events.addAll(customer2.pullEvents());
-        
+
         // When/Then - should not throw exception
         assertDoesNotThrow(() -> eventPublisher.publishAll(events));
     }

@@ -17,23 +17,6 @@ import com.example.poc.domain.vo.Email;
 import com.example.poc.domain.vo.Money;
 import com.example.poc.web.CustomerDto;
 
-/**
- * Unit tests for CustomerMapper
- * 
- * Tests bidirectional mapping between:
- * - Customer (domain entity with rich types)
- * - CustomerDto (DTO with primitive types)
- * 
- * This is a pure unit test that uses MapStruct's factory pattern
- * (Mappers.getMapper())
- * instead of loading the entire Spring context, making tests faster and more
- * focused.
- * 
- * References:
- * - architecture.md: Mapping layer, Value Objects
- * - api.md: REST API contract
- * - code-examples.md: Section 7 - MapStruct integration
- */
 @DisplayName("Customer Mapper Tests")
 class CustomerMapperTest {
 
