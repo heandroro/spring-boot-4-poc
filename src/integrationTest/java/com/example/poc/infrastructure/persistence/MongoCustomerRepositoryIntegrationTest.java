@@ -47,7 +47,7 @@ import com.github.javafaker.Faker;
  * 
  * References:
  * - docs/testing.md: Integration testing strategy
- * - PR heandroro/spring-boot-4-poc#16: Original conversion to unit tests
+ * - Related to PR #16: Original conversion to unit tests
  */
 @SpringBootTest
 @Testcontainers
@@ -366,32 +366,24 @@ class MongoCustomerRepositoryIntegrationTest {
     @Test
     @DisplayName("should persist domain events are published after save")
     void shouldPersistDomainEventsArePublishedAfterSave() {
-        // Given: New customer (will have CustomerCreatedEvent)
+        // Given: New customer (will have CustomerCreatedEvent upon creation)
         Customer customer = createValidCustomer();
-        
-        // Verify customer has events before save
-        assertEquals(1, customer.pullEvents().size());
-        
-        // Re-create to get events again
-        customer = Customer.create(
-            customer.getName(),
-            customer.getEmail(),
-            customer.getAddress(),
-            customer.getCreditLimit()
-        );
 
-        // When: Save customer (repository should publish events)
+        // When: Save customer (repository should pull and publish events)
         Customer saved = repository.save(customer);
 
-        // Then: Customer should be persisted
+        // Then: Customer should be persisted with ID
         assertNotNull(saved.getId());
         
-        // And: Events should have been pulled (cleared from customer)
+        // And: Events should have been pulled and published (cleared from customer)
+        // After save, the repository pulls events for publishing, so customer has no events
         assertEquals(0, saved.pullEvents().size());
         
-        // And: Customer should be retrievable from database
+        // And: Customer should be retrievable from database with all data intact
         Optional<Customer> retrieved = repository.findById(saved.getId());
         assertTrue(retrieved.isPresent());
+        assertEquals(customer.getName(), retrieved.get().getName());
+        assertEquals(customer.getEmail(), retrieved.get().getEmail());
     }
 
     @Test
