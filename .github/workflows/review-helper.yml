@@ -39,16 +39,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ✅ Quality Checks Passed
-              
-              - ✅ Build successful
-              - ✅ All tests passing
-              - ✅ Checkstyle and static checks passed
-              - ✅ Copilot review completed
-              
-              **Ready for human review!** 👀
-              
-              Se tudo estiver OK no review do Copilot, você pode aprovar rapidamente.`
+              body: "## ✅ Quality Checks Passed\n\n- ✅ Build successful\n- ✅ All tests passing\n- ✅ Checkstyle and static checks passed\n- ✅ Copilot review completed\n\n**Ready for human review!** 👀\n\nSe tudo estiver OK no review do Copilot, você pode aprovar rapidamente."
             })
       
       - name: Comment check failures
@@ -60,7 +51,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `## ❌ Quality Checks Failed
-
-Please run './gradlew check' locally and fix the reported issues before pushing again. Common causes: Checkstyle violations (including use of fully-qualified class names). See CONTRIBUTING.md > "Imports (sem nomes qualificados)" and '.github/instructions/no-fqn.instructions.md' for guidance.`
+              body: "## ❌ Quality Checks Failed\n\nPlease run './gradlew check' locally and fix the reported issues before pushing again. Common causes: Checkstyle violations (including use of fully-qualified class names). See CONTRIBUTING.md > \"Imports (sem nomes qualificados)\" and '.github/instructions/no-fqn.instructions.md' for guidance."
             })
