@@ -20,3 +20,20 @@ pr_description_guidance:
     - "Ensure suggested code complies with repository conventions: Java Records, constructor injection, Bean Validation on DTOs, and DDD layering."
     - "If a type name is ambiguous and you choose a non-obvious import, add a short note in the PR description explaining the choice."
   include_checklist: true
+  # Template para o corpo do Pull Request. O Copilot deve priorizar este formato
+  template: |
+    ## Resumo
+    - O que foi feito: (resumo curto das mudanças)
+    - Motivação: (por que essa mudança é necessária)
+    - Impacto: (qual o impacto esperado, compatibilidade, migração)
+
+    ## Como testar
+    - Passos para reproduzir / validar
+    - Comandos: (ex.: `./gradlew check`, `./gradlew integrationTest`)
+
+    ## Checklist
+    - [ ] Testes adicionados/atualizados
+    - [ ] Documentação atualizada (README / docs)
+    - [ ] Build/Check local passando
+
+    **Observação:** por favor gerar este texto em Português (pt-BR) e incluir um breve resumo em uma linha no topo.

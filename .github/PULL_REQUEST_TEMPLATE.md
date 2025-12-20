@@ -1,5 +1,8 @@
 # Pull Request
 
+> 📌 **Por favor:** Peça ao GitHub Copilot para gerar a descrição em **Português (pt-BR)**. Ex.: escreva no campo de descrição: "Por favor, gerar descrição em Português (pt-BR)" antes de aceitar a sugestão automática.
+
+
 <!-- 
 💡 DICA: Use o GitHub Copilot para gerar a descrição automaticamente!
 
