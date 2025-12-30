@@ -158,6 +158,8 @@ class CustomerControllerMvcTest {
         // Validate properties contains timestamp and errors
         assertTrue(response.containsKey("properties"), 
                 "Response should contain 'properties' field");
+        assertNotNull(response.get("properties"),
+                "'properties' value should not be null");
         @SuppressWarnings("unchecked")
         Map<String, Object> properties = (Map<String, Object>) response.get("properties");
         
@@ -170,19 +172,21 @@ class CustomerControllerMvcTest {
                 "Properties should contain 'errors' field");
         @SuppressWarnings("unchecked")
         List<Map<String, String>> errors = (List<Map<String, String>>) properties.get("errors");
+        assertNotNull(errors, "Errors list should not be null");
         assertFalse(errors.isEmpty(), 
                 "Errors array should not be empty");
         
-        // Validate error structure (field and message)
-        Map<String, String> firstError = errors.get(0);
-        assertTrue(firstError.containsKey("field"), 
-                "Error should contain 'field' property");
-        assertTrue(firstError.containsKey("message"), 
-                "Error should contain 'message' property");
-        assertNotNull(firstError.get("field"), 
-                "Error field should not be null");
-        assertNotNull(firstError.get("message"), 
-                "Error message should not be null");
+        // Validate error structure for all errors (field and message)
+        for (Map<String, String> error : errors) {
+            assertTrue(error.containsKey("field"),
+                    "Each error should contain 'field' property");
+            assertTrue(error.containsKey("message"),
+                    "Each error should contain 'message' property");
+            assertNotNull(error.get("field"),
+                    "Error field should not be null");
+            assertNotNull(error.get("message"),
+                    "Error message should not be null");
+        }
 
         verifyNoInteractions(service);
     }

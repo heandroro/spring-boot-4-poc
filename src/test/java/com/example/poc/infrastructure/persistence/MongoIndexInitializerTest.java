@@ -59,7 +59,6 @@ class MongoIndexInitializerTest {
         assertNotNull(emailIndex, "Should have email index");
         Document emailIndexDoc = emailIndex.getIndexKeys();
         assertEquals(1, emailIndexDoc.get("email.value"), "Email index should be ASC (1)");
-        assertTrue(emailIndex.getIndexOptions().containsKey("unique"), "Email index should be unique");
         assertEquals(true, emailIndex.getIndexOptions().get("unique"), "Email index unique flag should be true");
 
         // Find status index (single field)

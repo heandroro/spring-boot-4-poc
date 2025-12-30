@@ -116,11 +116,12 @@ class MongoCustomerRepositoryTest {
         Query capturedQuery = queryCaptor.getValue();
         assertNotNull(capturedQuery, "Query should not be null");
         
-        // Verify query contains criteria for ACTIVE status
-        String queryString = capturedQuery.toString();
-        assertTrue(queryString.contains("status"), 
+        // Verify query contains criteria for ACTIVE status using structured query object
+        org.bson.Document queryObject = capturedQuery.getQueryObject();
+        assertNotNull(queryObject, "Query object should not be null");
+        assertTrue(queryObject.containsKey("status"), 
                 "Query should filter by status field");
-        assertTrue(queryString.contains("ACTIVE"), 
+        assertEquals("ACTIVE", queryObject.get("status"), 
                 "Query should filter for ACTIVE customers");
         
         verifyNoInteractions(customerRepository);
