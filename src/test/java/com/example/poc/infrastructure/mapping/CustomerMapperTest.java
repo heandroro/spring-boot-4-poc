@@ -1,9 +1,10 @@
 package com.example.poc.infrastructure.mapping;
 
+import static com.example.poc.util.TestReflectionUtils.instantiateWithNoArgsConstructor;
+import static com.example.poc.util.TestReflectionUtils.setField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -152,8 +153,8 @@ class CustomerMapperTest {
 
     @Test
     @DisplayName("should map nullable nested fields safely")
-    void shouldMapNullableNestedFieldsSafely() throws Exception {
-        Customer partial = instantiateEmptyCustomer();
+    void shouldMapNullableNestedFieldsSafely() {
+        Customer partial = instantiateWithNoArgsConstructor(Customer.class);
         setField(partial, "email", null);
         setField(partial, "address", null);
         setField(partial, "creditLimit", null);
@@ -172,17 +173,5 @@ class CustomerMapperTest {
         assertNull(dto.creditLimit());
         assertNull(dto.availableCredit());
         assertNull(dto.status());
-    }
-
-    private Customer instantiateEmptyCustomer() throws Exception {
-        var constructor = Customer.class.getDeclaredConstructor();
-        constructor.setAccessible(true);
-        return constructor.newInstance();
-    }
-
-    private void setField(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
     }
 }

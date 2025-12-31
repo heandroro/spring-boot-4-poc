@@ -46,21 +46,10 @@ class MongoIndexInitializerTest {
 
         // When
         initializer = new MongoIndexInitializer(mongoTemplate);
-        // invoke internal method by calling public init (will call
-        // createCustomerIndexes)
-        // We avoid @PostConstruct by calling method directly via reflection of behavior
-        // Call private method via public initIndexes
-        // Since initIndexes also logs, we just run it
         initializer.initIndexes();
 
         // Then: verify number of createIndex calls (5 indexes created)
         verify(indexOps, times(5)).createIndex(any(IndexDefinition.class));
-    }
-
-    // Helper to inspect IndexDefinition keys via toString()
-    private boolean hasKey(IndexDefinition index, String field, Sort.Direction direction) {
-        String s = index.toString();
-        return s.contains(field) && s.contains(direction.name());
     }
 
     @Test

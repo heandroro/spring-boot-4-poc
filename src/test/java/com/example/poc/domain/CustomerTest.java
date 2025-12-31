@@ -1,5 +1,6 @@
 package com.example.poc.domain;
 
+import static com.example.poc.util.TestReflectionUtils.setField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -450,9 +451,7 @@ class CustomerTest {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         int before = customer.hashCode();
 
-        Field idField = Customer.class.getDeclaredField("id");
-        idField.setAccessible(true);
-        idField.set(customer, "id-123");
+        setField(customer, "id", "id-123");
 
         int after = customer.hashCode();
         assertNotEquals(before, after);
