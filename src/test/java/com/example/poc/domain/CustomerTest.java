@@ -1,5 +1,6 @@
 package com.example.poc.domain;
 
+import static com.example.poc.util.TestReflectionUtils.setField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -356,19 +357,17 @@ class CustomerTest {
 
     @Test
     @DisplayName("equals is sensitive to id when present")
-    void testEqualsRespectsIdWhenPresent() throws Exception {
+    void testEqualsRespectsIdWhenPresent() {
         Email email = new Email("unique2@example.com");
         Customer c1 = Customer.create("John Doe", email, validAddress, validCreditLimit);
         Customer c2 = Customer.create("John Doe", email, validAddress, validCreditLimit);
 
-        Field idField = Customer.class.getDeclaredField("id");
-        idField.setAccessible(true);
-        idField.set(c1, "id1");
-        idField.set(c2, "id2");
+        setField(c1, "id", "id1");
+        setField(c2, "id", "id2");
 
         assertFalse(c1.equals(c2));
 
-        idField.set(c2, "id1");
+        setField(c2, "id", "id1");
         assertTrue(c1.equals(c2));
     }
 
@@ -446,13 +445,11 @@ class CustomerTest {
 
     @Test
     @DisplayName("hashCode should change when id is set")
-    void testHashCodeReflectsIdAndEmail() throws Exception {
+    void testHashCodeReflectsIdAndEmail() {
         Customer customer = Customer.create("John Doe", validEmail, validAddress, validCreditLimit);
         int before = customer.hashCode();
 
-        Field idField = Customer.class.getDeclaredField("id");
-        idField.setAccessible(true);
-        idField.set(customer, "id-123");
+        setField(customer, "id", "id-123");
 
         int after = customer.hashCode();
         assertNotEquals(before, after);

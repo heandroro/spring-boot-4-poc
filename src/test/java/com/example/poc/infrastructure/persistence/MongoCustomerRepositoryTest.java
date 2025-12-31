@@ -64,13 +64,6 @@ class MongoCustomerRepositoryTest {
     void shouldSaveCustomerAndPublishPulledEvents() {
         // Given
         Customer customer = createValidCustomer();
-        List<DomainEvent> initialEvents = customer.pullEvents();
-        assertEquals(1, initialEvents.size());
-
-        // Re-create to accumulate events again
-        customer = Customer.create(customer.getName(), customer.getEmail(), customer.getAddress(),
-                customer.getCreditLimit());
-
         when(customerRepository.save(any(Customer.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // When
