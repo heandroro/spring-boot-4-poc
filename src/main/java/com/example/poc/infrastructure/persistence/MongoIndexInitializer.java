@@ -44,6 +44,10 @@ public class MongoIndexInitializer {
 
     @SuppressWarnings("removal")
     private void createCustomerIndexes() {
+        // Suppressing "removal" warning: Spring Data MongoDB index operations APIs
+        // may be marked for removal in future versions as part of API evolution.
+        // Current implementation uses the recommended createIndex() method.
+        // Monitor Spring Data MongoDB migration guides for updates.
 
         // 1. Unique index on email
         // Ensures no duplicate emails in system
