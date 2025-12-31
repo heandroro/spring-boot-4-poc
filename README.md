@@ -126,13 +126,26 @@ If Docker is not available, regular unit tests still run and the build remains g
 
 This README provides a concise overview. Detailed documentation is in [docs/](docs/):
 
+**Architecture & Design:**
+- **[Architecture](docs/architecture.md)** - DDD layers, structure
+- **[MongoDB](docs/mongodb.md)** - Database design patterns
+
+**Development:**
+- **[API](docs/api.md)** - REST API guidelines
+- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
+- **[Security](docs/security.md)** - Authentication, authorization, best practices
+
+**Tools & Practices:**
+- **[Instancio Best Practices](docs/instancio-best-practices.md)** - Test data generation
+- **[Agent Best Practices](docs/agent-best-practices.md)** - Copilot agents usage
+
+**Operations:**
+- **[Deployment](docs/deployment.md)** - Deployment guides
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+- **[GitHub Approval Strategy](docs/github-approval-strategy.md)** - PR review process
 
 > **Note:** README.md is kept concise. For detailed information, see the linked documentation files.
 
 ## 📄 License
 
 This project is released under the MIT License. See [LICENSE](LICENSE) for details.
-
-- **[Testing](docs/testing.md)** - Testing strategy, fixtures, coverage
-
-> Note: local Sonar scanner scripts were removed from the repository. If you need analysis, run Sonar in CI or use your preferred scanner with your own configuration.
