@@ -17,6 +17,7 @@ import com.github.javafaker.Faker;
 public final class CustomerTestFixtures {
 
     private static final Faker faker = new Faker();
+    private static final String DEFAULT_TEST_COUNTRY = "BR";
 
     private CustomerTestFixtures() {
     }
@@ -46,7 +47,7 @@ public final class CustomerTestFixtures {
                 .set(field(CustomerDto::city), faker.address().city())
                 .set(field(CustomerDto::state), faker.address().stateAbbr())
                 .set(field(CustomerDto::postalCode), faker.address().zipCode())
-                .set(field(CustomerDto::country), "BR")
+                .set(field(CustomerDto::country), DEFAULT_TEST_COUNTRY)
                 .set(field(CustomerDto::creditLimit), creditLimit)
                 .set(field(CustomerDto::availableCredit), creditLimit)
                 .set(field(CustomerDto::status), "ACTIVE")
@@ -54,11 +55,12 @@ public final class CustomerTestFixtures {
     }
 
     public static Address createValidAddress() {
-        return Address.of(
+        return new Address(
                 faker.address().streetAddress(),
                 faker.address().city(),
                 faker.address().stateAbbr(),
-                faker.address().zipCode());
+                faker.address().zipCode(),
+                DEFAULT_TEST_COUNTRY);
     }
 
     public static Customer createValidCustomer() {
