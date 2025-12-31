@@ -41,6 +41,8 @@ class MongoIndexInitializerTest {
     @DisplayName("should create expected indexes for Customer collection")
     @SuppressWarnings("removal")
     void shouldCreateExpectedIndexesForCustomerCollection() {
+        // Suppressing "removal" warning: Matching suppression in MongoIndexInitializer
+        // to maintain consistency while testing index creation APIs.
         // Given: indexOps mocked for Customer class
         when(mongoTemplate.indexOps(Customer.class)).thenReturn(indexOps);
 

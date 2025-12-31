@@ -37,6 +37,10 @@ import com.github.javafaker.Faker;
 @DisplayName("CustomerController MVC Tests")
 @SuppressWarnings("removal")
 class CustomerControllerMvcTest {
+    // Suppressing "removal" warning: MappingJackson2HttpMessageConverter constructor
+    // accepting ObjectMapper is marked for removal in Spring Framework 7.x.
+    // Current usage required for MockMvc setup with custom ObjectMapper configuration.
+    // Migration to alternative configuration approach planned for Spring Framework 7.1+.
 
     @Mock
     private CustomerService service;
