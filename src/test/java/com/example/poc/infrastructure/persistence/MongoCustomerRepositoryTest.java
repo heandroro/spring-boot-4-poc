@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -29,7 +29,6 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import com.example.poc.domain.Customer;
 import com.example.poc.domain.CustomerRepository;
-import com.example.poc.domain.event.DomainEvent;
 import com.example.poc.domain.vo.Money;
 import com.example.poc.infrastructure.event.DomainEventPublisher;
 import com.github.javafaker.Faker;
@@ -71,10 +70,7 @@ class MongoCustomerRepositoryTest {
         assertNotNull(saved);
         verify(customerRepository).save(customer);
 
-        ArgumentCaptor<List<DomainEvent>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-        verify(eventPublisher).publishAll(eventsCaptor.capture());
-        List<DomainEvent> published = eventsCaptor.getValue();
-        assertFalse(published.isEmpty());
+        verify(eventPublisher).publishAll(argThat(list -> list != null && !list.isEmpty()));
     }
 
     @Test
