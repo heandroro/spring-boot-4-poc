@@ -8,8 +8,6 @@ plugins {
     jacoco
 }
 
-import org.gradle.api.tasks.compile.JavaCompile
-
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
 
@@ -106,11 +104,6 @@ val integrationTest by tasks.registering(Test::class) {
 // tasks.check {
 //     dependsOn(integrationTest)
 // }
-
-tasks.named("compileTestJava", JavaCompile::class).configure {
-    // Temporarily enable -Xlint:unchecked to surface unchecked warnings for tests
-    options.compilerArgs.add("-Xlint:unchecked")
-}
 
 tasks.withType<Test> {
     useJUnitPlatform()
