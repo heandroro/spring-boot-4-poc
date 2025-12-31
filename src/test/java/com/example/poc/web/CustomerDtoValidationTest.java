@@ -1,6 +1,7 @@
 package com.example.poc.web;
 
-import static org.instancio.Select.all;
+import static com.example.poc.support.CustomerTestFixtures.createValidCustomerDto;
+import static com.example.poc.support.CustomerTestFixtures.generatePositiveMoney;
 import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -77,29 +78,10 @@ class CustomerDtoValidationTest {
     @Test
     @DisplayName("should pass validation for valid payload")
     void shouldPassValidationForValidPayload() {
-        BigDecimal limit = generatePositiveMoney();
-        CustomerDto valid = Instancio.of(CustomerDto.class)
-                .set(field(CustomerDto::name), faker.name().fullName())
-                .set(field(CustomerDto::email), faker.internet().emailAddress())
-                .set(field(CustomerDto::street), faker.address().streetAddress())
-                .set(field(CustomerDto::city), faker.address().city())
-                .set(field(CustomerDto::postalCode), faker.address().zipCode())
-                .set(field(CustomerDto::country), "BR")
-                .set(field(CustomerDto::creditLimit), limit)
-                .set(field(CustomerDto::availableCredit), limit)
-                .set(field(CustomerDto::status), "ACTIVE")
-                .create();
+        CustomerDto valid = createValidCustomerDto();
 
         Set<ConstraintViolation<CustomerDto>> violations = validator.validate(valid);
 
         assertTrue(violations.isEmpty());
-    }
-
-    private BigDecimal generatePositiveMoney() {
-        return Instancio.of(BigDecimal.class)
-                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
-                        .min(BigDecimal.ONE)
-                        .max(new BigDecimal("10000.00")))
-                .create();
     }
 }

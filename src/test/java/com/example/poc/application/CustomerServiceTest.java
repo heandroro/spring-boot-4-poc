@@ -1,6 +1,9 @@
 package com.example.poc.application;
 
-import static org.instancio.Select.all;
+import static com.example.poc.support.CustomerTestFixtures.createValidAddress;
+import static com.example.poc.support.CustomerTestFixtures.createValidCustomer;
+import static com.example.poc.support.CustomerTestFixtures.createValidCustomerDto;
+import static com.example.poc.support.CustomerTestFixtures.generatePositiveMoney;
 import static org.instancio.Select.field;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -12,7 +15,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.instancio.Instancio;
@@ -27,9 +29,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.poc.domain.Customer;
 import com.example.poc.domain.CustomerRepository;
-import com.example.poc.domain.vo.Address;
-import com.example.poc.domain.vo.Email;
-import com.example.poc.domain.vo.Money;
 import com.example.poc.infrastructure.mapping.CustomerMapper;
 import com.example.poc.web.CustomerDto;
 import com.github.javafaker.Faker;
@@ -58,9 +57,9 @@ class CustomerServiceTest {
     @DisplayName("should create customer successfully")
     void shouldCreateCustomerSuccessfully() {
         // Given
-        CustomerDto inputDto = createValidDto();
-        Customer entity = createValidEntity();
-        Customer saved = createValidEntity();
+        CustomerDto inputDto = createValidCustomerDto();
+        Customer entity = createValidCustomer();
+        Customer saved = createValidCustomer();
 
         when(mapper.toEntity(inputDto)).thenReturn(entity);
         when(repository.save(entity)).thenReturn(saved);
@@ -84,8 +83,8 @@ class CustomerServiceTest {
     void shouldFindCustomerByIdWhenExists() {
         // Given
         String id = faker.internet().uuid();
-        Customer entity = createValidEntity();
-        CustomerDto dto = createValidDto();
+        Customer entity = createValidCustomer();
+        CustomerDto dto = createValidCustomerDto();
 
         when(repository.findById(id)).thenReturn(Optional.of(entity));
         when(mapper.toDto(entity)).thenReturn(dto);
@@ -123,9 +122,9 @@ class CustomerServiceTest {
     @DisplayName("should call mapper and repository in correct order")
     void shouldCallMapperAndRepositoryInCorrectOrder() {
         // Given
-        CustomerDto inputDto = createValidDto();
-        Customer entity = createValidEntity();
-        Customer saved = createValidEntity();
+        CustomerDto inputDto = createValidCustomerDto();
+        Customer entity = createValidCustomer();
+        Customer saved = createValidCustomer();
 
         when(mapper.toEntity(inputDto)).thenReturn(entity);
         when(repository.save(entity)).thenReturn(saved);
@@ -145,8 +144,8 @@ class CustomerServiceTest {
     @DisplayName("should return dto from repository save result")
     void shouldReturnDtoFromRepositorySaveResult() {
         // Given
-        CustomerDto inputDto = createValidDto();
-        Customer entity = createValidEntity();
+        CustomerDto inputDto = createValidCustomerDto();
+        Customer entity = createValidCustomer();
         Customer savedEntity = Instancio.of(Customer.class)
                 .set(field(Customer::getId), faker.internet().uuid())
                 .create();
@@ -163,46 +162,5 @@ class CustomerServiceTest {
 
         // Then
         assertEquals(expectedDto.id(), result.id());
-    }
-
-    // === Helper Methods ===
-
-    private Customer createValidEntity() {
-        BigDecimal creditLimit = generatePositiveMoney();
-        return Customer.create(
-                faker.name().fullName(),
-                new Email(faker.internet().emailAddress()),
-                createAddress(),
-                Money.of(creditLimit));
-    }
-
-    private CustomerDto createValidDto() {
-        BigDecimal creditLimit = generatePositiveMoney();
-        return Instancio.of(CustomerDto.class)
-                .set(field(CustomerDto::name), faker.name().fullName())
-                .set(field(CustomerDto::email), faker.internet().emailAddress())
-                .set(field(CustomerDto::street), faker.address().streetAddress())
-                .set(field(CustomerDto::city), faker.address().city())
-                .set(field(CustomerDto::state), faker.address().stateAbbr())
-                .set(field(CustomerDto::country), "BR")
-                .set(field(CustomerDto::creditLimit), creditLimit)
-                .set(field(CustomerDto::availableCredit), creditLimit)
-                .create();
-    }
-
-    private Address createAddress() {
-        return Address.of(
-                faker.address().streetAddress(),
-                faker.address().city(),
-                faker.address().stateAbbr(),
-                faker.address().zipCode());
-    }
-
-    private BigDecimal generatePositiveMoney() {
-        return Instancio.of(BigDecimal.class)
-                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
-                        .min(BigDecimal.ONE)
-                        .max(new BigDecimal("10000.00")))
-                .create();
     }
 }

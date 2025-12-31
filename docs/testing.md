@@ -362,6 +362,56 @@ List<Customer> customList = Instancio.ofList(Customer.class)
     .create();
 ```
 
+### Shared Test Fixtures
+
+To avoid code duplication across test classes, use shared fixture classes in the `support` package. These provide reusable methods for creating test data with common configurations.
+
+**Example: `CustomerTestFixtures`**
+
+Located at `src/test/java/com/example/poc/support/CustomerTestFixtures.java`, this class provides:
+
+```java
+import static com.example.poc.support.CustomerTestFixtures.*;
+
+// Generate positive money values for credit limits
+BigDecimal creditLimit = generatePositiveMoney(); // Random between 1-10000
+
+// Generate money in specific range
+BigDecimal specific = generatePositiveMoneyInRange(
+    new BigDecimal("500.00"),
+    new BigDecimal("2000.00")
+);
+
+// Create valid CustomerDto with all required fields
+CustomerDto dto = createValidCustomerDto();
+
+// Create valid Address value object
+Address address = createValidAddress();
+
+// Create valid Customer entity
+Customer customer = createValidCustomer();
+
+// Create Customer with specific credit limit
+Customer customer = createCustomerWithLimit(new BigDecimal("5000.00"));
+```
+
+**Benefits:**
+- **DRY Principle**: Eliminates duplication of test helper methods
+- **Consistency**: Ensures test data follows the same patterns
+- **Maintainability**: Changes to test data generation happen in one place
+- **Readability**: Test code focuses on behavior, not data setup
+
+**When to use shared fixtures:**
+- Creating common test entities (Customer, Order, Product)
+- Generating valid DTOs with required fields
+- Creating value objects (Money, Address, Email)
+- Setting up test data with specific constraints
+
+**When to use inline Instancio:**
+- One-off test scenarios
+- Testing edge cases with specific field values
+- When you need unique customizations not covered by shared fixtures
+
 ## Parametrized Tests
 
 Test multiple scenarios:
