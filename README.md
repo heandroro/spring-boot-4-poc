@@ -29,8 +29,9 @@ Scaffolded Spring Boot 4 project using Java 25, MapStruct, Instancio, JUnit 6 an
 - **Context-Aware**: Reads PR comments to avoid duplicate feedback
 - **Selective Review**: Focuses on code (Java, YAML), ignores planning docs
 - **Standards Validation**: DDD, security, testing, and MongoDB best practices
+- **Portuguese Language Enforced**: Custom instructions in [.github/copilot-instructions.md](.github/copilot-instructions.md) ensure all Copilot interactions are in pt-BR
 
-📖 **Details:** [.github/agents/README.md](.github/agents/README.md) | [GitHub Strategy](docs/github-approval-strategy.md)
+📖 **Details:** [.github/agents/README.md](.github/agents/README.md) | [Copilot Instructions](.github/copilot-instructions.md) | [GitHub Strategy](docs/github-approval-strategy.md)
 
 ### Testing Stack
 - **JUnit 6 (Jupiter)**: Modern testing framework with `@DisplayName`

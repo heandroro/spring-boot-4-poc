@@ -2,6 +2,10 @@
 
 Este diretório contém configurações de agentes do GitHub Copilot para automação de tarefas no repositório.
 
+> **🌐 Idioma**: Todos os agentes e interações do GitHub Copilot foram configurados para responder em 
+> **Português Brasileiro (pt-BR)** através do arquivo [.github/copilot-instructions.md](../copilot-instructions.md). 
+> Isso inclui reviews de PR, descrições automáticas, comentários de código e sugestões do chat.
+
 > **📝 Importante**: As configurações neste diretório representam o comportamento desejado e as 
 > capacidades aspiracionais para agentes do GitHub Copilot. Nem todas as features descritas podem 
 > estar disponíveis na versão atual do GitHub Copilot. Esta documentação serve como:
@@ -130,7 +134,7 @@ O agente se integra com:
 - **GitHub API**: Para ler comentários e metadados do PR
 - **instructions.md**: Padrões gerais do projeto
 - **PULL_REQUEST_TEMPLATE.md**: Checklist de implementação
-- **copilot-instructions.md**: Instruções do VS Code Copilot
+- **copilot-instructions.md**: Instruções do repositório para GitHub Copilot (força idioma pt-BR)
 - **CONTRIBUTING.md**: Guia de contribuição
 
 ## 📊 Métricas
