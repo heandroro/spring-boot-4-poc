@@ -53,6 +53,13 @@ public ResponseEntity<ProductDto> create(@Valid @RequestBody CreateProductReques
 - Pre-commit hook: `.githooks/pre-commit`
 - Integração: `docker-compose.yml` (Sonar), `src/integrationTest` (Testcontainers)
 
+## Qualidade de Código & Ferramentas
+- SonarQube: há um serviço configurado em `docker-compose.yml` (use `docker-compose up sonarqube` para rodar localmente). Repare em `docs/sonar-local.md` para passos adicionais e como enviar análise local se necessário.
+- SpotBugs / Checkstyle: regras e exclusões estão em `config/spotbugs/` e `config/checkstyle/` — garanta que as verificações locais passem com `./gradlew check`.
+- Pré-commit: o hook (`.githooks/pre-commit`) roda `./gradlew -q checkIntegrationTestNames` — corrija nomes de testes de integração que não terminam com `IT`.
+- Geração de descrição de PR: o Copilot gera descrições automaticamente (config: `.github/copilot-pr-description.yml`) ou use o comando de paleta: **"Copilot: Generate Pull Request Description"**.
+- CI: verifique que checks de Sonar, SpotBugs e cobertura passem antes de solicitar merge.
+
 ## Restrições e avisos
 - Evite fazer mudanças arquitetônicas sem abrir issue e discutir com mantenedores.
 - Não substituir revisões humanas — agente dá sugestões que devem ser validadas por um revisor.
