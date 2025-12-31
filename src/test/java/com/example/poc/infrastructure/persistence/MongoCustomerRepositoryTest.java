@@ -1,6 +1,7 @@
 package com.example.poc.infrastructure.persistence;
 
-import static org.instancio.Select.all;
+import static com.example.poc.support.CustomerTestFixtures.createCustomerWithLimit;
+import static com.example.poc.support.CustomerTestFixtures.createValidCustomer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -15,7 +16,6 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,8 +30,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import com.example.poc.domain.Customer;
 import com.example.poc.domain.CustomerRepository;
 import com.example.poc.domain.event.DomainEvent;
-import com.example.poc.domain.vo.Address;
-import com.example.poc.domain.vo.Email;
 import com.example.poc.domain.vo.Money;
 import com.example.poc.infrastructure.event.DomainEventPublisher;
 import com.github.javafaker.Faker;
@@ -184,37 +182,5 @@ class MongoCustomerRepositoryTest {
 
         // Then
         verify(customerRepository).deleteById("abc");
-    }
-
-    private Customer createValidCustomer() {
-        return Customer.create(
-                faker.name().fullName(),
-                new Email(faker.internet().emailAddress()),
-                Address.of(
-                        faker.address().streetAddress(),
-                        faker.address().city(),
-                        faker.address().stateAbbr(),
-                        faker.address().zipCode()),
-                Money.of(generatePositiveMoney()));
-    }
-
-    private BigDecimal generatePositiveMoney() {
-        return Instancio.of(BigDecimal.class)
-                .generate(all(BigDecimal.class), gen -> gen.math().bigDecimal()
-                        .min(new BigDecimal("500.00"))
-                        .max(new BigDecimal("2000.00")))
-                .create();
-    }
-
-    private Customer createCustomerWithLimit(BigDecimal limit) {
-        return Customer.create(
-                faker.name().fullName(),
-                new Email(faker.internet().emailAddress()),
-                Address.of(
-                        faker.address().streetAddress(),
-                        faker.address().city(),
-                        faker.address().stateAbbr(),
-                        faker.address().zipCode()),
-                Money.of(limit));
     }
 }
