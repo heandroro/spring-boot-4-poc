@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.instancio.Instancio;
@@ -261,5 +262,161 @@ class ProductServiceTest {
         service.deleteById("1");
 
         verify(repository).deleteById("1");
+    }
+
+    @Test
+    @DisplayName("deve atualizar produto com specifications preenchidas")
+    void shouldUpdateProductWithSpecifications() {
+        var specs = Map.<String,Object>of("color","red");
+        var productToUpdate = Product.create(
+            "1",
+            "Product",
+            "Desc",
+            "Electronics",
+            new Money(new BigDecimal("50.00"), "USD"),
+            5,
+            List.of(ProductImage.primary("http://img", "alt"))
+        );
+
+        var dtoWithSpecs = new ProductCreateDto(
+            "1",
+            "Product",
+            "Desc",
+            "Electronics",
+            "50.00",
+            "USD",
+            5,
+            specs,
+            List.of(ProductImage.primary("http://img", "alt"))
+        );
+
+        when(repository.findById("1")).thenReturn(Optional.of(productToUpdate));
+        when(repository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toDto(any(Product.class))).thenReturn(productDto);
+
+        var result = service.update("1", dtoWithSpecs);
+
+        assertNotNull(result);
+        assertEquals(specs, productToUpdate.getSpecifications());
+        verify(repository).findById("1");
+        verify(repository).save(any(Product.class));
+        verify(mapper).toDto(productToUpdate);
+    }
+
+    @Test
+    @DisplayName("deve usar currency default quando currency do DTO for nula ao atualizar")
+    void shouldUseDefaultCurrencyWhenDtoCurrencyIsNullOnUpdate() {
+        var productToUpdate = Product.create(
+            "2",
+            "Product2",
+            "Desc",
+            "Electronics",
+            new Money(new BigDecimal("30.00"), "EUR"),
+            3,
+            List.of(ProductImage.primary("http://img2", "alt"))
+        );
+
+        var dtoWithNullCurrency = new ProductCreateDto(
+            "2",
+            "Product2",
+            "Desc",
+            "Electronics",
+            "30.00",
+            null,
+            3,
+            null,
+            List.of(ProductImage.primary("http://img2", "alt"))
+        );
+
+        when(repository.findById("2")).thenReturn(Optional.of(productToUpdate));
+        when(repository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toDto(any(Product.class))).thenReturn(productDto);
+
+        var result = service.update("2", dtoWithNullCurrency);
+
+        assertNotNull(result);
+        assertEquals(Money.DEFAULT_CURRENCY, productToUpdate.getPrice().currency());
+        verify(repository).findById("2");
+        verify(repository).save(any(Product.class));
+        verify(mapper).toDto(productToUpdate);
+    }
+
+    @Test
+    @DisplayName("deve criar produto com specifications preenchidas")
+    void shouldCreateProductWithSpecifications() {
+        var specs = Map.<String,Object>of("color","green");
+        var createDtoWithSpecs = new ProductCreateDto(
+            "NEW-002",
+            "New Product",
+            "Desc",
+            "Electronics",
+            "75.00",
+            "USD",
+            8,
+            specs,
+            List.of(ProductImage.primary("http://img3", "alt"))
+        );
+
+        var productDomain = Product.create(
+            "NEW-002",
+            "New Product",
+            "Desc",
+            "Electronics",
+            new Money(new BigDecimal("75.00"), "USD"),
+            8,
+            List.of(ProductImage.primary("http://img3", "alt"))
+        );
+
+        when(repository.existsBySku(createDtoWithSpecs.sku())).thenReturn(false);
+        when(mapper.toDomain(any(ProductCreateDto.class))).thenReturn(productDomain);
+        when(repository.save(any(Product.class))).thenReturn(productDomain);
+        when(mapper.toDto(productDomain)).thenReturn(productDto);
+
+        var result = service.create(createDtoWithSpecs);
+
+        assertNotNull(result);
+        verify(repository).existsBySku(createDtoWithSpecs.sku());
+        verify(mapper).toDomain(any(ProductCreateDto.class));
+        verify(repository).save(any(Product.class));
+        verify(mapper).toDto(productDomain);
+    }
+
+    @Test
+    @DisplayName("deve criar produto quando specifications e images forem nulos")
+    void shouldCreateProductWhenSpecsAndImagesNull() {
+        var createDtoNulls = new ProductCreateDto(
+            "NEW-003",
+            "New Product 3",
+            "Desc",
+            "Electronics",
+            "60.00",
+            "USD",
+            3,
+            null,
+            null
+        );
+
+        var productDomain = Product.create(
+            "NEW-003",
+            "New Product 3",
+            "Desc",
+            "Electronics",
+            new Money(new BigDecimal("60.00"), "USD"),
+            3,
+            List.of()
+        );
+
+        when(repository.existsBySku(createDtoNulls.sku())).thenReturn(false);
+        when(mapper.toDomain(any(ProductCreateDto.class))).thenReturn(productDomain);
+        when(repository.save(any(Product.class))).thenReturn(productDomain);
+        when(mapper.toDto(productDomain)).thenReturn(productDto);
+
+        var result = service.create(createDtoNulls);
+
+        assertNotNull(result);
+        verify(repository).existsBySku(createDtoNulls.sku());
+        verify(mapper).toDomain(any(ProductCreateDto.class));
+        verify(repository).save(any(Product.class));
+        verify(mapper).toDto(productDomain);
     }
 }

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.example.poc.domain.Product;
 import com.example.poc.domain.ProductRepository;
 import com.example.poc.domain.vo.Money;
+import com.example.poc.domain.vo.ProductImage;
 import com.example.poc.infrastructure.mapping.ProductMapper;
 import com.example.poc.web.ProductCreateDto;
 import com.example.poc.web.ProductDto;
@@ -35,9 +36,9 @@ public class ProductService {
             throw new IllegalArgumentException("Product with SKU " + dto.sku() + " already exists");
         }
 
-        // Cópias defensivas para evitar expor coleções mutáveis aos domínios/mappers
-        var safeSpecifications = dto.specifications() == null ? Map.<String, Object>of() : Map.copyOf(dto.specifications());
-        var safeImages = dto.images() == null ? List.<com.example.poc.domain.vo.ProductImage>of() : List.copyOf(dto.images());
+        // DTO já normaliza nulls para Map.of()/List.of(); fazemos apenas cópias defensivas
+        Map<String, Object> safeSpecifications = Map.copyOf(dto.specifications());
+        List<ProductImage> safeImages = List.copyOf(dto.images());
 
         var dtoSafe = new ProductCreateDto(
             dto.sku(), dto.name(), dto.description(), dto.category(), dto.price(), dto.currency(), dto.initialStock(),
@@ -74,9 +75,9 @@ public class ProductService {
             throw new IllegalArgumentException("Product with SKU " + dto.sku() + " already exists");
         }
 
-        // Cópias defensivas para update
-        var safeSpecifications = dto.specifications() == null ? Map.<String, Object>of() : Map.copyOf(dto.specifications());
-        var safeImages = dto.images() == null ? List.<com.example.poc.domain.vo.ProductImage>of() : List.copyOf(dto.images());
+        // DTO já normatiza nulls; cópias defensivas
+        Map<String, Object> safeSpecifications = Map.copyOf(dto.specifications());
+        List<ProductImage> safeImages = List.copyOf(dto.images());
 
         product.updatePrice(new Money(new BigDecimal(dto.price()), dto.currency() != null ? dto.currency() : Money.DEFAULT_CURRENCY));
         product.updateDescription(dto.description());
