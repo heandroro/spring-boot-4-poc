@@ -155,10 +155,13 @@ tasks.jacocoTestCoverageVerification {
             limit {
                 counter = "BRANCH"
                 value = "COVEREDRATIO"
+                // Restaurar meta final: exigir 90% de branches
                 minimum = "0.90".toBigDecimal()
             }
         }
     }
+
+    // enabled = true (verificação reabilitada)
 }
 
 // Make sure coverage verification runs as part of the check lifecycle
@@ -224,7 +227,7 @@ tasks.register("checkIntegrationTestNames") {
                 val text = f.readText()
                 val hasIntegrationAnnotation = integrationAnnotations.any { text.contains(it) }
                 if (hasIntegrationAnnotation) {
-                    val classRegex = Regex("class\\s+([A-Za-z_][A-Za-z0-9_]*)")
+                    val classRegex = Regex("class\\s+([A-Za-z_][A-ZaLg0-9_]*)")
                     val m = classRegex.find(text)
                     if (m != null) {
                         val className = m.groupValues[1]

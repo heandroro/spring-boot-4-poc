@@ -35,4 +35,3 @@ public class ProductCreatedEvent extends DomainEvent {
         return price;
     }
 }
-

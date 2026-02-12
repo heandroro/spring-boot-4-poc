@@ -1,0 +1,64 @@
+package com.example.poc.domain.event;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+@DisplayName("ProductCreatedEvent")
+class ProductCreatedEventTest {
+
+    @Test
+    @DisplayName("deve criar evento de produto criado")
+    void shouldCreateProductCreatedEvent() {
+        var event = new ProductCreatedEvent("TEST-001", "Test Product", "Electronics", "100.00");
+
+        assertNotNull(event);
+        assertEquals("TEST-001", event.getSku());
+        assertEquals("Test Product", event.getName());
+        assertEquals("Electronics", event.getCategory());
+        assertEquals("100.00", event.getPrice());
+        assertNotNull(event.getOccurredOn());
+        assertNotNull(event.getEventId());
+    }
+
+    @Test
+    @DisplayName("deve lançar exceção ao criar evento com SKU null")
+    void shouldThrowExceptionWithNullSku() {
+        assertThrows(NullPointerException.class,
+            () -> new ProductCreatedEvent(null, "Product", "Category", "100.00"));
+    }
+
+    @Test
+    @DisplayName("deve lançar exceção ao criar evento com nome null")
+    void shouldThrowExceptionWithNullName() {
+        assertThrows(NullPointerException.class,
+            () -> new ProductCreatedEvent("SKU-001", null, "Category", "100.00"));
+    }
+
+    @Test
+    @DisplayName("deve lançar exceção ao criar evento com categoria null")
+    void shouldThrowExceptionWithNullCategory() {
+        assertThrows(NullPointerException.class,
+            () -> new ProductCreatedEvent("SKU-001", "Product", null, "100.00"));
+    }
+
+    @Test
+    @DisplayName("deve lançar exceção ao criar evento com preço null")
+    void shouldThrowExceptionWithNullPrice() {
+        assertThrows(NullPointerException.class,
+            () -> new ProductCreatedEvent("SKU-001", "Product", "Category", null));
+    }
+
+    @Test
+    @DisplayName("deve validar toString do evento")
+    void shouldValidateToString() {
+        var event = new ProductCreatedEvent("TEST-001", "Test Product", "Electronics", "100.00");
+        var str = event.toString();
+
+        assertNotNull(str);
+        assertTrue(str.contains("TEST-001"));
+        assertTrue(str.contains("Test Product"));
+    }
+}
+

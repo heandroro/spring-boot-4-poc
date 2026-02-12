@@ -1,5 +1,6 @@
 package com.example.poc.application;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.poc.domain.Product;
 import com.example.poc.domain.ProductRepository;
+import com.example.poc.domain.vo.Money;
 import com.example.poc.infrastructure.mapping.ProductMapper;
 import com.example.poc.web.ProductDto;
 import com.example.poc.web.ProductCreateDto;
@@ -58,7 +60,12 @@ public class ProductService {
             throw new IllegalArgumentException("Product with SKU " + dto.sku() + " already exists");
         }
 
-        mapper.updateDomain(dto, product);
+        product.updatePrice(new Money(new BigDecimal(dto.price()), dto.currency() != null ? dto.currency() : Money.DEFAULT_CURRENCY));
+        product.updateDescription(dto.description());
+        if (dto.specifications() != null) {
+            product.updateSpecifications(dto.specifications());
+        }
+        product.updateImages(dto.images());
         Product updated = repository.save(product);
 
         return mapper.toDto(updated);
@@ -68,4 +75,3 @@ public class ProductService {
         repository.deleteById(id);
     }
 }
-

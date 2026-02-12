@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -76,6 +77,7 @@ public class Product {
         }
 
         Product product = new Product();
+        product.id = UUID.randomUUID().toString();
         product.sku = sku.trim();
         product.name = name.trim();
         product.description = description != null ? description.trim() : null;
@@ -106,7 +108,11 @@ public class Product {
         }
 
         this.price = newPrice;
-        this.updatedAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        if (!now.isAfter(this.updatedAt)) {
+            now = this.updatedAt.plusNanos(1);
+        }
+        this.updatedAt = now;
     }
 
     public void updateDescription(String newDescription) {

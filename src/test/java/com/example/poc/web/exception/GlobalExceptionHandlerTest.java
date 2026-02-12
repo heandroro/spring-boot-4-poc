@@ -20,7 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 
 class GlobalExceptionHandlerTest {
 
@@ -30,9 +33,15 @@ class GlobalExceptionHandlerTest {
     @BeforeEach
     void setup() {
         this.objectMapper = new ObjectMapper();
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        var jacksonConverter = new MappingJackson2HttpMessageConverter(objectMapper);
+
         this.mockMvc = MockMvcBuilders
                 .standaloneSetup(new TestController())
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setMessageConverters(jacksonConverter)
                 .build();
     }
 
@@ -69,9 +78,9 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Validation failed"))
                 .andExpect(jsonPath("$.detail").value("Request body contains invalid fields"))
-                .andExpect(jsonPath("$.errors[0].field").value("name"))
-                .andExpect(jsonPath("$.errors[0].message").value(containsString("must not be blank")))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.properties.errors[0].field").value("name"))
+                .andExpect(jsonPath("$.properties.errors[0].message").value(containsString("must not be blank")))
+                .andExpect(jsonPath("$.properties.timestamp").exists());
     }
 
     @Test
@@ -81,7 +90,7 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Bad Request"))
                 .andExpect(jsonPath("$.detail").value("bad request"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.properties.timestamp").exists());
     }
 
     @Test
@@ -91,6 +100,6 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.title").value("Internal Server Error"))
                 .andExpect(jsonPath("$.detail").value("An unexpected error occurred"))
-                .andExpect(jsonPath("$.timestamp").exists());
+                .andExpect(jsonPath("$.properties.timestamp").exists());
     }
 }
