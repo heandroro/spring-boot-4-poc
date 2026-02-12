@@ -1,6 +1,8 @@
 package com.example.poc.application;
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -11,9 +13,12 @@ import com.example.poc.domain.Product;
 import com.example.poc.domain.ProductRepository;
 import com.example.poc.domain.vo.Money;
 import com.example.poc.infrastructure.mapping.ProductMapper;
-import com.example.poc.web.ProductDto;
 import com.example.poc.web.ProductCreateDto;
+import com.example.poc.web.ProductDto;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP2"}, justification = "Referências finais injetadas via construtor são intencionais; não expomos coleções mutáveis diretamente aqui")
 @Service
 public class ProductService {
 
@@ -30,7 +35,16 @@ public class ProductService {
             throw new IllegalArgumentException("Product with SKU " + dto.sku() + " already exists");
         }
 
-        Product product = mapper.toDomain(dto);
+        // Cópias defensivas para evitar expor coleções mutáveis aos domínios/mappers
+        var safeSpecifications = dto.specifications() == null ? Map.<String, Object>of() : Map.copyOf(dto.specifications());
+        var safeImages = dto.images() == null ? List.<com.example.poc.domain.vo.ProductImage>of() : List.copyOf(dto.images());
+
+        var dtoSafe = new ProductCreateDto(
+            dto.sku(), dto.name(), dto.description(), dto.category(), dto.price(), dto.currency(), dto.initialStock(),
+            safeSpecifications, safeImages
+        );
+
+        Product product = mapper.toDomain(dtoSafe);
         Product saved = repository.save(product);
 
         return mapper.toDto(saved);
@@ -60,12 +74,16 @@ public class ProductService {
             throw new IllegalArgumentException("Product with SKU " + dto.sku() + " already exists");
         }
 
+        // Cópias defensivas para update
+        var safeSpecifications = dto.specifications() == null ? Map.<String, Object>of() : Map.copyOf(dto.specifications());
+        var safeImages = dto.images() == null ? List.<com.example.poc.domain.vo.ProductImage>of() : List.copyOf(dto.images());
+
         product.updatePrice(new Money(new BigDecimal(dto.price()), dto.currency() != null ? dto.currency() : Money.DEFAULT_CURRENCY));
         product.updateDescription(dto.description());
-        if (dto.specifications() != null) {
-            product.updateSpecifications(dto.specifications());
+        if (!safeSpecifications.isEmpty()) {
+            product.updateSpecifications(safeSpecifications);
         }
-        product.updateImages(dto.images());
+        product.updateImages(safeImages);
         Product updated = repository.save(product);
 
         return mapper.toDto(updated);
