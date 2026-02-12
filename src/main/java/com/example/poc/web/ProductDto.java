@@ -37,5 +37,9 @@ public record ProductDto(
         @NotNull(message = "Created at must not be null") String createdAt,
 
         @NotNull(message = "Updated at must not be null") String updatedAt) {
-}
 
+    public ProductDto {
+        specifications = specifications == null ? Map.of() : Map.copyOf(specifications);
+        images = images == null ? List.of() : List.copyOf(images);
+    }
+}

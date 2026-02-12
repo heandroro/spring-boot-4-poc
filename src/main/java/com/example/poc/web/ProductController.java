@@ -19,6 +19,9 @@ import com.example.poc.application.ProductService;
 
 import jakarta.validation.Valid;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
+@SuppressFBWarnings(value = {"EI_EXPOSE_REP2"}, justification = "Referência ao ProductService injetada por construtor é intencional e imutável")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {

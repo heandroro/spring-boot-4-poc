@@ -27,5 +27,9 @@ public record ProductCreateDto(
         Map<String, Object> specifications,
 
         List<ProductImage> images) {
-}
 
+    public ProductCreateDto {
+        specifications = specifications == null ? Map.of() : Map.copyOf(specifications);
+        images = images == null ? List.of() : List.copyOf(images);
+    }
+}
